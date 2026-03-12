@@ -5,6 +5,21 @@
 (function ($) {
     'use strict';
 
+    /* ── Globale Funktion: Edit-Panel ein-/ausklappen ───────── */
+    window.hsToggleEdit = function (id) {
+        var $panel = $('#hs-edit-panel-' + id);
+        if ($panel.is(':visible')) {
+            $panel.slideUp(200);
+        } else {
+            // Alle anderen schließen
+            $('.hs-card-edit-panel').slideUp(200);
+            $panel.slideDown(250, function () {
+                $('html, body').animate({ scrollTop: $panel.offset().top - 100 }, 400);
+                $panel.find('input[type="text"], input[type="date"]').first().focus();
+            });
+        }
+    };
+
     $(document).ready(function () {
 
         // ── 1. Zeichen-Zähler für Textareas mit maxlength ────────
@@ -98,6 +113,25 @@
                 }, 200);
             }
         }
+
+        // ── 8. Scroll zu bearbeitetem Eintrag nach Speichern ────
+        var urlParams = new URLSearchParams(window.location.search);
+        var editedId  = urlParams.get('hs_edited');
+        if (editedId) {
+            var $card = $('#hs-card-' + editedId);
+            if ($card.length) {
+                setTimeout(function () {
+                    $('html, body').animate({ scrollTop: $card.offset().top - 80 }, 500);
+                }, 200);
+            }
+        }
+
+        // ── 9. ESC-Taste schließt offene Edit-Panels ────────────
+        $(document).on('keydown', function (e) {
+            if (e.key === 'Escape') {
+                $('.hs-card-edit-panel:visible').slideUp(200);
+            }
+        });
 
     });
 

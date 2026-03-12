@@ -30,6 +30,7 @@ class Handschelle_Shortcodes {
 
         // Submit früh verarbeiten – BEVOR Header gesendet werden
         add_action( 'init', array( $this, 'early_frontend_submit' ) );
+        add_action( 'init', array( $this, 'early_frontend_edit' ) );
     }
 
     /* ================================================================
@@ -160,6 +161,42 @@ class Handschelle_Shortcodes {
             if ( strpos( $url, home_url() ) === 0 ) return $url;
         }
         return home_url();
+    }
+
+    /* ================================================================
+       FRONTEND-EDIT-HANDLER auf init-Hook
+    ================================================================ */
+    public function early_frontend_edit() {
+        if ( empty( $_POST['hs_edit_submit'] ) ) return;
+        if ( ! is_user_logged_in() ) return;
+
+        if ( ! isset( $_POST['hs_edit_nonce'] ) ||
+             ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['hs_edit_nonce'] ) ), 'hs_frontend_edit' ) ) {
+            wp_safe_redirect( $this->return_url() );
+            exit;
+        }
+
+        $id = intval( $_POST['hs_edit_id'] ?? 0 );
+        if ( ! $id ) {
+            wp_safe_redirect( $this->return_url() );
+            exit;
+        }
+
+        $data      = handschelle_sanitize_entry( $_POST );
+        $attach_id = Handschelle_Image_Handler::handle_upload_and_resize( 'bild_upload' );
+        if ( $attach_id ) $data['bild'] = $attach_id;
+
+        // Freigabe-Status nur für Admins änderbar
+        if ( current_user_can( 'manage_options' ) ) {
+            $data['freigegeben'] = isset( $_POST['freigegeben'] ) ? 1 : 0;
+        } else {
+            unset( $data['freigegeben'] );
+        }
+
+        Handschelle_Database::update( $id, $data );
+
+        wp_safe_redirect( add_query_arg( 'hs_edited', $id, $this->return_url() ) );
+        exit;
     }
 
     /* ================================================================
@@ -365,9 +402,15 @@ class Handschelle_Shortcodes {
             'Ermittlungen laufen' => 'hs-status-ermittlung',
             'Eingestellt'         => 'hs-status-eingestellt',
         );
+        $is_logged_in = is_user_logged_in();
+        $is_admin     = current_user_can( 'manage_options' );
+        $edited       = isset( $_GET['hs_edited'] ) && intval( $_GET['hs_edited'] ) === intval( $e->id );
         ob_start();
         ?>
-        <div class="hs-card">
+        <div class="hs-card" id="hs-card-<?php echo intval($e->id); ?>">
+            <?php if ( $edited ) : ?>
+                <div class="hs-alert hs-alert-success">✅ Eintrag erfolgreich aktualisiert!</div>
+            <?php endif; ?>
             <div class="hs-card-header">
                 <div class="hs-card-img-wrap <?php echo $img_url ? '' : 'hs-card-img-placeholder'; ?>">
                     <?php if ( $img_url ) : ?><img src="<?php echo esc_url($img_url); ?>" alt="<?php echo esc_attr($e->name); ?>" class="hs-card-img"><?php else : ?>👤<?php endif; ?>
@@ -378,6 +421,14 @@ class Handschelle_Shortcodes {
                     <?php if ( $e->partei ) : ?><p class="hs-card-partei">🏛 <?php echo esc_html($e->partei); ?><?php if($e->aufgabe_partei) echo ' &ndash; '.esc_html($e->aufgabe_partei); ?></p><?php endif; ?>
                     <?php if ( $e->parlament ) : ?><p class="hs-card-parlament">📜 <?php echo esc_html($e->parlament); ?><?php if($e->parlament_name) echo ' ('.esc_html($e->parlament_name).')'; ?></p><?php endif; ?>
                 </div>
+                <?php if ( $is_logged_in ) : ?>
+                <button type="button"
+                    class="hs-card-edit-btn"
+                    onclick="hsToggleEdit(<?php echo intval($e->id); ?>)"
+                    title="Eintrag bearbeiten">
+                    ✏ Bearbeiten
+                </button>
+                <?php endif; ?>
             </div>
             <div class="hs-card-body">
                 <div class="hs-card-straftat"><span class="hs-label">⚖ Straftat:</span><p><?php echo nl2br(esc_html($e->straftat)); ?></p></div>
@@ -402,7 +453,109 @@ class Handschelle_Shortcodes {
                 <div class="hs-card-footer"><?php echo implode( '', $sm_links ); ?></div>
             <?php endif; ?>
             <div class="hs-card-date">Eingetragen am <?php echo esc_html( date_i18n('d.m.Y', strtotime($e->datum_eintrag)) ); ?></div>
-        </div>
+
+            <?php if ( $is_logged_in ) : ?>
+            <!-- ── Inline-Bearbeitungsformular (eingeklappt) ─────── -->
+            <div class="hs-card-edit-panel" id="hs-edit-panel-<?php echo intval($e->id); ?>" style="display:none;">
+                <div class="hs-card-edit-header">
+                    ✏ Eintrag bearbeiten
+                    <button type="button" class="hs-edit-close" onclick="hsToggleEdit(<?php echo intval($e->id); ?>)" title="Schließen">✕</button>
+                </div>
+                <form method="post" enctype="multipart/form-data" class="hs-edit-form">
+                    <?php wp_nonce_field( 'hs_frontend_edit', 'hs_edit_nonce' ); ?>
+                    <input type="hidden" name="hs_edit_submit"  value="1">
+                    <input type="hidden" name="hs_edit_id"      value="<?php echo intval($e->id); ?>">
+                    <input type="hidden" name="hs_return_url"   value="<?php echo esc_url( get_permalink() ); ?>">
+
+                    <div class="hs-edit-grid">
+                        <!-- Eintragsdetails -->
+                        <div class="hs-edit-section-title">📋 Eintragsdetails</div>
+                        <div class="hs-field"><label>Datum</label><input type="date" name="datum_eintrag" value="<?php echo esc_attr($e->datum_eintrag); ?>" required></div>
+                        <div class="hs-field"><label>Name <span>(max. 50)</span></label><input type="text" name="name" maxlength="50" value="<?php echo esc_attr($e->name); ?>" required></div>
+                        <div class="hs-field"><label>Beruf <span>(max. 50)</span></label><input type="text" name="beruf" maxlength="50" value="<?php echo esc_attr($e->beruf); ?>"></div>
+                        <div class="hs-field hs-field-full">
+                            <label>Bild ersetzen <span>(optional)</span></label>
+                            <input type="file" name="bild_upload" accept="image/*" class="hs-file-input">
+                            <?php if ( $img_url ) : ?><div class="hs-edit-current-img"><img src="<?php echo esc_url($img_url); ?>" alt="Aktuell"><small>Aktuelles Bild</small></div><?php endif; ?>
+                            <input type="hidden" name="bild" value="<?php echo esc_attr($e->bild); ?>">
+                        </div>
+
+                        <!-- Politisch -->
+                        <div class="hs-edit-section-title">🏛 Politisch</div>
+                        <div class="hs-field"><label>Partei <span>(max. 50)</span></label><input type="text" name="partei" maxlength="50" value="<?php echo esc_attr($e->partei); ?>"></div>
+                        <div class="hs-field"><label>Aufgabe in der Partei</label><input type="text" name="aufgabe_partei" maxlength="100" value="<?php echo esc_attr($e->aufgabe_partei); ?>"></div>
+                        <div class="hs-field">
+                            <label>Parlament</label>
+                            <select name="parlament">
+                                <option value="">-- Bitte wählen --</option>
+                                <?php foreach ( handschelle_parlaments() as $parl ) : ?>
+                                    <option value="<?php echo esc_attr($parl); ?>" <?php selected($e->parlament, $parl); ?>><?php echo esc_html($parl); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="hs-field"><label>Parlament Name</label><input type="text" name="parlament_name" maxlength="50" value="<?php echo esc_attr($e->parlament_name); ?>"></div>
+                        <div class="hs-field">
+                            <label>Status</label>
+                            <select name="status_aktiv">
+                                <option value="1" <?php selected(intval($e->status_aktiv), 1); ?>>Aktiv</option>
+                                <option value="0" <?php selected(intval($e->status_aktiv), 0); ?>>Inaktiv</option>
+                            </select>
+                        </div>
+
+                        <!-- Straftat -->
+                        <div class="hs-edit-section-title">⚖ Straftat</div>
+                        <div class="hs-field hs-field-full">
+                            <label>Straftat <span>(max. 200 Zeichen)</span></label>
+                            <textarea name="straftat" maxlength="200" rows="3" required><?php echo esc_textarea($e->straftat); ?></textarea>
+                            <small class="hs-char-counter" data-target="straftat">0 / 200 Zeichen</small>
+                        </div>
+                        <div class="hs-field"><label>Urteil <span>(max. 50)</span></label><input type="text" name="urteil" maxlength="50" value="<?php echo esc_attr($e->urteil); ?>"></div>
+                        <div class="hs-field"><label>Link zur Quelle</label><input type="url" name="link_quelle" value="<?php echo esc_attr($e->link_quelle); ?>"></div>
+                        <div class="hs-field"><label>Aktenzeichen</label><input type="text" name="aktenzeichen" maxlength="50" value="<?php echo esc_attr($e->aktenzeichen); ?>"></div>
+                        <div class="hs-field hs-field-full"><label>Bemerkung</label><textarea name="bemerkung" rows="3"><?php echo esc_textarea($e->bemerkung); ?></textarea></div>
+                        <div class="hs-field">
+                            <label>Status Straftat</label>
+                            <select name="status_straftat">
+                                <?php foreach ( handschelle_status_straftat_options() as $st ) : ?>
+                                    <option value="<?php echo esc_attr($st); ?>" <?php selected($e->status_straftat, $st); ?>><?php echo esc_html($st); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+
+                        <!-- Social Media -->
+                        <div class="hs-edit-section-title">📱 Social-Media</div>
+                        <?php foreach ( array(
+                            'sm_facebook'  => '📘 Facebook',
+                            'sm_youtube'   => '▶ YouTube',
+                            'sm_personal'  => '👤 Persönliches Profil',
+                            'sm_twitter'   => '🐦 Twitter / X',
+                            'sm_homepage'  => '🌐 Homepage',
+                            'sm_wikipedia' => '📖 Wikipedia',
+                            'sm_sonstige'  => '🔗 Sonstige',
+                        ) as $field => $label ) : ?>
+                            <div class="hs-field"><label><?php echo $label; ?></label><input type="url" name="<?php echo esc_attr($field); ?>" value="<?php echo esc_attr($e->$field ?? ''); ?>" placeholder="https://…"></div>
+                        <?php endforeach; ?>
+
+                        <?php if ( $is_admin ) : ?>
+                        <!-- Freigabe (nur Admins) -->
+                        <div class="hs-edit-section-title">⚙ Freigabe</div>
+                        <div class="hs-field hs-field-full">
+                            <label class="hs-checkbox-label">
+                                <input type="checkbox" name="freigegeben" value="1" <?php checked( intval($e->freigegeben), 1 ); ?>>
+                                Eintrag freigeben (öffentlich sichtbar)
+                            </label>
+                        </div>
+                        <?php endif; ?>
+                    </div><!-- .hs-edit-grid -->
+
+                    <div class="hs-edit-actions">
+                        <button type="submit" class="hs-btn hs-btn-primary">💾 Speichern</button>
+                        <button type="button" class="hs-btn hs-btn-cancel" onclick="hsToggleEdit(<?php echo intval($e->id); ?>)">Abbrechen</button>
+                    </div>
+                </form>
+            </div><!-- .hs-card-edit-panel -->
+            <?php endif; ?>
+        </div><!-- .hs-card -->
         <?php
         return ob_get_clean();
     }
