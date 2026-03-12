@@ -1,6 +1,6 @@
 <?php
 /**
- * Die Handschelle V.Alpha-2 – Shortcodes
+ * Die-Handschelle 2.0 A – Shortcodes
  *
  * Shortcodes:
  *   [handschelle]            – Eingabeformular
@@ -13,6 +13,14 @@
  *
  * Submit-Handler läuft auf dem 'init'-Hook (VOR jeder HTTP-Ausgabe),
  * damit wp_safe_redirect() zuverlässig funktioniert.
+ *
+ * DISCLAIMER:
+ * Dieses Plugin dient ausschließlich der sachlichen Dokumentation öffentlich
+ * bekannter Straftaten politischer Personen auf Basis von Medienberichten und
+ * Gerichtsurteilen. Es erhebt keinen Anspruch auf Vollständigkeit. Alle Angaben
+ * ohne Gewähr. Betreiber haften nicht für die Richtigkeit der eingetragenen
+ * Inhalte. Die Veröffentlichung eines Eintrags erfolgt erst nach manueller
+ * Prüfung und Freigabe durch den Administrator.
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
@@ -274,7 +282,7 @@ class Handschelle_Shortcodes {
         ?>
         <div class="hs-frontend hs-full-width">
             <div class="hs-statistik">
-                <h2 class="hs-section-title">📊 Statistik – Einträge je Partei</h2>
+                <h2 class="hs-section-title">📊 Einträge je Partei</h2>
                 <?php if ( empty( $rows ) ) : ?>
                     <p class="hs-empty">Noch keine freigegebenen Einträge vorhanden.</p>
                 <?php else : ?>
@@ -290,7 +298,7 @@ class Handschelle_Shortcodes {
                             ?>
                                 <tr>
                                     <td class="hs-stat-rank"><?php echo $i + 1; ?></td>
-                                    <td class="hs-stat-partei"><?php echo esc_html( $r->partei ); ?></td>
+                                    <td class="hs-stat-partei"><a href="<?php echo esc_url( add_query_arg( 'hs_partei', urlencode( $r->partei ), get_permalink() ) ); ?>" class="hs-stat-partei-link"><?php echo esc_html( $r->partei ); ?></a></td>
                                     <td class="hs-stat-count"><?php echo $anzahl; ?></td>
                                     <td class="hs-stat-pct"><?php echo $pct; ?>&nbsp;%</td>
                                     <td class="hs-stat-bar-cell"><div class="hs-stat-bar-wrap"><div class="hs-stat-bar" style="width:<?php echo $bar_pct; ?>%"></div></div></td>

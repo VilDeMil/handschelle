@@ -1,6 +1,14 @@
 <?php
 /**
- * Die Handschelle V.Alpha-2 – Datenbankklasse
+ * Die-Handschelle 2.0 A – Datenbankklasse
+ *
+ * DISCLAIMER:
+ * Dieses Plugin dient ausschließlich der sachlichen Dokumentation öffentlich
+ * bekannter Straftaten politischer Personen auf Basis von Medienberichten und
+ * Gerichtsurteilen. Es erhebt keinen Anspruch auf Vollständigkeit. Alle Angaben
+ * ohne Gewähr. Betreiber haften nicht für die Richtigkeit der eingetragenen
+ * Inhalte. Die Veröffentlichung eines Eintrags erfolgt erst nach manueller
+ * Prüfung und Freigabe durch den Administrator.
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 

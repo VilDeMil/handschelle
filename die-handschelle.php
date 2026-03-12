@@ -1,18 +1,27 @@
 <?php
 /**
- * Plugin Name: Die Handschelle V.Alpha-2
- * Plugin URI:  https://github.com/bernd-dorfmueller/die-handschelle
+ * Plugin Name: Die-Handschelle
+ * Plugin URI:  https://github.com/VilDeMil/handschelle
  * Description: Dokumentation von Straftaten politischer Personen. Neue Einträge müssen im Admin-Bereich freigegeben werden.
- * Version:     V.01.1
+ * Version:     2.0 A
  * Author:      Bernd K.R. Dorfmüller
  * Author URI:  mailto:bernd.dorfmueller@gmail.com
  * Text Domain: die-handschelle
  * License:     GPL-2.0+
+ *
+ * DISCLAIMER:
+ * Dieses Plugin dient ausschließlich der sachlichen Dokumentation öffentlich
+ * bekannter Straftaten politischer Personen auf Basis von Medienberichten und
+ * Gerichtsurteilen. Es erhebt keinen Anspruch auf Vollständigkeit. Alle Angaben
+ * ohne Gewähr. Betreiber haften nicht für die Richtigkeit der eingetragenen
+ * Inhalte. Die Veröffentlichung eines Eintrags erfolgt erst nach manueller
+ * Prüfung und Freigabe durch den Administrator.
+ * Version wird bei jedem Commit um 0.1 erhöht.
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'HANDSCHELLE_VERSION',    'V.01.1' );
+define( 'HANDSCHELLE_VERSION',    '2.0 A' );
 define( 'HANDSCHELLE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'HANDSCHELLE_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'HANDSCHELLE_DB_TABLE',   'die_handschelle' );
