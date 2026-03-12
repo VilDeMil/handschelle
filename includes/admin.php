@@ -1,6 +1,6 @@
 <?php
 /**
- * Die-Handschelle 2.0 A – Admin-Panel
+ * Die-Handschelle 2.06 – Admin-Panel
  *
  * DISCLAIMER:
  * Dieses Plugin dient ausschließlich der sachlichen Dokumentation öffentlich
@@ -35,6 +35,7 @@ class Handschelle_Admin {
         add_submenu_page( 'handschelle', 'Neuer Eintrag',      '+ Neuer Eintrag', 'manage_options', 'handschelle-add',           array( $this, 'page_add' ) );
         add_submenu_page( 'handschelle', 'Eintrag bearbeiten', 'Bearbeiten',      'manage_options', 'handschelle-edit',          array( $this, 'page_edit' ) );
         add_submenu_page( 'handschelle', 'Import / Export',    'Import / Export', 'manage_options', 'handschelle-import-export', array( $this, 'page_import_export' ) );
+        add_submenu_page( 'handschelle', 'Bilder',             'Bilder',          'manage_options', 'handschelle-bilder',        array( $this, 'page_bilder' ) );
         add_submenu_page( 'handschelle', 'Datenbank',          'Datenbank',       'manage_options', 'handschelle-db',            array( $this, 'page_database' ) );
     }
 
@@ -96,8 +97,10 @@ class Handschelle_Admin {
                 }
                 break;
 
-            case 'export_csv': $this->export_csv(); break;
-            case 'import_csv': $this->import_csv(); break;
+            case 'export_csv':        $this->export_csv(); break;
+            case 'import_csv':        $this->import_csv(); break;
+            case 'export_images_zip': $this->export_images_zip(); break;
+            case 'import_images_zip': $this->import_images_zip(); break;
 
             case 'truncate':
                 Handschelle_Database::truncate_table();
@@ -413,6 +416,206 @@ class Handschelle_Admin {
             <?php echo $this->hs_footer(); ?>
         </div>
         <?php
+    }
+
+    /* ================================================================
+       SEITE: BILDER
+    ================================================================ */
+    public function page_bilder() {
+        $all     = Handschelle_Database::get_all( array( 'freigegeben' => 'all' ) );
+        $entries = array_filter( $all, fn( $e ) => ! empty( $e->bild ) );
+        $zippable = 0;
+        foreach ( $entries as $e ) {
+            if ( is_numeric( $e->bild ) && get_attached_file( intval( $e->bild ) ) ) $zippable++;
+        }
+        $nonce = wp_create_nonce( 'handschelle_admin_action' );
+        ?>
+        <div class="wrap hs-wrap">
+            <h1>🖼 Bilder Backup</h1>
+            <div class="hs-form-section">
+                <p>Gesamt Einträge mit Bild: <strong><?php echo count( $entries ); ?></strong> &nbsp;|&nbsp; ZIP-fähige Attachments: <strong><?php echo $zippable; ?></strong></p>
+                <?php if ( $zippable > 0 ) : ?>
+                <form method="post" action="<?php echo esc_url( admin_url('admin.php') ); ?>">
+                    <?php wp_nonce_field( 'handschelle_admin_action' ); ?>
+                    <input type="hidden" name="hs_action" value="export_images_zip">
+                    <input type="hidden" name="page" value="handschelle-bilder">
+                    <button type="submit" class="button button-primary hs-btn">📦 ZIP erstellen &amp; herunterladen</button>
+                </form>
+                <?php else : ?>
+                    <p style="color:#999;">Keine Attachments zum Zippen vorhanden.</p>
+                <?php endif; ?>
+            </div>
+            <div class="hs-form-section" style="margin-top:1.5rem;">
+                <h2>⬆ ZIP Import</h2>
+                <p>Importiert alle Bilder aus einer ZIP-Datei in die Medienbibliothek (JPEG, PNG, GIF, WebP). Bilder werden auf max. 450&nbsp;px Höhe skaliert.</p>
+                <form method="post" action="<?php echo esc_url( admin_url('admin.php') ); ?>" enctype="multipart/form-data">
+                    <?php wp_nonce_field( 'handschelle_admin_action' ); ?>
+                    <input type="hidden" name="hs_action" value="import_images_zip">
+                    <input type="hidden" name="page" value="handschelle-bilder">
+                    <div class="hs-field" style="max-width:420px;margin-bottom:.8rem;">
+                        <label>ZIP-Datei auswählen</label>
+                        <input type="file" name="zip_file" accept=".zip" required>
+                    </div>
+                    <button type="submit" class="button button-primary hs-btn">📤 ZIP importieren</button>
+                </form>
+            </div>
+            <div class="hs-form-section" style="margin-top:1.5rem;">
+                <h2>Bildliste</h2>
+                <?php if ( empty( $entries ) ) : ?>
+                    <p class="hs-empty">Keine Einträge mit Bild.</p>
+                <?php else : ?>
+                <table class="widefat fixed striped hs-admin-table">
+                    <thead>
+                        <tr>
+                            <th style="width:70px">Vorschau</th>
+                            <th>Name</th>
+                            <th>Partei</th>
+                            <th>Typ</th>
+                            <th>Dateiname</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <?php foreach ( $entries as $e ) :
+                        $img_url  = handschelle_get_image_url( $e->bild );
+                        $is_attach = is_numeric( $e->bild ) && intval( $e->bild ) > 0;
+                        $file_path = $is_attach ? get_attached_file( intval( $e->bild ) ) : '';
+                        $filename  = $file_path ? basename( $file_path ) : '—';
+                        $typ       = $is_attach ? 'Attachment (ID: ' . intval( $e->bild ) . ')' : 'Externe URL';
+                    ?>
+                        <tr>
+                            <td>
+                                <?php if ( $img_url ) : ?>
+                                    <img src="<?php echo esc_url( $img_url ); ?>" style="width:56px;height:56px;object-fit:cover;border-radius:4px;">
+                                <?php else : ?>
+                                    <div style="width:56px;height:56px;background:#eee;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;">👤</div>
+                                <?php endif; ?>
+                            </td>
+                            <td><strong><?php echo esc_html( $e->name ); ?></strong></td>
+                            <td><?php echo esc_html( $e->partei ); ?></td>
+                            <td><?php echo esc_html( $typ ); ?></td>
+                            <td><code><?php echo esc_html( $filename ); ?></code></td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+                <?php endif; ?>
+            </div>
+            <?php echo $this->hs_footer(); ?>
+        </div>
+        <?php
+    }
+
+    /* ================================================================
+       ZIP EXPORT
+    ================================================================ */
+    private function export_images_zip() {
+        if ( ! class_exists( 'ZipArchive' ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-bilder' ), 'Fehler: PHP ZipArchive nicht verfügbar.' );
+            return;
+        }
+        $all     = Handschelle_Database::get_all( array( 'freigegeben' => 'all' ) );
+        $entries = array_filter( $all, fn( $e ) => ! empty( $e->bild ) && is_numeric( $e->bild ) );
+
+        $zip_path = sys_get_temp_dir() . '/hs_bilder_' . time() . '.zip';
+        $zip      = new ZipArchive();
+        if ( $zip->open( $zip_path, ZipArchive::CREATE | ZipArchive::OVERWRITE ) !== true ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-bilder' ), 'Fehler: ZIP-Datei konnte nicht erstellt werden.' );
+            return;
+        }
+        $count = 0;
+        foreach ( $entries as $e ) {
+            $file = get_attached_file( intval( $e->bild ) );
+            if ( $file && file_exists( $file ) ) {
+                $zip->addFile( $file, basename( $file ) );
+                $count++;
+            }
+        }
+        $zip->close();
+
+        if ( $count === 0 || ! file_exists( $zip_path ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-bilder' ), 'Keine Dateien gefunden.' );
+            return;
+        }
+
+        $filename = 'handschelle-bilder-' . date( 'Y-m-d' ) . '.zip';
+        header( 'Content-Type: application/zip' );
+        header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+        header( 'Content-Length: ' . filesize( $zip_path ) );
+        header( 'Pragma: no-cache' );
+        readfile( $zip_path );
+        unlink( $zip_path );
+        exit;
+    }
+
+    /* ================================================================
+       ZIP IMPORT
+    ================================================================ */
+    private function import_images_zip() {
+        if ( ! class_exists( 'ZipArchive' ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-bilder' ), 'Fehler: PHP ZipArchive nicht verfügbar.' );
+            return;
+        }
+        if ( empty( $_FILES['zip_file']['tmp_name'] ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-bilder' ), 'Fehler: Keine ZIP-Datei hochgeladen.' );
+            return;
+        }
+
+        $zip = new ZipArchive();
+        if ( $zip->open( $_FILES['zip_file']['tmp_name'] ) !== true ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-bilder' ), 'Fehler: ZIP-Datei konnte nicht geöffnet werden.' );
+            return;
+        }
+
+        if ( ! function_exists( 'wp_handle_sideload' ) ) require_once ABSPATH . 'wp-admin/includes/file.php';
+        if ( ! function_exists( 'wp_generate_attachment_metadata' ) ) require_once ABSPATH . 'wp-admin/includes/image.php';
+
+        $allowed  = array( 'jpg', 'jpeg', 'png', 'gif', 'webp' );
+        $temp_dir = trailingslashit( sys_get_temp_dir() ) . 'hs_zip_import_' . time() . '/';
+        wp_mkdir_p( $temp_dir );
+        $upload_dir = wp_upload_dir();
+        $count      = 0;
+
+        for ( $i = 0; $i < $zip->numFiles; $i++ ) {
+            $name = $zip->getNameIndex( $i );
+            // skip directories and hidden files
+            if ( substr( $name, -1 ) === '/' || strpos( basename( $name ), '.' ) === 0 ) continue;
+            $ext = strtolower( pathinfo( $name, PATHINFO_EXTENSION ) );
+            if ( ! in_array( $ext, $allowed, true ) ) continue;
+
+            $temp_file = $temp_dir . wp_unique_filename( $temp_dir, basename( $name ) );
+            $stream    = $zip->getStream( $name );
+            if ( ! $stream ) continue;
+            file_put_contents( $temp_file, stream_get_contents( $stream ) );
+            fclose( $stream );
+            if ( ! file_exists( $temp_file ) ) continue;
+
+            // Resize to max 450px height
+            Handschelle_Image_Handler::resize_to_height( $temp_file, 450 );
+
+            // Move to WP uploads
+            $dest = trailingslashit( $upload_dir['path'] ) . wp_unique_filename( $upload_dir['path'], basename( $temp_file ) );
+            if ( ! rename( $temp_file, $dest ) ) { unlink( $temp_file ); continue; }
+
+            $filetype  = wp_check_filetype( basename( $dest ) );
+            $attach_id = wp_insert_attachment( array(
+                'post_mime_type' => $filetype['type'],
+                'post_title'     => sanitize_file_name( pathinfo( $dest, PATHINFO_FILENAME ) ),
+                'post_content'   => '',
+                'post_status'    => 'inherit',
+            ), $dest );
+
+            if ( $attach_id && ! is_wp_error( $attach_id ) ) {
+                wp_update_attachment_metadata( $attach_id, wp_generate_attachment_metadata( $attach_id, $dest ) );
+                $count++;
+            }
+        }
+
+        $zip->close();
+        // cleanup temp dir
+        foreach ( glob( $temp_dir . '*' ) as $f ) @unlink( $f );
+        @rmdir( $temp_dir );
+
+        $this->redirect( admin_url( 'admin.php?page=handschelle-bilder' ), "{$count} Bild(er) aus ZIP importiert und in Medienbibliothek gespeichert." );
     }
 
     /* ================================================================
