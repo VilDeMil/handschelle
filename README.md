@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 2.05 |
+| **Version** | 2.06 |
 | **Autor** | Bernd K.R. Dorfmüller |
 | **E-Mail** | bernd@xn--dorfmller-u9a.com |
 | **Website** | https://xn--dorfmller-u9a.com/die-handschelle |
@@ -332,7 +332,7 @@ Outputs the copyright/disclaimer block:
 Defined in `die-handschelle.php`:
 
 ```php
-HANDSCHELLE_VERSION     // '2.05'
+HANDSCHELLE_VERSION     // '2.06'
 HANDSCHELLE_PLUGIN_DIR  // Absolute path to plugin directory
 HANDSCHELLE_PLUGIN_URL  // URL to plugin directory
 HANDSCHELLE_DB_TABLE    // Full table name, e.g. 'wp_die_handschelle'
