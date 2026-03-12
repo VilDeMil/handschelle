@@ -7,8 +7,8 @@
 |---|---|
 | **Version** | 2.0 A |
 | **Autor** | Bernd K.R. Dorfmüller |
-| **E-Mail** | handschelle@dorfmueller.com |
-| **Website** | https://github.com/VilDeMil/handschelle |
+| **E-Mail** | bernd@xn--dorfmller-u9a.com |
+| **Website** | https://xn--dorfmller-u9a.com/die-handschelle |
 | **Lizenz** | GPL-2.0+ |
 | **Requires** | WordPress 5.5+, PHP 7.4+, GD Library |
 
@@ -203,7 +203,7 @@ Outputs the copyright/disclaimer block:
 **Output:**
 > **Die-Handschelle © 2026**
 > Wer in unseren Parlamenten ist oder war kriminell? Eine Datenbank der Straftaten.
-> [handschelle@dorfmüller.com](mailto:handschelle@dorfmueller.com) · [github.com/VilDeMil/handschelle](https://github.com/VilDeMil/handschelle)
+> [bernd@xn--dorfmller-u9a.com](mailto:bernd@xn--dorfmller-u9a.com) · [xn--dorfmller-u9a.com/die-handschelle](https://xn--dorfmller-u9a.com/die-handschelle)
 
 ---
 
