@@ -1,6 +1,14 @@
 <?php
 /**
- * Die Handschelle V.Alpha-2 – Admin-Panel
+ * Die-Handschelle 2.0 A – Admin-Panel
+ *
+ * DISCLAIMER:
+ * Dieses Plugin dient ausschließlich der sachlichen Dokumentation öffentlich
+ * bekannter Straftaten politischer Personen auf Basis von Medienberichten und
+ * Gerichtsurteilen. Es erhebt keinen Anspruch auf Vollständigkeit. Alle Angaben
+ * ohne Gewähr. Betreiber haften nicht für die Richtigkeit der eingetragenen
+ * Inhalte. Die Veröffentlichung eines Eintrags erfolgt erst nach manueller
+ * Prüfung und Freigabe durch den Administrator.
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
@@ -22,7 +30,7 @@ class Handschelle_Admin {
        MENÜS
     ================================================================ */
     public function register_menus() {
-        add_menu_page( 'Die Handschelle', 'Die Handschelle', 'manage_options', 'handschelle', array( $this, 'page_overview' ), 'dashicons-lock', 25 );
+        add_menu_page( 'Die-Handschelle', 'Die-Handschelle', 'manage_options', 'handschelle', array( $this, 'page_overview' ), 'dashicons-lock', 25 );
         add_submenu_page( 'handschelle', 'Übersicht',          'Übersicht',       'manage_options', 'handschelle',              array( $this, 'page_overview' ) );
         add_submenu_page( 'handschelle', 'Neuer Eintrag',      '+ Neuer Eintrag', 'manage_options', 'handschelle-add',           array( $this, 'page_add' ) );
         add_submenu_page( 'handschelle', 'Eintrag bearbeiten', 'Bearbeiten',      'manage_options', 'handschelle-edit',          array( $this, 'page_edit' ) );
@@ -205,7 +213,7 @@ class Handschelle_Admin {
         $nonce   = wp_create_nonce( 'handschelle_admin_action' );
         ?>
         <div class="wrap hs-wrap">
-            <h1>🔒 Die Handschelle <span class="hs-version">V.Alpha-2</span></h1>
+            <h1>🔒 Die-Handschelle <span class="hs-version">2.0 A</span></h1>
             <div class="hs-stats-bar">
                 <span>Gesamt: <strong><?php echo $total; ?></strong></span>
                 <span>Ausstehend: <strong class="<?php echo $pending ? 'hs-warn' : ''; ?>"><?php echo $pending; ?></strong></span>
