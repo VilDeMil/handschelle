@@ -165,9 +165,13 @@
 .hs-stat-bar { height:100%; background:linear-gradient(90deg,var(--hs-accent) 0%,var(--hs-gold) 100%); border-radius:20px; transition:width .6s ease; min-width:4px; }
 
 /* ── Disclaimer ─────────────────────────────────────────────── */
-.hs-disclaimer { text-align:center; padding:.6rem 1rem; font-size:.85rem; color:var(--hs-muted); font-family:var(--hs-font); }
-.hs-disclaimer-link { color:var(--hs-muted); text-decoration:none; border-bottom:1px dotted var(--hs-muted); transition:color .2s; }
-.hs-disclaimer-link:hover { color:var(--hs-accent); border-bottom-color:var(--hs-accent); }
+.hs-disclaimer { text-align:center; padding:1.4rem 1.2rem; font-family:var(--hs-font); border-top:2px solid var(--hs-border); margin-top:1rem; }
+.hs-disclaimer p { margin:.3rem 0; }
+.hs-disclaimer-title { font-size:1rem; font-weight:700; color:var(--hs-primary); letter-spacing:.02em; }
+.hs-disclaimer-tagline { font-size:.88rem; color:var(--hs-muted); line-height:1.6; }
+.hs-disclaimer-links { font-size:.82rem; color:var(--hs-muted); margin-top:.5rem !important; }
+.hs-disclaimer-link { color:var(--hs-accent); text-decoration:none; font-weight:600; transition:color .2s, opacity .2s; }
+.hs-disclaimer-link:hover { color:var(--hs-primary); text-decoration:underline; }
 
 /* ── Admin Page Footer ──────────────────────────────────────── */
 .hs-page-footer { margin-top:2rem; padding:.6rem 0; border-top:1px solid var(--hs-border); font-size:.8rem; color:var(--hs-muted); }
