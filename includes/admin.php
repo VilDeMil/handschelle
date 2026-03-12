@@ -191,6 +191,10 @@ class Handschelle_Admin {
         }
     }
 
+    private function hs_footer() {
+        return '<p class="hs-page-footer"><a href="https://github.com/VilDeMil/handschelle" target="_blank" rel="noopener noreferrer">github.com/VilDeMil/handschelle</a></p>';
+    }
+
     /* ================================================================
        SEITE: ÜBERSICHT
     ================================================================ */
@@ -249,6 +253,7 @@ class Handschelle_Admin {
                 <?php endforeach; ?>
                 </tbody>
             </table>
+            <?php echo $this->hs_footer(); ?>
         </div>
         <?php
     }
@@ -257,7 +262,7 @@ class Handschelle_Admin {
        SEITE: NEUER EINTRAG / BEARBEITEN
     ================================================================ */
     public function page_add() {
-        echo '<div class="wrap hs-wrap"><h1>➕ Neuer Eintrag</h1>' . $this->render_form( null ) . '</div>';
+        echo '<div class="wrap hs-wrap"><h1>➕ Neuer Eintrag</h1>' . $this->render_form( null ) . $this->hs_footer() . '</div>';
     }
 
     public function page_edit() {
@@ -267,7 +272,7 @@ class Handschelle_Admin {
             echo '<div class="wrap hs-wrap"><div class="notice notice-error"><p>Eintrag nicht gefunden.</p></div></div>';
             return;
         }
-        echo '<div class="wrap hs-wrap"><h1>✏ Bearbeiten: ' . esc_html( $entry->name ) . '</h1>' . $this->render_form( $entry ) . '</div>';
+        echo '<div class="wrap hs-wrap"><h1>✏ Bearbeiten: ' . esc_html( $entry->name ) . '</h1>' . $this->render_form( $entry ) . $this->hs_footer() . '</div>';
     }
 
     /* ================================================================
@@ -397,6 +402,7 @@ class Handschelle_Admin {
                     <button type="submit" class="button button-primary hs-btn" style="margin-top:.8rem;">⬆ Importieren</button>
                 </form>
             </div>
+            <?php echo $this->hs_footer(); ?>
         </div>
         <?php
     }
@@ -424,6 +430,7 @@ class Handschelle_Admin {
                     <a href="<?php echo esc_url( admin_url("admin.php?page=handschelle-db&hs_action=drop&_wpnonce={$nonce}") ); ?>" class="button hs-btn-danger" onclick="return confirm('Tabelle WIRKLICH löschen? Kann NICHT rückgängig gemacht werden!')">🗑 Tabelle löschen</a>
                 </div>
             </div>
+            <?php echo $this->hs_footer(); ?>
         </div>
         <?php
     }
