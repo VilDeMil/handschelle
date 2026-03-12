@@ -33,8 +33,12 @@ class Handschelle_Shortcodes {
         add_shortcode( 'handschelle-partei',     array( $this, 'sc_partei' ) );
         add_shortcode( 'handschelle-name',       array( $this, 'sc_name' ) );
         add_shortcode( 'hndschelle-name',        array( $this, 'sc_name' ) ); // Typo-Alias
-        add_shortcode( 'handschelle-statistik',  array( $this, 'sc_statistik' ) );
-        add_shortcode( 'handschelle-disclaimer', array( $this, 'sc_disclaimer' ) );
+        add_shortcode( 'handschelle-statistik',       array( $this, 'sc_statistik' ) );
+        add_shortcode( 'handschelle-statistik-partei', array( $this, 'sc_statistik_partei' ) );
+        add_shortcode( 'handschelle-statistik-name',   array( $this, 'sc_statistik_name' ) );
+        add_shortcode( 'handschelle-name-anzeige',     array( $this, 'sc_name_anzeige' ) );
+        add_shortcode( 'handschelle-name-partei',      array( $this, 'sc_name_partei' ) );
+        add_shortcode( 'handschelle-disclaimer',       array( $this, 'sc_disclaimer' ) );
 
         // Submit früh verarbeiten – BEVOR Header gesendet werden
         add_action( 'init', array( $this, 'early_frontend_submit' ) );
@@ -316,6 +320,158 @@ class Handschelle_Shortcodes {
     }
 
     /* ================================================================
+       [handschelle-name-anzeige] – Name-Dropdown + Einträge (leer am Anfang)
+    ================================================================ */
+    public function sc_name_anzeige( $atts ) {
+        $namen    = Handschelle_Database::get_distinct_namen();
+        $selected = sanitize_text_field( wp_unslash( $_GET['hs_name_anzeige'] ?? '' ) );
+        ob_start();
+        ?>
+        <div class="hs-frontend hs-full-width">
+            <div class="hs-search-box">
+                <form method="get" class="hs-search-form">
+                    <?php $this->preserve_page_param(); ?>
+                    <select name="hs_name_anzeige" class="hs-select" onchange="this.form.submit()">
+                        <option value="">-- Person auswählen --</option>
+                        <?php foreach ( $namen as $n ) : ?>
+                            <option value="<?php echo esc_attr($n); ?>" <?php selected($selected,$n); ?>><?php echo esc_html($n); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <noscript><button type="submit" class="hs-btn">Suchen</button></noscript>
+                </form>
+                <?php if ( ! empty( $selected ) ) :
+                    $entries = Handschelle_Database::get_all( array( 'freigegeben' => 1, 'name' => $selected ) );
+                ?>
+                    <div class="hs-search-results">
+                        <?php if ( empty($entries) ) : ?>
+                            <p class="hs-empty">Keine Einträge für diese Person.</p>
+                        <?php else : ?>
+                            <div class="hs-cards-grid"><?php foreach ( $entries as $e ) echo $this->render_card($e); ?></div>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /* ================================================================
+       [handschelle-name-partei] – Partei-Dropdown + Einträge (leer am Anfang)
+    ================================================================ */
+    public function sc_name_partei( $atts ) {
+        $parteien = Handschelle_Database::get_distinct_parteien();
+        $selected = sanitize_text_field( wp_unslash( $_GET['hs_name_partei'] ?? '' ) );
+        ob_start();
+        ?>
+        <div class="hs-frontend hs-full-width">
+            <div class="hs-search-box">
+                <form method="get" class="hs-search-form">
+                    <?php $this->preserve_page_param(); ?>
+                    <select name="hs_name_partei" class="hs-select" onchange="this.form.submit()">
+                        <option value="">-- Partei auswählen --</option>
+                        <?php foreach ( $parteien as $p ) : ?>
+                            <option value="<?php echo esc_attr($p); ?>" <?php selected($selected,$p); ?>><?php echo esc_html($p); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <noscript><button type="submit" class="hs-btn">Suchen</button></noscript>
+                </form>
+                <?php if ( ! empty( $selected ) ) :
+                    $entries = Handschelle_Database::get_all( array( 'freigegeben' => 1, 'partei' => $selected ) );
+                ?>
+                    <div class="hs-search-results">
+                        <?php if ( empty($entries) ) : ?>
+                            <p class="hs-empty">Keine Einträge für diese Partei.</p>
+                        <?php else : ?>
+                            <div class="hs-cards-grid"><?php foreach ( $entries as $e ) echo $this->render_card($e); ?></div>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /* ================================================================
+       [handschelle-statistik-partei] – Partei / Anzahl Einträge
+    ================================================================ */
+    public function sc_statistik_partei( $atts ) {
+        global $wpdb;
+        $table = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
+        $rows  = $wpdb->get_results(
+            "SELECT partei, COUNT(*) AS anzahl FROM `{$table}`
+             WHERE freigegeben = 1 AND partei != ''
+             GROUP BY partei ORDER BY anzahl DESC, partei ASC"
+        );
+        ob_start();
+        ?>
+        <div class="hs-frontend hs-full-width">
+            <div class="hs-statistik">
+                <h2 class="hs-section-title">Wie viele Straftäter je Partei gibt es?</h2>
+                <?php if ( empty( $rows ) ) : ?>
+                    <p class="hs-empty">Noch keine freigegebenen Einträge vorhanden.</p>
+                <?php else : ?>
+                    <div class="hs-stat-table-wrap">
+                        <table class="hs-stat-table">
+                            <thead><tr><th>Partei</th><th>Anzahl Einträge</th></tr></thead>
+                            <tbody>
+                            <?php foreach ( $rows as $r ) : ?>
+                                <tr>
+                                    <td class="hs-stat-partei"><?php echo esc_html( $r->partei ); ?></td>
+                                    <td class="hs-stat-count"><?php echo intval( $r->anzahl ); ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /* ================================================================
+       [handschelle-statistik-name] – Name / Anzahl Einträge
+    ================================================================ */
+    public function sc_statistik_name( $atts ) {
+        global $wpdb;
+        $table = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
+        $rows  = $wpdb->get_results(
+            "SELECT name, COUNT(*) AS anzahl FROM `{$table}`
+             WHERE freigegeben = 1 AND name != ''
+             GROUP BY name ORDER BY anzahl DESC, name ASC"
+        );
+        ob_start();
+        ?>
+        <div class="hs-frontend hs-full-width">
+            <div class="hs-statistik">
+                <h2 class="hs-section-title">Wer hat bereits einen Eintrag?</h2>
+                <?php if ( empty( $rows ) ) : ?>
+                    <p class="hs-empty">Noch keine freigegebenen Einträge vorhanden.</p>
+                <?php else : ?>
+                    <div class="hs-stat-table-wrap">
+                        <table class="hs-stat-table">
+                            <thead><tr><th>Name</th><th>Anzahl Einträge</th></tr></thead>
+                            <tbody>
+                            <?php foreach ( $rows as $r ) : ?>
+                                <tr>
+                                    <td class="hs-stat-partei"><?php echo esc_html( $r->name ); ?></td>
+                                    <td class="hs-stat-count"><?php echo intval( $r->anzahl ); ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /* ================================================================
        [handschelle-disclaimer] – Copyright-Hinweis
     ================================================================ */
     public function sc_disclaimer( $atts ) {
@@ -325,9 +481,9 @@ class Handschelle_Shortcodes {
             <p class="hs-disclaimer-title">Die-Handschelle &copy; 2026</p>
             <p class="hs-disclaimer-tagline">Wer in unseren Parlamenten ist oder war kriminell?<br>Eine Datenbank der Straftaten.</p>
             <p class="hs-disclaimer-links">
-                <a href="mailto:handschelle@dorfmueller.com" class="hs-disclaimer-link">handschelle@dorfmüller.com</a>
+                <a href="mailto:bernd@xn--dorfmller-u9a.com" class="hs-disclaimer-link">bernd@xn--dorfmller-u9a.com</a>
                 &nbsp;&middot;&nbsp;
-                <a href="https://github.com/VilDeMil/handschelle" target="_blank" rel="noopener noreferrer" class="hs-disclaimer-link">github.com/VilDeMil/handschelle</a>
+                <a href="https://xn--dorfmller-u9a.com/die-handschelle" target="_blank" rel="noopener noreferrer" class="hs-disclaimer-link">xn--dorfmller-u9a.com/die-handschelle</a>
             </p>
         </div>
         <?php
