@@ -1,6 +1,6 @@
 <?php
 /**
- * Die-Handschelle 2.0 A – Shortcodes
+ * Die-Handschelle 2.04 – Shortcodes
  *
  * Shortcodes:
  *   [handschelle]            – Eingabeformular
@@ -418,7 +418,7 @@ class Handschelle_Shortcodes {
                             <tbody>
                             <?php foreach ( $rows as $r ) : ?>
                                 <tr>
-                                    <td class="hs-stat-partei"><?php echo esc_html( $r->partei ); ?></td>
+                                    <td class="hs-stat-partei"><a href="<?php echo esc_url( add_query_arg( 'hs_name_partei', urlencode( $r->partei ), get_permalink() ) ); ?>" class="hs-stat-partei-link"><?php echo esc_html( $r->partei ); ?></a></td>
                                     <td class="hs-stat-count"><?php echo intval( $r->anzahl ); ?></td>
                                 </tr>
                             <?php endforeach; ?>
