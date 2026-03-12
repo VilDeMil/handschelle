@@ -166,6 +166,13 @@
 
 /* ── Disclaimer ─────────────────────────────────────────────── */
 .hs-disclaimer { text-align:center; padding:.6rem 1rem; font-size:.85rem; color:var(--hs-muted); font-family:var(--hs-font); }
+.hs-disclaimer-link { color:var(--hs-muted); text-decoration:none; border-bottom:1px dotted var(--hs-muted); transition:color .2s; }
+.hs-disclaimer-link:hover { color:var(--hs-accent); border-bottom-color:var(--hs-accent); }
+
+/* ── Admin Page Footer ──────────────────────────────────────── */
+.hs-page-footer { margin-top:2rem; padding:.6rem 0; border-top:1px solid var(--hs-border); font-size:.8rem; color:var(--hs-muted); }
+.hs-page-footer a { color:var(--hs-muted); text-decoration:none; border-bottom:1px dotted var(--hs-muted); transition:color .2s; }
+.hs-page-footer a:hover { color:var(--hs-accent); border-bottom-color:var(--hs-accent); }
 
 /* ── Responsive ─────────────────────────────────────────────── */
 @media (max-width: 900px) {

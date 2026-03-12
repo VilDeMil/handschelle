@@ -276,7 +276,7 @@ class Handschelle_Shortcodes {
     public function sc_disclaimer( $atts ) {
         ob_start();
         ?>
-        <div class="hs-disclaimer">Die-Handschelle! &copy; 2026</div>
+        <div class="hs-disclaimer">Die-Handschelle! &copy; 2026 &ndash; <a href="https://github.com/VilDeMil/handschelle" target="_blank" rel="noopener noreferrer" class="hs-disclaimer-link">github.com/VilDeMil/handschelle</a></div>
         <?php
         return ob_get_clean();
     }
