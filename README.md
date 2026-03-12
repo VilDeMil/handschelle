@@ -1,14 +1,14 @@
-# Die Handschelle V.Alpha-2
+# Die-Handschelle
 
 > Dokumentation von Straftaten politischer Personen als WordPress-Plugin.
 > Documentation of crimes by political figures as a WordPress plugin.
 
 | | |
 |---|---|
-| **Version** | V.01.1 |
+| **Version** | 2.0 A |
 | **Autor** | Bernd K.R. Dorfmüller |
-| **E-Mail** | bernd@dorfmüller.com |
-| **Website** | https://dorfmüller.com/die-handschelle/ |
+| **E-Mail** | handschelle@dorfmueller.com |
+| **Website** | https://github.com/VilDeMil/handschelle |
 | **Lizenz** | GPL-2.0+ |
 | **Requires** | WordPress 5.5+, PHP 7.4+, GD Library |
 
@@ -182,24 +182,28 @@ Renders only the Person name search dropdown.
 
 ### `[handschelle-statistik]`
 
-Displays a statistics table listing the number of entries per political party along with relative bar charts (percentage of total).
+Displays a statistics table titled **"Einträge je Partei"** listing the number of entries per political party along with relative bar charts (percentage of total). Each party name links to the party filter page via `?hs_partei=` parameter.
 
 ```
 [handschelle-statistik]
 ```
 
-**Output columns:** Party name · Count · Relative bar chart
+**Output columns:** Party name (linked) · Count · Relative bar chart
 
 ---
 
 ### `[handschelle-disclaimer]`
 
-Outputs the copyright/disclaimer notice:
-> *Die-Handschelle! © 2026*
+Outputs the copyright/disclaimer block:
 
 ```
 [handschelle-disclaimer]
 ```
+
+**Output:**
+> **Die-Handschelle © 2026**
+> Wer in unseren Parlamenten ist oder war kriminell? Eine Datenbank der Straftaten.
+> [handschelle@dorfmüller.com](mailto:handschelle@dorfmueller.com) · [github.com/VilDeMil/handschelle](https://github.com/VilDeMil/handschelle)
 
 ---
 
@@ -328,7 +332,7 @@ Outputs the copyright/disclaimer notice:
 Defined in `die-handschelle.php`:
 
 ```php
-HANDSCHELLE_VERSION     // '01.1'
+HANDSCHELLE_VERSION     // '2.0 A'
 HANDSCHELLE_PLUGIN_DIR  // Absolute path to plugin directory
 HANDSCHELLE_PLUGIN_URL  // URL to plugin directory
 HANDSCHELLE_DB_TABLE    // Full table name, e.g. 'wp_die_handschelle'
@@ -549,6 +553,7 @@ die-handschelle/
 - Profile images are automatically resized to a maximum height of **450px** using the GD library (required).
 - CSV export uses **UTF-8 with BOM** and **semicolons** as delimiters for Excel compatibility.
 - The **Edit page** is hidden from the admin sidebar but accessible via the ✏ button in the Overview table.
+- **Logged-in users** also see an edit button directly on entry cards in the frontend (`[handschelle-anzeige]`) — no need to navigate to the admin backend.
 - All forms use **WordPress nonce verification** to prevent CSRF attacks.
 - All user input is sanitized with WordPress sanitization functions before writing to the database.
 - Social media icons are rendered as **inline SVG** with brand colors and hover effects — no external icon library required.
