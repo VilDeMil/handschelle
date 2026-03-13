@@ -223,7 +223,7 @@ class Handschelle_Shortcodes {
         $atts = shortcode_atts( array(
             'partei' => '',
             'name'   => '',
-            'limit'  => 12,
+            'limit'  => 0,
         ), $atts );
 
         $limit  = max( 0, intval( $atts['limit'] ) );
@@ -959,21 +959,46 @@ class Handschelle_Shortcodes {
                             if ( ! $img_url ) continue;
                         ?>
                         <div class="hs-bild-item">
-                            <img src="<?php echo esc_url( $img_url ); ?>"
-                                 alt="<?php echo esc_attr( $e->name ); ?>"
-                                 style="max-width:300px;max-height:300px;width:auto;height:auto;display:block;">
+                            <div class="hs-bild-img-wrap">
+                                <img src="<?php echo esc_url( $img_url ); ?>"
+                                     alt="<?php echo esc_attr( $e->name ); ?>"
+                                     style="max-width:300px;max-height:300px;width:auto;height:auto;display:block;">
+                                <div class="hs-bild-tooltip" role="tooltip">
+                                    <strong><?php echo esc_html( $e->name ); ?></strong>
+                                    <?php if ( ! empty( $e->partei ) ) : ?>
+                                        <span><?php echo esc_html( $e->partei ); ?></span>
+                                    <?php endif; ?>
+                                    <?php if ( ! empty( $e->beruf ) ) : ?>
+                                        <span><?php echo esc_html( $e->beruf ); ?></span>
+                                    <?php endif; ?>
+                                    <?php if ( ! empty( $e->parlament ) ) : ?>
+                                        <span><?php echo esc_html( $e->parlament );
+                                            echo ! empty( $e->parlament_name ) ? ' – ' . esc_html( $e->parlament_name ) : ''; ?></span>
+                                    <?php endif; ?>
+                                    <?php if ( ! empty( $e->straftat ) ) : ?>
+                                        <span class="hs-bild-tooltip-straftat"><?php echo esc_html( $e->straftat ); ?></span>
+                                    <?php endif; ?>
+                                    <?php if ( ! empty( $e->status_straftat ) ) : ?>
+                                        <span><?php echo esc_html( $e->status_straftat ); ?></span>
+                                    <?php endif; ?>
+                                    <?php if ( ! empty( $e->urteil ) ) : ?>
+                                        <span>Urteil: <?php echo esc_html( $e->urteil ); ?></span>
+                                    <?php endif; ?>
+                                    <?php if ( ! empty( $e->aktenzeichen ) ) : ?>
+                                        <span>Az: <?php echo esc_html( $e->aktenzeichen ); ?></span>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
                             <p class="hs-bild-caption"><?php echo esc_html( $e->name ); ?></p>
+                            <?php if ( ! empty( $e->straftat ) ) : ?>
+                                <p class="hs-bild-straftat"><?php echo esc_html( $e->straftat ); ?></p>
+                            <?php endif; ?>
                         </div>
                         <?php endforeach; ?>
                     </div>
                 <?php endif; ?>
             </div>
         </div>
-        <style>
-        .hs-bilder-grid{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;}
-        .hs-bild-item{text-align:center;}
-        .hs-bild-caption{margin:6px 0 0;font-size:.85em;color:#555;}
-        </style>
         <?php
         return ob_get_clean();
     }

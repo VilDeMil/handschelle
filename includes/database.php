@@ -182,4 +182,18 @@ class Handschelle_Database {
         self::drop_table();
         self::create_table();
     }
+
+    /**
+     * Checks whether the current DB schema matches the plugin version.
+     * If not (or if columns are missing), runs dbDelta() to add any missing fields.
+     * dbDelta() never removes columns, so existing data is always preserved.
+     */
+    public static function maybe_upgrade_table() {
+        $stored = get_option( 'handschelle_db_version', '0' );
+        if ( version_compare( $stored, HANDSCHELLE_VERSION, '>=' ) ) {
+            return;
+        }
+        self::create_table(); // dbDelta inside create_table() adds missing columns
+        update_option( 'handschelle_db_version', HANDSCHELLE_VERSION );
+    }
 }
