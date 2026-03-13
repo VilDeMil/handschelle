@@ -149,8 +149,37 @@ class Handschelle_Database {
 
     public static function count_all( $args = array() ) {
         global $wpdb;
-        $table = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
-        $where = isset( $args['freigegeben'] ) ? $wpdb->prepare( 'WHERE freigegeben = %d', intval( $args['freigegeben'] ) ) : '';
-        return (int) $wpdb->get_var( "SELECT COUNT(*) FROM `{$table}` {$where}" );
+        $table    = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
+        $defaults = array(
+            'freigegeben' => 1,
+            'partei'      => '',
+            'name'        => '',
+            'search'      => '',
+        );
+        $args  = wp_parse_args( $args, $defaults );
+        $where = array();
+        $vals  = array();
+
+        if ( $args['freigegeben'] !== 'all' ) {
+            $where[] = 'freigegeben = %d';
+            $vals[]  = intval( $args['freigegeben'] );
+        }
+        if ( ! empty( $args['partei'] ) ) { $where[] = 'partei = %s'; $vals[] = $args['partei']; }
+        if ( ! empty( $args['name'] ) )   { $where[] = 'name = %s';   $vals[] = $args['name']; }
+        if ( ! empty( $args['search'] ) ) {
+            $where[] = '(name LIKE %s OR straftat LIKE %s OR partei LIKE %s)';
+            $like    = '%' . $wpdb->esc_like( $args['search'] ) . '%';
+            $vals[]  = $like; $vals[] = $like; $vals[] = $like;
+        }
+
+        $sql = "SELECT COUNT(*) FROM `{$table}`";
+        if ( ! empty( $where ) ) $sql .= ' WHERE ' . implode( ' AND ', $where );
+        if ( ! empty( $vals ) ) $sql = $wpdb->prepare( $sql, $vals );
+        return (int) $wpdb->get_var( $sql );
+    }
+
+    public static function recreate_table() {
+        self::drop_table();
+        self::create_table();
     }
 }

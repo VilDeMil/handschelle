@@ -1,13 +1,14 @@
 <?php
 /**
- * Die-Handschelle 2.09 – Shortcodes
+ * Die-Handschelle 3.00 – Shortcodes
  *
  * Shortcodes:
  *   [handschelle]            – Eingabeformular
- *   [handschelle-anzeige]    – Alle freigegebenen Einträge
- *   [handschelle-suche]      – Beide Dropdowns
+ *   [handschelle-anzeige]    – Alle freigegebenen Einträge (mit Paginierung)
+ *   [handschelle-suche]      – Volltext-Suche + Dropdowns
  *   [handschelle-partei]     – Dropdown nach Partei
  *   [handschelle-name]       – Dropdown nach Name
+ *   [handschelle-karte]      – Einzelne Eintragskarte (id="X")
  *   [handschelle-statistik]  – Einträge je Partei (Tabelle + Balken)
  *   [handschelle-disclaimer] – Copyright-Hinweis
  *
@@ -40,6 +41,7 @@ class Handschelle_Shortcodes {
         add_shortcode( 'handschelle-name-partei',      array( $this, 'sc_name_partei' ) );
         add_shortcode( 'handschelle-disclaimer',       array( $this, 'sc_disclaimer' ) );
         add_shortcode( 'handschelle-bilder',           array( $this, 'sc_bilder' ) );
+        add_shortcode( 'handschelle-karte',            array( $this, 'sc_karte' ) );
 
         // Submit früh verarbeiten – BEVOR Header gesendet werden
         add_action( 'init', array( $this, 'early_frontend_submit' ) );
@@ -213,34 +215,118 @@ class Handschelle_Shortcodes {
     }
 
     /* ================================================================
-       [handschelle-anzeige] – Alle freigegebenen Einträge
+       [handschelle-anzeige] – Alle freigegebenen Einträge (mit Paginierung)
     ================================================================ */
     public function sc_anzeige( $atts ) {
-        $atts = shortcode_atts( array( 'partei' => '', 'name' => '' ), $atts );
+        $atts = shortcode_atts( array(
+            'partei' => '',
+            'name'   => '',
+            'limit'  => 12,
+        ), $atts );
+
+        $limit  = max( 0, intval( $atts['limit'] ) );
+        $paged  = max( 1, intval( $_GET['hs_paged'] ?? 1 ) );
+        $search = sanitize_text_field( wp_unslash( $_GET['hs_search'] ?? '' ) );
+
         $args = array( 'freigegeben' => 1 );
         if ( ! empty( $atts['partei'] ) ) $args['partei'] = sanitize_text_field( $atts['partei'] );
         if ( ! empty( $atts['name'] ) )   $args['name']   = sanitize_text_field( $atts['name'] );
+        if ( ! empty( $search ) )         $args['search'] = $search;
+
+        $total_pages = 1;
+        if ( $limit > 0 ) {
+            $total       = Handschelle_Database::count_all( $args );
+            $total_pages = (int) ceil( $total / $limit );
+            $total_pages = max( 1, $total_pages );
+            $paged       = min( $paged, $total_pages );
+            $args['limit']  = $limit;
+            $args['offset'] = ( $paged - 1 ) * $limit;
+        }
+
         $entries = Handschelle_Database::get_all( $args );
         ob_start();
         echo '<div class="hs-frontend hs-full-width">';
         echo '<h2 class="hs-section-title">📋 Einträge</h2>';
+
+        if ( ! empty( $search ) ) {
+            echo '<div class="hs-search-info">🔍 Suche nach: <strong>' . esc_html( $search ) . '</strong>'
+               . ' &mdash; <a href="' . esc_url( remove_query_arg( array( 'hs_search', 'hs_paged' ) ) ) . '">✕ Zurücksetzen</a></div>';
+        }
+
         if ( empty( $entries ) ) {
             echo '<p class="hs-empty">Keine Einträge vorhanden.</p>';
         } else {
             echo '<div class="hs-cards-grid">';
             foreach ( $entries as $e ) echo $this->render_card( $e );
             echo '</div>';
+            if ( $limit > 0 && $total_pages > 1 ) {
+                echo $this->render_pagination( $paged, $total_pages );
+            }
         }
         echo '</div>';
         return ob_get_clean();
     }
 
     /* ================================================================
-       [handschelle-suche] – Beide Dropdowns
+       PAGINATION (intern)
+    ================================================================ */
+    private function render_pagination( $current, $total_pages ) {
+        $base = remove_query_arg( 'hs_paged' );
+        ob_start();
+        ?>
+        <nav class="hs-pagination" aria-label="Seitennavigation">
+            <?php if ( $current > 1 ) : ?>
+                <a href="<?php echo esc_url( add_query_arg( 'hs_paged', $current - 1, $base ) ); ?>" class="hs-page-link">&#8592; Zurück</a>
+            <?php endif; ?>
+            <?php for ( $i = 1; $i <= $total_pages; $i++ ) :
+                $show = ( abs( $i - $current ) <= 2 || $i === 1 || $i === $total_pages );
+                $dots = ( abs( $i - $current ) === 3 );
+                if ( $show ) : ?>
+                    <?php if ( $i === $current ) : ?>
+                        <span class="hs-page-link hs-page-current"><?php echo $i; ?></span>
+                    <?php else : ?>
+                        <a href="<?php echo esc_url( add_query_arg( 'hs_paged', $i, $base ) ); ?>" class="hs-page-link"><?php echo $i; ?></a>
+                    <?php endif; ?>
+                <?php elseif ( $dots ) : ?>
+                    <span class="hs-page-dots">…</span>
+                <?php endif; ?>
+            <?php endfor; ?>
+            <?php if ( $current < $total_pages ) : ?>
+                <a href="<?php echo esc_url( add_query_arg( 'hs_paged', $current + 1, $base ) ); ?>" class="hs-page-link">Weiter &#8594;</a>
+            <?php endif; ?>
+        </nav>
+        <?php
+        return ob_get_clean();
+    }
+
+    /* ================================================================
+       [handschelle-suche] – Volltext-Suche + Beide Dropdowns
     ================================================================ */
     public function sc_suche( $atts ) {
+        $search = sanitize_text_field( wp_unslash( $_GET['hs_search'] ?? '' ) );
         ob_start();
         echo '<div class="hs-frontend hs-full-width">';
+        ?>
+        <div class="hs-search-box">
+            <h3 class="hs-search-title">🔍 Volltext-Suche</h3>
+            <form method="get" class="hs-search-form">
+                <?php $this->preserve_page_param(); ?>
+                <?php if ( ! empty( $_GET['hs_partei'] ) ) : ?>
+                    <input type="hidden" name="hs_partei" value="<?php echo esc_attr( sanitize_text_field( $_GET['hs_partei'] ) ); ?>">
+                <?php endif; ?>
+                <?php if ( ! empty( $_GET['hs_name'] ) ) : ?>
+                    <input type="hidden" name="hs_name" value="<?php echo esc_attr( sanitize_text_field( $_GET['hs_name'] ) ); ?>">
+                <?php endif; ?>
+                <input type="text" name="hs_search" value="<?php echo esc_attr( $search ); ?>"
+                       placeholder="Name, Partei oder Straftat …" class="hs-search-input">
+                <button type="submit" class="hs-btn">Suchen</button>
+                <?php if ( ! empty( $search ) ) : ?>
+                    <a href="<?php echo esc_url( remove_query_arg( array( 'hs_search', 'hs_paged' ) ) ); ?>"
+                       class="hs-btn hs-btn-cancel">✕ Zurücksetzen</a>
+                <?php endif; ?>
+            </form>
+        </div>
+        <?php
         echo $this->render_partei_dropdown();
         echo $this->render_name_dropdown();
         echo '</div>';
@@ -503,6 +589,9 @@ class Handschelle_Shortcodes {
             <h3 class="hs-search-title">🏛 Nach Partei suchen</h3>
             <form method="get" class="hs-search-form">
                 <?php $this->preserve_page_param(); ?>
+                <?php if ( ! empty( $_GET['hs_search'] ) ) : ?>
+                    <input type="hidden" name="hs_search" value="<?php echo esc_attr( sanitize_text_field( $_GET['hs_search'] ) ); ?>">
+                <?php endif; ?>
                 <select name="hs_partei" class="hs-select" onchange="this.form.submit()">
                     <option value="">-- Partei auswählen --</option>
                     <?php foreach ( $parteien as $p ) : ?>
@@ -540,6 +629,9 @@ class Handschelle_Shortcodes {
             <h3 class="hs-search-title">👤 Nach Person suchen</h3>
             <form method="get" class="hs-search-form">
                 <?php $this->preserve_page_param(); ?>
+                <?php if ( ! empty( $_GET['hs_search'] ) ) : ?>
+                    <input type="hidden" name="hs_search" value="<?php echo esc_attr( sanitize_text_field( $_GET['hs_search'] ) ); ?>">
+                <?php endif; ?>
                 <select name="hs_name" class="hs-select" onchange="this.form.submit()">
                     <option value="">-- Person auswählen --</option>
                     <?php foreach ( $namen as $n ) : ?>
@@ -771,6 +863,18 @@ class Handschelle_Shortcodes {
         </style>
         <?php
         return ob_get_clean();
+    }
+
+    /* ================================================================
+       [handschelle-karte id="X"] – Einzelne Eintragskarte
+    ================================================================ */
+    public function sc_karte( $atts ) {
+        $atts = shortcode_atts( array( 'id' => 0 ), $atts );
+        $id   = intval( $atts['id'] );
+        if ( ! $id ) return '';
+        $e = Handschelle_Database::get_one( $id );
+        if ( ! $e || ! $e->freigegeben ) return '';
+        return '<div class="hs-frontend hs-full-width">' . $this->render_card( $e ) . '</div>';
     }
 
     /* ================================================================

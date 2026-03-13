@@ -342,3 +342,39 @@
     .hs-edit-grid { grid-template-columns: 1fr; }
     .hs-edit-actions { flex-direction: column; }
 }
+
+/* ================================================================
+   V3.0 – Paginierung
+================================================================ */
+.hs-pagination { display:flex; gap:.4rem; align-items:center; justify-content:center; margin:1.8rem 0; flex-wrap:wrap; }
+.hs-page-link { display:inline-flex; align-items:center; justify-content:center; min-width:38px; height:38px; padding:0 .85rem; border:1.5px solid var(--hs-border); border-radius:var(--hs-radius); font-size:.88rem; font-weight:600; color:var(--hs-primary); text-decoration:none; transition:background .15s,border-color .15s,color .15s; background:#fff; white-space:nowrap; }
+.hs-page-link:hover { background:var(--hs-accent); border-color:var(--hs-accent); color:#fff; text-decoration:none; }
+.hs-page-current { background:var(--hs-primary); border-color:var(--hs-primary); color:#fff !important; cursor:default; }
+.hs-page-dots { color:var(--hs-muted); font-size:.9rem; padding:0 .3rem; line-height:38px; }
+
+/* ================================================================
+   V3.0 – Volltext-Suche
+================================================================ */
+.hs-search-input { flex:1; min-width:200px; padding:.55rem .75rem; border:1.5px solid var(--hs-border); border-radius:var(--hs-radius); font-size:.9rem; font-family:var(--hs-font); background:#fafafa; color:#222; transition:border-color .2s,box-shadow .2s; }
+.hs-search-input:focus { outline:none; border-color:var(--hs-accent); box-shadow:0 0 0 3px rgba(192,57,43,.12); background:#fff; }
+.hs-search-info { display:flex; align-items:center; gap:.5rem; background:#fff3cd; border-left:4px solid var(--hs-gold); padding:.65rem 1rem; border-radius:var(--hs-radius); margin-bottom:1rem; font-size:.88rem; flex-wrap:wrap; }
+.hs-search-info a { color:var(--hs-accent); text-decoration:none; font-weight:700; }
+.hs-search-info a:hover { text-decoration:underline; }
+
+/* ================================================================
+   V3.0 – Admin Filter Tabs
+================================================================ */
+.hs-filter-tabs { display:flex; gap:.4rem; margin-bottom:.9rem; flex-wrap:wrap; }
+.hs-filter-tab { display:inline-flex; align-items:center; gap:.35rem; padding:.4rem 1rem; border:1.5px solid var(--hs-border); border-radius:20px; font-size:.82rem; font-weight:600; color:#555; text-decoration:none; background:#fff; transition:background .15s,color .15s,border-color .15s; }
+.hs-filter-tab:hover { background:#f0f0f0; color:#333; text-decoration:none; border-color:#bbb; }
+.hs-filter-tab.active { background:var(--hs-primary); color:#fff; border-color:var(--hs-primary); }
+.hs-filter-count { display:inline-flex; align-items:center; justify-content:center; background:rgba(255,255,255,.25); color:inherit; border-radius:12px; font-size:.72rem; padding:.05rem .45rem; font-weight:700; min-width:20px; }
+.hs-filter-tab:not(.active) .hs-filter-count { background:#e9ecef; color:#555; }
+
+/* ================================================================
+   V3.0 – Bulk Actions Bar
+================================================================ */
+.hs-bulk-bar { display:flex; gap:.7rem; align-items:center; padding:.6rem 0 .8rem; flex-wrap:wrap; }
+.hs-bulk-select-all { display:inline-flex; align-items:center; gap:.4rem; font-size:.85rem; font-weight:600; color:#444; cursor:pointer; }
+.hs-bulk-checkbox { width:16px; height:16px; cursor:pointer; accent-color:var(--hs-accent); }
+.hs-bulk-select { padding:.42rem .65rem; border:1.5px solid var(--hs-border); border-radius:var(--hs-radius); font-size:.88rem; font-family:var(--hs-font); background:#fafafa; }
