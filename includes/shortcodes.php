@@ -1,6 +1,6 @@
 <?php
 /**
- * Die-Handschelle 2.07 – Shortcodes
+ * Die-Handschelle 2.08 – Shortcodes
  *
  * Shortcodes:
  *   [handschelle]            – Eingabeformular

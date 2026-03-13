@@ -5,12 +5,34 @@
 
 | | |
 |---|---|
-| **Version** | 2.07 |
+| **Version** | 2.08 |
 | **Autor** | Bernd K.R. Dorfmüller |
 | **E-Mail** | bernd@xn--dorfmller-u9a.com |
 | **Website** | https://xn--dorfmller-u9a.com/die-handschelle |
 | **Lizenz** | GPL-2.0+ |
 | **Requires** | WordPress 5.5+, PHP 7.4+, GD Library |
+
+---
+
+## Einleitung / Introduction
+
+Die letzten Tage gab es immer wieder Berichte über verurteilte Straftäter in unseren Parlamenten, aber leider waren die Informationen immer dürftig, nur schwer zu finden und spätestens nach einigen Tagen verschwanden diese „Vorfälle" im digitalen Rauschen und wurden vergessen.
+
+„Wie wäre es, wenn diese Informationen zentral gesammelt werden?" Eine interessante Frage und einige Stunden „Vibe-Coding" später gibt es nun **„Die-Handschelle"**. Eine Datenbank in der nach kriminellen **Mandatsträgern** gefiltert werden kann.
+
+Jeder kann mitmachen und neue Fälle melden. Jeder Eintrag wird vor der Veröffentlichung genau geprüft.
+
+---
+
+**„Die-Handschelle" benötigt Deine Hilfe.**
+
+Während der Entwicklung dieser Datenbank stellte sich schnell heraus, dass es auf allen politischen Ebenen Mandatsträger mit einer zweifelhaften Vergangenheit gibt — und es sind so viele, dass wir nicht alle Informationen alleine finden können.
+
+Das Projekt „Die-Handschelle" steht noch ganz am Anfang. „Die-Handschelle" wird stetig weiter entwickelt und weitere Funktionen sind in Vorbereitung.
+
+Bitte unterstützt das Projekt, indem ihr dabei helft, Straftäter in unseren Parlamenten zu identifizieren.
+
+**Danke — „Die-Handschelle"**
 
 ---
 
@@ -387,7 +409,7 @@ Outputs the copyright/disclaimer block:
 Defined in `die-handschelle.php`:
 
 ```php
-HANDSCHELLE_VERSION     // '2.07'
+HANDSCHELLE_VERSION     // '2.08'
 HANDSCHELLE_PLUGIN_DIR  // Absolute path to plugin directory
 HANDSCHELLE_PLUGIN_URL  // URL to plugin directory
 HANDSCHELLE_DB_TABLE    // Full table name, e.g. 'wp_die_handschelle'
@@ -619,6 +641,9 @@ die-handschelle/
 ---
 
 ## Release Notes
+
+### 2.08 *(2026-03-13)*
+- Added Introduction / Einleitung section to README.md
 
 ### 2.07 *(2026-03-13)*
 - Added shortcode `[handschelle-bilder]`: gallery of all approved entry images, max 300×300 px, aspect ratio preserved
