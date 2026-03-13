@@ -1,6 +1,6 @@
 <?php
 /**
- * Die-Handschelle 2.06 – Shortcodes
+ * Die-Handschelle 2.07 – Shortcodes
  *
  * Shortcodes:
  *   [handschelle]            – Eingabeformular
@@ -39,6 +39,7 @@ class Handschelle_Shortcodes {
         add_shortcode( 'handschelle-name-anzeige',     array( $this, 'sc_name_anzeige' ) );
         add_shortcode( 'handschelle-name-partei',      array( $this, 'sc_name_partei' ) );
         add_shortcode( 'handschelle-disclaimer',       array( $this, 'sc_disclaimer' ) );
+        add_shortcode( 'handschelle-bilder',           array( $this, 'sc_bilder' ) );
 
         // Submit früh verarbeiten – BEVOR Header gesendet werden
         add_action( 'init', array( $this, 'early_frontend_submit' ) );
@@ -728,6 +729,46 @@ class Handschelle_Shortcodes {
             </div><!-- .hs-card-edit-panel -->
             <?php endif; ?>
         </div><!-- .hs-card -->
+        <?php
+        return ob_get_clean();
+    }
+
+    /* ================================================================
+       [handschelle-bilder] – Bildergalerie aller freigegebenen Einträge
+    ================================================================ */
+    public function sc_bilder( $atts ) {
+        $entries = Handschelle_Database::get_all( array( 'freigegeben' => 1 ) );
+        $mit_bild = array_filter( $entries, function( $e ) {
+            return ! empty( $e->bild );
+        } );
+        ob_start();
+        ?>
+        <div class="hs-frontend hs-full-width">
+            <div class="hs-bilder-galerie">
+                <?php if ( empty( $mit_bild ) ) : ?>
+                    <p class="hs-empty">Keine Bilder vorhanden.</p>
+                <?php else : ?>
+                    <div class="hs-bilder-grid">
+                        <?php foreach ( $mit_bild as $e ) :
+                            $img_url = handschelle_get_image_url( $e->bild );
+                            if ( ! $img_url ) continue;
+                        ?>
+                        <div class="hs-bild-item">
+                            <img src="<?php echo esc_url( $img_url ); ?>"
+                                 alt="<?php echo esc_attr( $e->name ); ?>"
+                                 style="max-width:300px;max-height:300px;width:auto;height:auto;display:block;">
+                            <p class="hs-bild-caption"><?php echo esc_html( $e->name ); ?></p>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+        <style>
+        .hs-bilder-grid{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;}
+        .hs-bild-item{text-align:center;}
+        .hs-bild-caption{margin:6px 0 0;font-size:.85em;color:#555;}
+        </style>
         <?php
         return ob_get_clean();
     }
