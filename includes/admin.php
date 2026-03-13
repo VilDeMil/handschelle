@@ -181,11 +181,18 @@ class Handschelle_Admin {
         $count = 0;
         while ( ( $row = fgetcsv( $fh, 0, ';' ) ) !== false ) {
             if ( count( $row ) < 20 ) continue;
+            // Resolve bild: if numeric ID doesn't exist locally, try to find
+            // attachment by filename (allows import after image ZIP import).
+            $bild_raw = sanitize_text_field( $row[4] );
+            if ( is_numeric( $bild_raw ) && intval( $bild_raw ) > 0 && ! get_attached_file( intval( $bild_raw ) ) ) {
+                // ID invalid on this site – clear it (images must be imported separately)
+                $bild_raw = '';
+            }
             Handschelle_Database::insert( array(
                 'datum_eintrag'  => sanitize_text_field( $row[1] ),
                 'name'           => substr( sanitize_text_field( $row[2] ), 0, 50 ),
                 'beruf'          => substr( sanitize_text_field( $row[3] ), 0, 50 ),
-                'bild'           => sanitize_text_field( $row[4] ),
+                'bild'           => $bild_raw,
                 'partei'         => substr( sanitize_text_field( $row[5] ), 0, 50 ),
                 'aufgabe_partei' => substr( sanitize_text_field( $row[6] ), 0, 100 ),
                 'parlament'      => sanitize_text_field( $row[7] ),
@@ -824,13 +831,17 @@ class Handschelle_Admin {
 
         $zip->addFromString( 'handschelle-data.csv', $csv );
 
+        // Build bild-map: attachment ID → image basename (for ID remapping on restore)
+        $bild_map = array();
         foreach ( $entries as $e ) {
             if ( empty( $e->bild ) || ! is_numeric( $e->bild ) ) continue;
             $file = get_attached_file( intval( $e->bild ) );
             if ( $file && file_exists( $file ) ) {
                 $zip->addFile( $file, 'images/' . basename( $file ) );
+                $bild_map[ intval( $e->bild ) ] = basename( $file );
             }
         }
+        $zip->addFromString( 'bild-map.json', wp_json_encode( $bild_map ) );
         $zip->close();
 
         if ( ! file_exists( $zip_path ) ) {
@@ -911,6 +922,23 @@ class Handschelle_Admin {
             }
         }
 
+        // ── 1b. Lade bild-map.json für ID-Remapping ──────────────
+        $bild_map_file = $temp_dir . 'bild-map.json';
+        // $img_map: basename → new attachment ID (built in step 1)
+        // We need: old attachment ID → new attachment ID
+        // bild-map.json contains: old_id → basename
+        $old_id_to_new_id = array();
+        if ( file_exists( $bild_map_file ) ) {
+            $bild_map_data = json_decode( file_get_contents( $bild_map_file ), true );
+            if ( is_array( $bild_map_data ) ) {
+                foreach ( $bild_map_data as $old_id => $basename ) {
+                    if ( isset( $img_map[ $basename ] ) ) {
+                        $old_id_to_new_id[ intval( $old_id ) ] = $img_map[ $basename ];
+                    }
+                }
+            }
+        }
+
         // ── 2. CSV einlesen und Einträge ersetzen ────────────────
         $csv_file  = $temp_dir . 'handschelle-data.csv';
         $entry_count = 0;
@@ -924,10 +952,13 @@ class Handschelle_Admin {
             fgetcsv( $fh, 0, ';' ); // header row
             while ( ( $row = fgetcsv( $fh, 0, ';' ) ) !== false ) {
                 if ( count( $row ) < 20 ) continue;
-                // Map old bild value: if it was a numeric attachment ID that
-                // matches an imported image filename, update to the new ID.
-                $bild_val = sanitize_text_field( $row[4] );
-                // (Remapping by filename is best-effort; IDs differ across sites)
+                // Remap bild attachment ID: old ID → new ID via bild-map.json
+                $bild_raw = sanitize_text_field( $row[4] );
+                if ( is_numeric( $bild_raw ) && isset( $old_id_to_new_id[ intval( $bild_raw ) ] ) ) {
+                    $bild_val = $old_id_to_new_id[ intval( $bild_raw ) ];
+                } else {
+                    $bild_val = $bild_raw;
+                }
                 Handschelle_Database::insert( array(
                     'datum_eintrag'  => sanitize_text_field( $row[1] ),
                     'name'           => substr( sanitize_text_field( $row[2] ), 0, 50 ),
@@ -962,6 +993,7 @@ class Handschelle_Admin {
         foreach ( glob( $temp_dir . 'images/*' ) as $f ) @unlink( $f );
         @rmdir( $temp_dir . 'images' );
         @unlink( $temp_dir . 'handschelle-data.csv' );
+        @unlink( $temp_dir . 'bild-map.json' );
         @rmdir( $temp_dir );
 
         $this->redirect(
