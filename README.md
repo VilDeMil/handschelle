@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 2.06 |
+| **Version** | 2.07 |
 | **Autor** | Bernd K.R. Dorfmüller |
 | **E-Mail** | bernd@xn--dorfmller-u9a.com |
 | **Website** | https://xn--dorfmller-u9a.com/die-handschelle |
@@ -89,6 +89,11 @@ All shortcodes output HTML and can be placed on any WordPress page or post.
 | `[handschelle-partei]` | Party search dropdown only |
 | `[handschelle-name]` | Person name search dropdown only |
 | `[handschelle-statistik]` | Statistics table with bar chart per party |
+| `[handschelle-statistik-partei]` | Table: party / entry count (party links to filter) |
+| `[handschelle-statistik-name]` | Table: person name / entry count |
+| `[handschelle-name-anzeige]` | Name dropdown – shows cards for selected person |
+| `[handschelle-name-partei]` | Party dropdown – shows cards for selected party |
+| `[handschelle-bilder]` | Gallery of all approved entry images (max 300×300 px) |
 | `[handschelle-disclaimer]` | Copyright notice |
 
 ---
@@ -189,6 +194,56 @@ Displays a statistics table titled **"Einträge je Partei"** listing the number 
 ```
 
 **Output columns:** Party name (linked) · Count · Relative bar chart
+
+---
+
+### `[handschelle-statistik-partei]`
+
+Displays a table titled **"Wie viele Straftäter je Partei gibt es?"** with columns: Party (linked to `?hs_name_partei=`) and entry count.
+
+```
+[handschelle-statistik-partei]
+```
+
+---
+
+### `[handschelle-statistik-name]`
+
+Displays a table titled **"Wer hat bereits einen Eintrag?"** with columns: Name and entry count.
+
+```
+[handschelle-statistik-name]
+```
+
+---
+
+### `[handschelle-name-anzeige]`
+
+Renders a person name dropdown. After selection, shows all approved entry cards for that person.
+
+```
+[handschelle-name-anzeige]
+```
+
+---
+
+### `[handschelle-name-partei]`
+
+Renders a party dropdown. After selection, shows all approved entry cards for that party.
+
+```
+[handschelle-name-partei]
+```
+
+---
+
+### `[handschelle-bilder]`
+
+Displays a responsive gallery of all approved entries that have an image. Images are displayed with `max-width: 300px` and `max-height: 300px` while preserving the original aspect ratio. Each image is captioned with the person's name.
+
+```
+[handschelle-bilder]
+```
 
 ---
 
@@ -332,7 +387,7 @@ Outputs the copyright/disclaimer block:
 Defined in `die-handschelle.php`:
 
 ```php
-HANDSCHELLE_VERSION     // '2.06'
+HANDSCHELLE_VERSION     // '2.07'
 HANDSCHELLE_PLUGIN_DIR  // Absolute path to plugin directory
 HANDSCHELLE_PLUGIN_URL  // URL to plugin directory
 HANDSCHELLE_DB_TABLE    // Full table name, e.g. 'wp_die_handschelle'
@@ -512,6 +567,7 @@ Registered in `includes/admin.php`:
 | + Neuer Eintrag | `die-handschelle-add` | Add new entry form |
 | *(Bearbeiten)* | `die-handschelle-edit` | Edit entry (hidden from sidebar) |
 | Import / Export | `die-handschelle-importexport` | CSV import & export |
+| Bilder | `die-handschelle-bilder` | Image list, ZIP export & ZIP import |
 | Datenbank | `die-handschelle-db` | Database management |
 
 ---
@@ -557,6 +613,32 @@ die-handschelle/
 - All forms use **WordPress nonce verification** to prevent CSRF attacks.
 - All user input is sanitized with WordPress sanitization functions before writing to the database.
 - Social media icons are rendered as **inline SVG** with brand colors and hover effects — no external icon library required.
+
+---
+
+---
+
+## Release Notes
+
+### 2.07 *(2026-03-13)*
+- Added shortcode `[handschelle-bilder]`: gallery of all approved entry images, max 300×300 px, aspect ratio preserved
+- Version bump rule documented: +0.01 per commit
+
+### 2.06 *(2026-03-13)*
+- Added admin page **Bilder**: list all entries with images, ZIP export & ZIP import of attachments
+- ZIP import: extracts images, resizes to max 450 px height via GD, registers as WP media attachments
+
+### 2.05 *(2026-03-13)*
+- Added shortcodes: `[handschelle-statistik-partei]`, `[handschelle-statistik-name]`, `[handschelle-name-anzeige]`, `[handschelle-name-partei]`
+- Party column in `[handschelle-statistik-partei]` links to `?hs_name_partei=` filter
+
+### 2.04 *(2026-03-13)*
+- Updated author email to `bernd@xn--dorfmller-u9a.com`
+- Updated project URL to `https://xn--dorfmller-u9a.com/die-handschelle`
+- Version numbering converted to numeric format (0.01 increments)
+
+### Alpha-2 / 2.0 A *(initial)*
+- Initial release: frontend submission form, entry cards, party/name dropdowns, statistics table, CSV import/export, database management, image upload & resize (GD, max 450 px height)
 
 ---
 
