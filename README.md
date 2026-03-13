@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 3.00 |
+| **Version** | 3.01 |
 | **Autor** | Bernd K.R. Dorfmüller |
 | **E-Mail** | bernd@xn--dorfmller-u9a.com |
 | **Website** | https://xn--dorfmller-u9a.com/die-handschelle |
@@ -436,7 +436,7 @@ Outputs the copyright/disclaimer block:
 Defined in `die-handschelle.php`:
 
 ```php
-HANDSCHELLE_VERSION     // '3.00'
+HANDSCHELLE_VERSION     // '3.01'
 HANDSCHELLE_PLUGIN_DIR  // Absolute path to plugin directory
 HANDSCHELLE_PLUGIN_URL  // URL to plugin directory
 HANDSCHELLE_DB_TABLE    // Full table name, e.g. 'wp_die_handschelle'
@@ -509,11 +509,27 @@ Handschelle_Database::recreate_table();   // drop + re-create
 File: `includes/image-handler.php`
 
 ```php
-// Upload an image file and create a WordPress media attachment.
-// Returns attachment ID (int) or WP_Error on failure.
-$attachment_id = Handschelle_Image_Handler::handle_upload_and_resize( $_FILES['bild'] );
+/**
+ * Upload, optionally rename, resize and register as WP media attachment.
+ *
+ * @param  string $file_input_name  $_FILES key  (e.g. 'bild_upload')
+ * @param  string $person_name      Person name – used to build filename slug
+ * @param  string $partei           Party name  – appended to filename slug
+ * @return int    Attachment ID on success, 0 on failure / no file uploaded.
+ */
+$attachment_id = Handschelle_Image_Handler::handle_upload_and_resize(
+    'bild_upload',     // $_FILES key
+    'Max Mustermann',  // person name  → sanitize_title() → "max-mustermann"
+    'CDU'              // party name   → sanitize_title() → "cdu"
+    // result filename:  max-mustermann-cdu.jpg
+);
 
-// The image is automatically resized to a maximum height of 450px.
+// Rename logic:
+//   both name and partei  → "{name}-{partei}.{ext}"   e.g. max-mustermann-cdu.jpg
+//   name only             → "{name}.{ext}"             e.g. max-mustermann.jpg
+//   neither provided      → original filename kept
+//
+// The image is automatically resized to a maximum height of 450 px.
 // Supported formats: JPEG, PNG, GIF, WebP
 // PNG and GIF transparency is preserved.
 ```
@@ -560,12 +576,15 @@ handschelle_ajax.nonce     // Security nonce for requests
 | Behavior | Trigger |
 |---|---|
 | Character counter | Any `<textarea>` with a `maxlength` attribute inside `.hs-form` |
-| Image preview | `<input type="file" name="bild">` file change |
-| Auto-submit dropdowns | `<select>` change inside `.hs-suche` |
-| Delete confirmation | Click on any `.hs-delete-btn` link |
-| Required field validation | Submit of `.hs-form` |
+| Image preview | `<input type="file" class="hs-file-input">` file change |
+| Auto-submit dropdowns | `<select class="hs-select">` change |
+| Delete confirmation | Click on any `.hs-btn-delete` link |
+| Required field validation | Submit of `#hs-eingabe-form` |
 | Alert fade-in | `.hs-alert` elements on page load |
-| Smooth scroll to anchor | Any `<a href="#...">` link |
+| Smooth scroll to anchor | URL hash on page load |
+| Scroll to edited entry | `?hs_edited=ID` URL parameter after save |
+| ESC closes edit panel | Keyboard ESC key (frontend inline edit) |
+| WP Media Library picker | Click on `.hs-media-btn` (admin image field) |
 
 ---
 
@@ -602,6 +621,24 @@ Override these in your theme to customize the plugin appearance:
 | `.hs-statistik` | Statistics table |
 | `.hs-alert` | Alert / notice messages |
 | `.hs-sm-link` | Social media icon link |
+| `.hs-pagination` | Pagination nav container |
+| `.hs-page-link` | Pagination page link |
+| `.hs-page-current` | Current page indicator (non-link) |
+| `.hs-page-dots` | Ellipsis `…` between page ranges |
+| `.hs-search-input` | Full-text search input field |
+| `.hs-search-info` | Banner showing active search term + result count |
+| `.hs-filter-tabs` | Admin filter tab row (Alle / Ausstehend / Freigegeben) |
+| `.hs-filter-tab` | Individual filter tab link |
+| `.hs-filter-count` | Count badge inside a filter tab |
+| `.hs-bulk-bar` | Admin bulk-action toolbar |
+| `.hs-bulk-checkbox` | Individual row checkbox |
+| `.hs-bulk-select` | Bulk-action `<select>` dropdown |
+| `.hs-media-picker` | Admin image-field wrapper |
+| `.hs-media-picker-row` | Row containing ID input, picker button, and file upload |
+| `.hs-media-id` | Hidden-number input holding the WP attachment ID |
+| `.hs-media-btn` | Button that opens the WP Media Library modal |
+| `.hs-media-sep` | Separator text between media button and file input |
+| `.hs-media-preview` | Thumbnail preview area for the selected/uploaded image |
 
 ---
 
@@ -666,6 +703,8 @@ die-handschelle/
 - All forms use **WordPress nonce verification** to prevent CSRF attacks.
 - All user input is sanitized with WordPress sanitization functions before writing to the database.
 - Social media icons are rendered as **inline SVG** with brand colors and hover effects — no external icon library required.
+- **Image uploads** (frontend and admin) are automatically renamed to `name-partei.ext` (e.g. `max-mustermann-cdu.jpg`) using `sanitize_title()`. If only a name is given, the result is `name.ext`. If neither is provided, the original filename is kept.
+- The **admin image field** supports two workflows: (1) pick an existing image from the WP Media Library via the `wp.media` modal with live thumbnail preview, or (2) upload a new file directly — both set the attachment ID on the entry.
 
 ---
 
@@ -679,6 +718,8 @@ die-handschelle/
 - **`[handschelle-karte id="X"]`**: Neuer Shortcode zur Anzeige einer einzelnen Eintragskarte per Datenbank-ID
 - **Admin-Übersicht: Filter-Tabs**: Schnellfilter Alle / Ausstehend / Freigegeben mit Anzahl-Badges
 - **Admin-Übersicht: Bulk-Aktionen**: Mehrere Einträge per Checkbox auswählen und gemeinsam freigeben, sperren oder löschen
+- **Admin Bild-Feld: WP-Medienbibliothek-Picker**: Im Admin-Formular (Hinzufügen/Bearbeiten) öffnet ein Button die WP-Medienbibliothek (`wp.media`-Modal); bereits gesetztes Bild wird vorausgewählt; Vorschau-Thumbnail wird sofort angezeigt; manuelle Attachment-ID-Eingabe und Datei-Upload bleiben weiterhin möglich
+- **Auto-Rename bei Bild-Uploads**: Alle hochgeladenen Bilder (Frontend und Admin) werden automatisch nach dem Schema `name-partei.ext` umbenannt (z. B. `max-mustermann-cdu.jpg`); erzeugt mit `sanitize_title()` für saubere, URL-sichere Dateinamen
 - **`Handschelle_Database::count_all()`** erweitert: unterstützt jetzt dieselben Filter wie `get_all()` (search, partei, name) – benötigt für genaue Paginierung
 - **`Handschelle_Database::recreate_table()`** als eigenständige Methode hinzugefügt
 
