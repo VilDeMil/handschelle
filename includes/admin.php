@@ -412,18 +412,25 @@ class Handschelle_Admin {
                                 <?php endif; ?>
                             </div>
                             <div class="hs-media-picker-row">
-                                <input type="number" name="bild" id="hs-media-id-bild"
-                                       class="hs-media-id" placeholder="Medienbibliothek-ID"
-                                       value="<?php echo $v('bild'); ?>" style="width:160px;">
-                                <button type="button" class="button hs-media-btn"
+                                <input type="hidden" name="bild" id="hs-media-id-bild"
+                                       class="hs-media-id"
+                                       value="<?php echo $v('bild'); ?>">
+                                <button type="button" class="button button-primary hs-media-btn"
                                         data-target-id="hs-media-id-bild"
                                         data-preview-id="hs-media-preview-bild">
-                                    🖼 Medienbibliothek
+                                    🖼 Medienbibliothek öffnen
                                 </button>
-                                <span class="hs-media-sep">oder</span>
+                                <?php if ( $is_edit && $v('bild') ) : ?>
+                                <button type="button" class="button hs-media-remove-btn"
+                                        data-target-id="hs-media-id-bild"
+                                        data-preview-id="hs-media-preview-bild">
+                                    ✕ Bild entfernen
+                                </button>
+                                <?php endif; ?>
+                                <span class="hs-media-sep">oder neu hochladen:</span>
                                 <input type="file" name="bild_upload" accept="image/*" class="hs-file-input">
                             </div>
-                            <small>Upload: wird auf max. 450&nbsp;px Höhe skaliert und in der Medienbibliothek gespeichert.</small>
+                            <small>Upload: Datei wird als <em>&lt;Name&gt;HA.&lt;Endung&gt;</em> gespeichert und auf max. 450&nbsp;px Höhe skaliert.</small>
                         </div>
                     </div>
                 </div>

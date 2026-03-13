@@ -15,25 +15,21 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 class Handschelle_Image_Handler {
 
     /**
-     * Handles upload, optional rename to "{name}-{partei}.ext", resize and media-library insert.
+     * Handles upload, rename to "{name}HA.ext", resize and media-library insert.
      *
      * @param  string $file_input_name  $_FILES key
      * @param  string $person_name      Person name – used for filename slug
-     * @param  string $partei           Party name  – appended to filename slug
+     * @param  string $partei           Unused – kept for backward compatibility
      * @return int    Attachment ID on success, 0 on failure / no file.
      */
     public static function handle_upload_and_resize( $file_input_name, $person_name = '', $partei = '' ) {
         if ( empty( $_FILES[ $file_input_name ]['name'] ) ) return 0;
         if ( ! function_exists( 'wp_handle_upload' ) ) require_once ABSPATH . 'wp-admin/includes/file.php';
 
-        // Rename to NAME-PARTEI.ext when person name is known
+        // Rename to {name}HA.ext when person name is known
         if ( ! empty( $person_name ) ) {
-            $ext   = strtolower( pathinfo( $_FILES[ $file_input_name ]['name'], PATHINFO_EXTENSION ) );
-            $parts = array_filter( array(
-                sanitize_title( $person_name ),
-                ! empty( $partei ) ? sanitize_title( $partei ) : '',
-            ) );
-            $slug = implode( '-', $parts );
+            $ext  = strtolower( pathinfo( $_FILES[ $file_input_name ]['name'], PATHINFO_EXTENSION ) );
+            $slug = sanitize_title( $person_name ) . 'HA';
             $_FILES[ $file_input_name ]['name'] = $slug . ( $ext ? '.' . $ext : '' );
         }
 
