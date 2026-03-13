@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 class Handschelle_Image_Handler {
 
     /**
-     * Handles upload, rename to "{name}HA.ext", resize and media-library insert.
+     * Handles upload, rename to "{name}-HA.ext", resize and media-library insert.
      *
      * @param  string $file_input_name  $_FILES key
      * @param  string $person_name      Person name – used for filename slug
@@ -26,10 +26,10 @@ class Handschelle_Image_Handler {
         if ( empty( $_FILES[ $file_input_name ]['name'] ) ) return 0;
         if ( ! function_exists( 'wp_handle_upload' ) ) require_once ABSPATH . 'wp-admin/includes/file.php';
 
-        // Rename to {name}HA.ext when person name is known
+        // Rename to {name}-HA.ext when person name is known
         if ( ! empty( $person_name ) ) {
             $ext  = strtolower( pathinfo( $_FILES[ $file_input_name ]['name'], PATHINFO_EXTENSION ) );
-            $slug = sanitize_title( $person_name ) . 'HA';
+            $slug = sanitize_title( $person_name ) . '-HA';
             $_FILES[ $file_input_name ]['name'] = $slug . ( $ext ? '.' . $ext : '' );
         }
 

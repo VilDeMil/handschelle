@@ -37,6 +37,7 @@ class Handschelle_Shortcodes {
         add_shortcode( 'handschelle-statistik',       array( $this, 'sc_statistik' ) );
         add_shortcode( 'handschelle-statistik-partei', array( $this, 'sc_statistik_partei' ) );
         add_shortcode( 'handschelle-statistik-name',   array( $this, 'sc_statistik_name' ) );
+        add_shortcode( 'handschelle-statistik-ol',     array( $this, 'sc_statistik_ol' ) );
         add_shortcode( 'handschelle-name-anzeige',     array( $this, 'sc_name_anzeige' ) );
         add_shortcode( 'handschelle-name-partei',      array( $this, 'sc_name_partei' ) );
         add_shortcode( 'handschelle-disclaimer',       array( $this, 'sc_disclaimer' ) );
@@ -551,6 +552,41 @@ class Handschelle_Shortcodes {
                             </tbody>
                         </table>
                     </div>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /* ================================================================
+       [handschelle-statistik-ol] – Partei / Anzahl Namen (geordnete Liste)
+    ================================================================ */
+    public function sc_statistik_ol( $atts ) {
+        global $wpdb;
+        $table = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
+        $rows  = $wpdb->get_results(
+            "SELECT partei, COUNT(DISTINCT name) AS anzahl_namen FROM `{$table}`
+             WHERE freigegeben = 1 AND partei != '' AND name != ''
+             GROUP BY partei ORDER BY anzahl_namen DESC, partei ASC"
+        );
+        ob_start();
+        ?>
+        <div class="hs-frontend hs-full-width">
+            <div class="hs-statistik">
+                <h2 class="hs-section-title">📋 Statistik: Partei – Anzahl Namen</h2>
+                <?php if ( empty( $rows ) ) : ?>
+                    <p class="hs-empty">Noch keine freigegebenen Einträge vorhanden.</p>
+                <?php else : ?>
+                    <ol class="hs-statistik-ol">
+                    <?php foreach ( $rows as $r ) : ?>
+                        <li class="hs-statistik-ol-item">
+                            <span class="hs-statistik-ol-partei"><?php echo esc_html( $r->partei ); ?></span>
+                            <span class="hs-statistik-ol-sep"> – </span>
+                            <span class="hs-statistik-ol-count"><?php echo intval( $r->anzahl_namen ); ?> <?php echo intval( $r->anzahl_namen ) === 1 ? 'Name' : 'Namen'; ?></span>
+                        </li>
+                    <?php endforeach; ?>
+                    </ol>
                 <?php endif; ?>
             </div>
         </div>
