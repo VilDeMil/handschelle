@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 3.03 |
+| **Version** | 3.04 |
 | **Autor** | Bernd K.R. Dorfmüller |
 | **E-Mail** | bernd@xn--dorfmller-u9a.com |
 | **Website** | https://xn--dorfmller-u9a.com/die-handschelle |
@@ -195,8 +195,9 @@ Displays a single entry card by database ID. Only shows approved entries.
 | `id` | int | Database ID of the entry to display |
 
 **Card contents:**
-- Profile photo (resized to max 450px height)
-- Person name & party badge
+- Profile photo (resized to max 450px height) — **clickable**, links to name search (`?hs_name=`) on the same page
+- Person name with inline **Google** and **Abgeordnetenwatch** search links
+- Party badge
 - Profession & position
 - Parliament affiliation
 - Crime description & status badge
@@ -647,6 +648,12 @@ Override these in your theme to customize the plugin appearance:
 | `.hs-bulk-bar` | Admin bulk-action toolbar |
 | `.hs-bulk-checkbox` | Individual row checkbox |
 | `.hs-bulk-select` | Bulk-action `<select>` dropdown |
+| `.hs-cards-single` | Full-width single-column card list (name results) |
+| `.hs-card-img-link` | Anchor wrapping the card profile image |
+| `.hs-name-search-links` | Container for inline Google / Abgeordnetenwatch links in card header |
+| `.hs-name-search-link` | Individual search link in card header (light style on dark bg) |
+| `.hs-search-buttons` | Container for Google / Abgeordnetenwatch buttons (form/result context) |
+| `.hs-search-btn` | Individual search button (neutral secondary style) |
 | `.hs-media-picker` | Admin image-field wrapper |
 | `.hs-media-picker-row` | Row containing ID input, picker button, and file upload |
 | `.hs-media-id` | Hidden-number input holding the WP attachment ID |
@@ -727,7 +734,7 @@ die-handschelle/
 - Profile images are automatically resized to a maximum height of **450px** using the GD library (required).
 - CSV export uses **UTF-8 with BOM** and **semicolons** as delimiters for Excel compatibility.
 - The **Edit page** is hidden from the admin sidebar but accessible via the ✏ button in the Overview table.
-- **Logged-in users** also see an edit button directly on entry cards in the frontend (`[handschelle-anzeige]`) — no need to navigate to the admin backend.
+- **Logged-in users** also see an edit button directly on entry cards in the frontend (`[handschelle-anzeige]`) — no need to navigate to the admin backend. The inline edit panel includes **Google** and **Abgeordnetenwatch** search buttons next to the name field.
 - All forms use **WordPress nonce verification** to prevent CSRF attacks.
 - All user input is sanitized with WordPress sanitization functions before writing to the database.
 - Social media icons are rendered as **inline SVG** with brand colors and hover effects — no external icon library required.
@@ -739,6 +746,15 @@ die-handschelle/
 ---
 
 ## Release Notes
+
+### 3.04 *(2026-03-13)*
+- **Search buttons everywhere**: Google and Abgeordnetenwatch search links added in three locations:
+  1. **Admin edit form** – below the Name field (edit mode only)
+  2. **Frontend inline edit panel** – below the Name field
+  3. **Name display results** (`[handschelle-name]`, `[handschelle-name-anzeige]`) – shown above the entry cards after selecting a person
+- **Card image clickable**: Profile photo is now wrapped in a link (`?hs_name=<name>`) that navigates to the name details on the same page
+- **Inline search links on card name**: Every entry card now shows compact Google and Abgeordnetenwatch links directly below the person's name in the card header
+- **Full-width name results**: When viewing cards via a name selection, results now use `.hs-cards-single` (full-width single-column layout) instead of the default multi-column grid
 
 ### 3.03 *(2026-03-13)*
 - **Image rename pattern changed** to `<Name>-HA.<ext>` (e.g. `max-mustermann-HA.jpg`); party name no longer part of filename

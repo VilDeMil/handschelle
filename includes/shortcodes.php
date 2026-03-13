@@ -431,10 +431,14 @@ class Handschelle_Shortcodes {
                     $entries = Handschelle_Database::get_all( array( 'freigegeben' => 1, 'name' => $selected ) );
                 ?>
                     <div class="hs-search-results">
+                        <div class="hs-search-buttons">
+                            <a href="<?php echo esc_url( 'https://www.google.com/search?q=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 Suche mit GOOGLE</a>
+                            <a href="<?php echo esc_url( 'https://www.abgeordnetenwatch.de/profile?politician_search_keys=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🏛 Suche mit Abgeordnetenwatch</a>
+                        </div>
                         <?php if ( empty($entries) ) : ?>
                             <p class="hs-empty">Keine Einträge für diese Person.</p>
                         <?php else : ?>
-                            <div class="hs-cards-grid"><?php foreach ( $entries as $e ) echo $this->render_card($e); ?></div>
+                            <div class="hs-cards-single"><?php foreach ( $entries as $e ) echo $this->render_card($e); ?></div>
                         <?php endif; ?>
                     </div>
                 <?php endif; ?>
@@ -681,10 +685,14 @@ class Handschelle_Shortcodes {
             ?>
                 <div class="hs-search-results">
                     <h4>Einträge für: <em><?php echo esc_html($selected); ?></em> <span class="hs-count">(<?php echo count($entries); ?>)</span></h4>
+                    <div class="hs-search-buttons">
+                        <a href="<?php echo esc_url( 'https://www.google.com/search?q=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 Suche mit GOOGLE</a>
+                        <a href="<?php echo esc_url( 'https://www.abgeordnetenwatch.de/profile?politician_search_keys=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🏛 Suche mit Abgeordnetenwatch</a>
+                    </div>
                     <?php if ( empty($entries) ) : ?>
                         <p class="hs-empty">Keine Einträge für diese Person.</p>
                     <?php else : ?>
-                        <div class="hs-cards-grid"><?php foreach ( $entries as $e ) echo $this->render_card($e); ?></div>
+                        <div class="hs-cards-single"><?php foreach ( $entries as $e ) echo $this->render_card($e); ?></div>
                     <?php endif; ?>
                 </div>
             <?php endif; ?>
@@ -714,10 +722,18 @@ class Handschelle_Shortcodes {
             <?php endif; ?>
             <div class="hs-card-header">
                 <div class="hs-card-img-wrap <?php echo $img_url ? '' : 'hs-card-img-placeholder'; ?>">
-                    <?php if ( $img_url ) : ?><img src="<?php echo esc_url($img_url); ?>" alt="<?php echo esc_attr($e->name); ?>" class="hs-card-img"><?php else : ?>👤<?php endif; ?>
+                    <?php if ( $img_url ) : ?>
+                    <a href="<?php echo esc_url( add_query_arg( 'hs_name', $e->name, get_permalink() ) ); ?>" title="<?php echo esc_attr( $e->name ); ?> – Details anzeigen" class="hs-card-img-link">
+                        <img src="<?php echo esc_url($img_url); ?>" alt="<?php echo esc_attr($e->name); ?>" class="hs-card-img">
+                    </a>
+                    <?php else : ?>👤<?php endif; ?>
                 </div>
                 <div class="hs-card-meta">
                     <h3 class="hs-card-name"><?php echo esc_html($e->name); ?></h3>
+                    <div class="hs-name-search-links">
+                        <a href="<?php echo esc_url( 'https://www.google.com/search?q=' . urlencode( $e->name ) ); ?>" target="_blank" rel="noopener" class="hs-name-search-link" title="Google-Suche">🔍 Google</a>
+                        <a href="<?php echo esc_url( 'https://www.abgeordnetenwatch.de/profile?politician_search_keys=' . urlencode( $e->name ) ); ?>" target="_blank" rel="noopener" class="hs-name-search-link" title="Abgeordnetenwatch-Suche">🏛 Abgeordnetenwatch</a>
+                    </div>
                     <?php if ( $e->beruf ) : ?><p class="hs-card-beruf"><?php echo esc_html($e->beruf); ?></p><?php endif; ?>
                     <?php if ( $e->partei ) : ?><p class="hs-card-partei">🏛 <?php echo esc_html($e->partei); ?><?php if($e->aufgabe_partei) echo ' &ndash; '.esc_html($e->aufgabe_partei); ?></p><?php endif; ?>
                     <?php if ( $e->parlament ) : ?><p class="hs-card-parlament">📜 <?php echo esc_html($e->parlament); ?><?php if($e->parlament_name) echo ' ('.esc_html($e->parlament_name).')'; ?></p><?php endif; ?>
@@ -772,7 +788,14 @@ class Handschelle_Shortcodes {
                         <!-- Eintragsdetails -->
                         <div class="hs-edit-section-title">📋 Eintragsdetails</div>
                         <div class="hs-field"><label>Datum</label><input type="date" name="datum_eintrag" value="<?php echo esc_attr($e->datum_eintrag); ?>" required></div>
-                        <div class="hs-field"><label>Name <span>(max. 50)</span></label><input type="text" name="name" maxlength="50" value="<?php echo esc_attr($e->name); ?>" required></div>
+                        <div class="hs-field">
+                            <label>Name <span>(max. 50)</span></label>
+                            <input type="text" name="name" maxlength="50" value="<?php echo esc_attr($e->name); ?>" required>
+                            <div class="hs-search-buttons">
+                                <a href="<?php echo esc_url( 'https://www.google.com/search?q=' . urlencode( $e->name ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Suche mit GOOGLE</a>
+                                <a href="<?php echo esc_url( 'https://www.abgeordnetenwatch.de/profile?politician_search_keys=' . urlencode( $e->name ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🏛 Suche mit Abgeordnetenwatch</a>
+                            </div>
+                        </div>
                         <div class="hs-field"><label>Beruf <span>(max. 50)</span></label><input type="text" name="beruf" maxlength="50" value="<?php echo esc_attr($e->beruf); ?>"></div>
                         <div class="hs-field hs-field-full">
                             <label>Bild ersetzen <span>(optional)</span></label>
