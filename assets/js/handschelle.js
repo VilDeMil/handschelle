@@ -174,6 +174,19 @@
 
                 frame.open();
             });
+
+            // ── 11. Bild aus Medienbibliothek entfernen ──────────
+            $(document).on('click', '.hs-media-remove-btn', function (e) {
+                e.preventDefault();
+                var $btn      = $(this);
+                var targetId  = $btn.data('target-id');
+                var previewId = $btn.data('preview-id');
+                var $input    = targetId  ? $('#' + targetId)  : $btn.closest('.hs-media-picker').find('.hs-media-id');
+                var $preview  = previewId ? $('#' + previewId) : $btn.closest('.hs-media-picker').find('.hs-media-preview');
+                $input.val('');
+                $preview.empty();
+                $btn.hide();
+            });
         }
 
     });
