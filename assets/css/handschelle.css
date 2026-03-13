@@ -35,7 +35,7 @@
 .hs-section-title { background:linear-gradient(135deg,var(--hs-primary) 0%,var(--hs-accent) 100%); color:#fff; margin:0 0 1.5rem; padding:1rem 1.5rem; border-radius:var(--hs-radius); font-size:1.4rem; letter-spacing:.02em; }
 
 /* ── Formulare ──────────────────────────────────────────────── */
-.hs-form { background:var(--hs-card-bg); border-radius:var(--hs-radius); box-shadow:var(--hs-shadow); overflow:hidden; }
+.hs-form { border-radius:var(--hs-radius); overflow:hidden; }
 .hs-form-section { padding:1.5rem; border-bottom:1px solid var(--hs-border); }
 .hs-form-section:last-child { border-bottom:none; }
 .hs-form-section h2, .hs-form-section h3 { margin:0 0 1rem; font-size:1rem; font-weight:700; color:var(--hs-primary); padding-bottom:.45rem; border-bottom:2px solid var(--hs-accent); }
@@ -55,7 +55,7 @@
 .hs-char-counter { font-size:.78rem; color:var(--hs-muted); text-align:right; transition:color .2s; }
 .hs-checkbox-label { display:flex !important; align-items:center; gap:.5rem; font-weight:600 !important; cursor:pointer; }
 .hs-current-image { margin-bottom:.6rem; }
-.hs-form-actions { padding:1.5rem; display:flex; align-items:center; gap:1rem; flex-wrap:wrap; background:#f8f9fa; border-top:1px solid var(--hs-border); }
+.hs-form-actions { padding:1.5rem; display:flex; align-items:center; gap:1rem; flex-wrap:wrap; border-top:1px solid var(--hs-border); }
 .hs-note { font-size:.8rem; color:var(--hs-muted); margin:0; }
 
 /* ── Buttons ────────────────────────────────────────────────── */
@@ -91,16 +91,16 @@
 .hs-card-name { font-size:1.05rem; font-weight:700; margin:0 0 .25rem; color:#fff; }
 .hs-card-beruf, .hs-card-partei, .hs-card-parlament { font-size:.8rem; margin:.15rem 0; color:rgba(255,255,255,.8); word-break:break-word; }
 .hs-card-body { padding:1rem; flex:1; display:flex; flex-direction:column; gap:.65rem; }
-.hs-card-straftat { background:#fef9e7; border-left:3px solid var(--hs-gold); padding:.6rem .8rem; border-radius:0 var(--hs-radius) var(--hs-radius) 0; }
+.hs-card-straftat { border-left:3px solid var(--hs-gold); padding:.6rem .8rem; border-radius:0 var(--hs-radius) var(--hs-radius) 0; }
 .hs-card-straftat p { margin:.3rem 0 0; font-size:.88rem; color:#333; line-height:1.5; }
 .hs-label { font-weight:700; font-size:.8rem; color:var(--hs-primary); display:block; margin-bottom:.1rem; }
 .hs-card-row { font-size:.85rem; color:#444; display:flex; align-items:center; flex-wrap:wrap; gap:.4rem; }
-.hs-card-bemerkung { background:#f8f9fa; padding:.6rem .8rem; border-radius:var(--hs-radius); font-size:.85rem; }
+.hs-card-bemerkung { padding:.6rem .8rem; border-radius:var(--hs-radius); font-size:.85rem; }
 .hs-card-bemerkung p { margin:.2rem 0 0; color:#555; line-height:1.5; }
 .hs-link { color:var(--hs-accent); font-size:.85rem; font-weight:600; text-decoration:none; transition:color .2s; }
 .hs-link:hover { color:var(--hs-accent-h); text-decoration:underline; }
-.hs-card-footer { padding:.75rem 1rem; border-top:1px solid var(--hs-border); display:flex; flex-wrap:wrap; gap:.45rem; background:#f8f9fa; }
-.hs-card-date { padding:.4rem 1rem; font-size:.72rem; color:var(--hs-muted); text-align:right; background:#f8f9fa; border-top:1px solid var(--hs-border); }
+.hs-card-footer { padding:.75rem 1rem; border-top:1px solid var(--hs-border); display:flex; flex-wrap:wrap; gap:.45rem; }
+.hs-card-date { padding:.4rem 1rem; font-size:.72rem; color:var(--hs-muted); text-align:right; border-top:1px solid var(--hs-border); }
 
 /* ── Social Media Links ─────────────────────────────────────── */
 .hs-sm-link { display:inline-flex; align-items:center; gap:.35rem; font-size:.78rem; font-weight:600; color:#333; text-decoration:none; background:#fff; border:1px solid var(--hs-border); padding:.3rem .7rem .3rem .5rem; border-radius:20px; transition:background .2s,color .2s,border-color .2s,box-shadow .2s; white-space:nowrap; box-shadow:0 1px 3px rgba(0,0,0,.06); }
@@ -116,7 +116,7 @@
 .hs-sm-link[data-sm="wikipedia"]:hover svg { fill:#fff; }
 
 /* ── Suchboxen ──────────────────────────────────────────────── */
-.hs-search-box { background:var(--hs-card-bg); border-radius:var(--hs-radius); box-shadow:var(--hs-shadow); padding:1.5rem; margin-bottom:1.5rem; border:1px solid var(--hs-border); }
+.hs-search-box { border-radius:var(--hs-radius); padding:1.5rem; margin-bottom:1.5rem; border:1px solid var(--hs-border); }
 .hs-search-title { margin:0 0 .9rem; font-size:1.05rem; font-weight:700; color:var(--hs-primary); }
 .hs-search-form { display:flex; gap:.8rem; flex-wrap:wrap; align-items:center; }
 .hs-select { padding:.55rem .75rem; border:1.5px solid var(--hs-border); border-radius:var(--hs-radius); font-size:.9rem; font-family:var(--hs-font); background:#fafafa; min-width:220px; cursor:pointer; transition:border-color .2s; }
@@ -145,8 +145,8 @@
 
 /* ── Statistik ──────────────────────────────────────────────── */
 .hs-statistik { width:100%; }
-.hs-stat-total { background:var(--hs-primary); color:#fff; padding:.7rem 1.2rem; border-radius:var(--hs-radius); margin-bottom:1.2rem; font-size:.95rem; }
-.hs-stat-total strong { color:#f39c12; font-size:1.1em; }
+.hs-stat-total { border:1px solid var(--hs-border); padding:.7rem 1.2rem; border-radius:var(--hs-radius); margin-bottom:1.2rem; font-size:.95rem; }
+.hs-stat-total strong { color:var(--hs-accent); font-size:1.1em; }
 .hs-stat-table-wrap { overflow-x:auto; border-radius:var(--hs-radius); box-shadow:var(--hs-shadow); border:1px solid var(--hs-border); }
 .hs-stat-table { width:100%; border-collapse:collapse; font-family:var(--hs-font); font-size:.9rem; }
 .hs-stat-table thead tr { background:var(--hs-primary); color:#fff; }

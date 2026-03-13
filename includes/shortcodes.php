@@ -34,7 +34,8 @@ class Handschelle_Shortcodes {
         add_shortcode( 'handschelle-partei',     array( $this, 'sc_partei' ) );
         add_shortcode( 'handschelle-name',       array( $this, 'sc_name' ) );
         add_shortcode( 'hndschelle-name',        array( $this, 'sc_name' ) ); // Typo-Alias
-        add_shortcode( 'handschelle-statistik',       array( $this, 'sc_statistik' ) );
+        add_shortcode( 'handschelle-statistik',         array( $this, 'sc_statistik' ) );
+        add_shortcode( 'handschelle-statistik-nolink', array( $this, 'sc_statistik_nolink' ) );
         add_shortcode( 'handschelle-statistik-partei', array( $this, 'sc_statistik_partei' ) );
         add_shortcode( 'handschelle-statistik-name',   array( $this, 'sc_statistik_name' ) );
         add_shortcode( 'handschelle-statistik-ol',     array( $this, 'sc_statistik_ol' ) );
@@ -408,6 +409,57 @@ class Handschelle_Shortcodes {
     }
 
     /* ================================================================
+       [handschelle-statistik-nolink] – Einträge je Partei (ohne Links)
+    ================================================================ */
+    public function sc_statistik_nolink( $atts ) {
+        global $wpdb;
+        $table = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
+        $rows  = $wpdb->get_results(
+            "SELECT partei, COUNT(*) AS anzahl FROM `{$table}`
+             WHERE freigegeben = 1 AND partei != ''
+             GROUP BY partei ORDER BY anzahl DESC, partei ASC"
+        );
+        $total = 0;
+        foreach ( $rows as $r ) $total += intval( $r->anzahl );
+
+        ob_start();
+        ?>
+        <div class="hs-frontend hs-full-width">
+            <div class="hs-statistik">
+                <h2 class="hs-section-title">📊 Einträge je Partei</h2>
+                <?php if ( empty( $rows ) ) : ?>
+                    <p class="hs-empty">Noch keine freigegebenen Einträge vorhanden.</p>
+                <?php else : ?>
+                    <div class="hs-stat-total">Gesamt freigegebene Einträge: <strong><?php echo intval($total); ?></strong></div>
+                    <div class="hs-stat-table-wrap">
+                        <table class="hs-stat-table">
+                            <thead><tr><th>#</th><th>Partei</th><th>Einträge</th><th>Anteil</th><th>Balken</th></tr></thead>
+                            <tbody>
+                            <?php foreach ( $rows as $i => $r ) :
+                                $anzahl  = intval( $r->anzahl );
+                                $pct     = $total > 0 ? round( $anzahl / $total * 100, 1 ) : 0;
+                                $bar_pct = $total > 0 ? round( $anzahl / $rows[0]->anzahl * 100, 1 ) : 0;
+                            ?>
+                                <tr>
+                                    <td class="hs-stat-rank"><?php echo $i + 1; ?></td>
+                                    <td class="hs-stat-partei"><?php echo esc_html( $r->partei ); ?></td>
+                                    <td class="hs-stat-count"><?php echo $anzahl; ?></td>
+                                    <td class="hs-stat-pct"><?php echo $pct; ?>&nbsp;%</td>
+                                    <td class="hs-stat-bar-cell"><div class="hs-stat-bar-wrap"><div class="hs-stat-bar" style="width:<?php echo $bar_pct; ?>%"></div></div></td>
+                                </tr>
+                            <?php endforeach; ?>
+                            </tbody>
+                            <tfoot><tr><td colspan="2"><strong>Gesamt</strong></td><td><strong><?php echo intval($total); ?></strong></td><td><strong>100&nbsp;%</strong></td><td></td></tr></tfoot>
+                        </table>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /* ================================================================
        [handschelle-name-anzeige] – Name-Dropdown + Einträge (leer am Anfang)
     ================================================================ */
     public function sc_name_anzeige( $atts ) {
@@ -730,10 +782,6 @@ class Handschelle_Shortcodes {
                 </div>
                 <div class="hs-card-meta">
                     <h3 class="hs-card-name"><?php echo esc_html($e->name); ?></h3>
-                    <div class="hs-name-search-links">
-                        <a href="<?php echo esc_url( 'https://www.google.com/search?q=' . urlencode( $e->name ) ); ?>" target="_blank" rel="noopener" class="hs-name-search-link" title="Google-Suche">🔍 Google</a>
-                        <a href="<?php echo esc_url( 'https://www.abgeordnetenwatch.de/profile?politician_search_keys=' . urlencode( $e->name ) ); ?>" target="_blank" rel="noopener" class="hs-name-search-link" title="Abgeordnetenwatch-Suche">🏛 Abgeordnetenwatch</a>
-                    </div>
                     <?php if ( $e->beruf ) : ?><p class="hs-card-beruf"><?php echo esc_html($e->beruf); ?></p><?php endif; ?>
                     <?php if ( $e->partei ) : ?><p class="hs-card-partei">🏛 <?php echo esc_html($e->partei); ?><?php if($e->aufgabe_partei) echo ' &ndash; '.esc_html($e->aufgabe_partei); ?></p><?php endif; ?>
                     <?php if ( $e->parlament ) : ?><p class="hs-card-parlament">📜 <?php echo esc_html($e->parlament); ?><?php if($e->parlament_name) echo ' ('.esc_html($e->parlament_name).')'; ?></p><?php endif; ?>
@@ -756,19 +804,25 @@ class Handschelle_Shortcodes {
                     <?php echo $e->status_aktiv ? '<span class="hs-badge hs-badge-aktiv">Aktiv</span>' : '<span class="hs-badge hs-badge-inaktiv">Inaktiv</span>'; ?>
                 </div>
                 <?php if ( $e->bemerkung ) : ?><div class="hs-card-bemerkung"><span class="hs-label">💬 Bemerkung:</span><p><?php echo nl2br(esc_html($e->bemerkung)); ?></p></div><?php endif; ?>
-                <?php if ( $e->link_quelle ) : ?><div class="hs-card-row"><a href="<?php echo esc_url($e->link_quelle); ?>" target="_blank" rel="noopener noreferrer" class="hs-link">🔍 Quelle ansehen</a></div><?php endif; ?>
             </div>
             <?php
-            $sm_links = array();
+            $footer_links = array();
+            // Quelle
+            if ( ! empty( $e->link_quelle ) ) {
+                $footer_links[] = '<a href="'.esc_url($e->link_quelle).'" target="_blank" rel="noopener noreferrer" class="hs-sm-link" data-sm="link" title="Quelle">'.$this->svg_link().' Quelle</a>';
+            }
+            // Google + Abgeordnetenwatch
+            $footer_links[] = '<a href="'.esc_url( 'https://www.google.com/search?q=' . urlencode( $e->name ) ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="google" title="Google-Suche">🔍 Google</a>';
+            $footer_links[] = '<a href="'.esc_url( 'https://www.abgeordnetenwatch.de/profile?politician_search_keys=' . urlencode( $e->name ) ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="abgeordnetenwatch" title="Abgeordnetenwatch">🏛 Abgeordnetenwatch</a>';
+            // Social media
             foreach ( $this->sm_fields() as $field => list( $icon, $label ) ) {
                 if ( ! empty( $e->$field ) ) {
                     $key = str_replace( 'sm_', '', $field );
-                    $sm_links[] = '<a href="'.esc_url($e->$field).'" target="_blank" rel="noopener noreferrer" class="hs-sm-link" data-sm="'.esc_attr($key).'" title="'.esc_attr($label).'">'.$icon.' '.esc_html($label).'</a>';
+                    $footer_links[] = '<a href="'.esc_url($e->$field).'" target="_blank" rel="noopener noreferrer" class="hs-sm-link" data-sm="'.esc_attr($key).'" title="'.esc_attr($label).'">'.$icon.' '.esc_html($label).'</a>';
                 }
             }
-            if ( ! empty( $sm_links ) ) : ?>
-                <div class="hs-card-footer"><?php echo implode( '', $sm_links ); ?></div>
-            <?php endif; ?>
+            ?>
+            <div class="hs-card-footer"><?php echo implode( '', $footer_links ); ?></div>
             <div class="hs-card-date">Eingetragen am <?php echo esc_html( date_i18n('d.m.Y', strtotime($e->datum_eintrag)) ); ?></div>
 
             <?php if ( $is_logged_in ) : ?>
