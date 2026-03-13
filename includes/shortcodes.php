@@ -44,6 +44,7 @@ class Handschelle_Shortcodes {
         add_shortcode( 'handschelle-disclaimer',       array( $this, 'sc_disclaimer' ) );
         add_shortcode( 'handschelle-bilder',           array( $this, 'sc_bilder' ) );
         add_shortcode( 'handschelle-karte',            array( $this, 'sc_karte' ) );
+        add_shortcode( 'handschelle-asc',              array( $this, 'sc_asc' ) );
 
         // Submit früh verarbeiten – BEVOR Header gesendet werden
         add_action( 'init', array( $this, 'early_frontend_submit' ) );
@@ -76,6 +77,8 @@ class Handschelle_Shortcodes {
                             <div class="hs-field"><label>Datum</label><input type="date" name="datum_eintrag" value="<?php echo esc_attr( date('Y-m-d') ); ?>" required></div>
                             <div class="hs-field"><label>Name <span>(max. 50 Zeichen)</span></label><input type="text" name="name" maxlength="50" required placeholder="Vor- und Nachname"></div>
                             <div class="hs-field"><label>Beruf <span>(max. 50 Zeichen)</span></label><input type="text" name="beruf" maxlength="50" placeholder="z.B. Politiker, Unternehmer"></div>
+                            <div class="hs-field"><label>Geburtsort <span>(max. 100 Zeichen)</span></label><input type="text" name="geburtsort" maxlength="100" placeholder="z.B. Berlin"></div>
+                            <div class="hs-field"><label>Geburtsdatum</label><input type="date" name="geburtsdatum"></div>
                             <div class="hs-field hs-field-full">
                                 <label>Bild hochladen</label>
                                 <input type="file" name="bild_upload" accept="image/*" class="hs-file-input">
@@ -133,7 +136,7 @@ class Handschelle_Shortcodes {
                     <div class="hs-form-section">
                         <h3>📱 Social-Media Links</h3>
                         <div class="hs-form-grid">
-                            <?php foreach ( array( 'sm_facebook'=>'📘 Facebook','sm_youtube'=>'▶ YouTube','sm_personal'=>'👤 Persönliches Profil','sm_twitter'=>'🐦 Twitter / X','sm_homepage'=>'🌐 Persönliche Homepage','sm_wikipedia'=>'📖 Wikipedia','sm_sonstige'=>'🔗 Sonstige' ) as $field => $label ) : ?>
+                            <?php foreach ( array( 'sm_facebook'=>'📘 Facebook','sm_youtube'=>'▶ YouTube','sm_personal'=>'👤 Persönliches Profil','sm_twitter'=>'🐦 Twitter / X','sm_homepage'=>'🌐 Persönliche Homepage','sm_wikipedia'=>'📖 Wikipedia','sm_linkedin'=>'💼 LinkedIn','sm_xing'=>'💼 Xing','sm_truth_social'=>'🗣 Truth Social','sm_sonstige'=>'🔗 Sonstige' ) as $field => $label ) : ?>
                                 <div class="hs-field"><label><?php echo $label; ?></label><input type="url" name="<?php echo esc_attr($field); ?>" placeholder="https://…"></div>
                             <?php endforeach; ?>
                         </div>
@@ -484,8 +487,11 @@ class Handschelle_Shortcodes {
                 ?>
                     <div class="hs-search-results">
                         <div class="hs-search-buttons">
-                            <a href="<?php echo esc_url( 'https://www.google.com/search?q=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 Suche mit GOOGLE</a>
-                            <a href="<?php echo esc_url( 'https://www.abgeordnetenwatch.de/profile?politician_search_keys=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🏛 Suche mit Abgeordnetenwatch</a>
+                            <a href="<?php echo esc_url( 'https://www.google.com/search?q=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 GOOGLE</a>
+                            <a href="<?php echo esc_url( 'https://www.qwant.com/?l=de&q=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 Qwant</a>
+                            <a href="<?php echo esc_url( 'https://duckduckgo.com/?q=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 DuckDuckGo</a>
+                            <a href="<?php echo esc_url( 'https://www.bing.com/search?q=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 Bing</a>
+                            <a href="<?php echo esc_url( 'https://www.abgeordnetenwatch.de/profile?politician_search_keys=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🏛 Abgeordnetenwatch</a>
                         </div>
                         <?php if ( empty($entries) ) : ?>
                             <p class="hs-empty">Keine Einträge für diese Person.</p>
@@ -651,6 +657,27 @@ class Handschelle_Shortcodes {
     }
 
     /* ================================================================
+       [handschelle-asc] – Horizontale Parteiliste mit Eintragsanzahl
+    ================================================================ */
+    public function sc_asc( $atts ) {
+        global $wpdb;
+        $table = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
+        $rows  = $wpdb->get_results(
+            "SELECT partei, COUNT(*) AS anzahl FROM `{$table}`
+             WHERE freigegeben = 1 AND partei != ''
+             GROUP BY partei ORDER BY partei ASC"
+        );
+        if ( empty( $rows ) ) return '';
+        ob_start();
+        echo '<div class="hs-frontend hs-full-width"><ul class="hs-asc-list">';
+        foreach ( $rows as $r ) {
+            echo '<li class="hs-asc-item"><span class="hs-asc-partei">' . esc_html( $r->partei ) . '</span> <span class="hs-asc-count">(' . intval( $r->anzahl ) . ')</span></li>';
+        }
+        echo '</ul></div>';
+        return ob_get_clean();
+    }
+
+    /* ================================================================
        [handschelle-disclaimer] – Copyright-Hinweis
     ================================================================ */
     public function sc_disclaimer( $atts ) {
@@ -658,11 +685,13 @@ class Handschelle_Shortcodes {
         ?>
         <div class="hs-disclaimer">
             <p class="hs-disclaimer-title">Die-Handschelle &copy; 2026</p>
-            <p class="hs-disclaimer-tagline">Wer in unseren Parlamenten ist oder war kriminell?<br>Eine Datenbank der Straftaten.</p>
+            <p class="hs-disclaimer-tagline">&bdquo;Wer in unseren Parlamenten ist oder war kriminell?&ldquo;<br>Eine Datenbank der Straftaten.</p>
             <p class="hs-disclaimer-links">
-                <a href="mailto:bernd@xn--dorfmller-u9a.com" class="hs-disclaimer-link">bernd@xn--dorfmller-u9a.com</a>
+                <a href="https://www.die-handschelle.de" target="_blank" rel="noopener noreferrer" class="hs-disclaimer-link">www.die-handschelle.de</a>
                 &nbsp;&middot;&nbsp;
-                <a href="https://xn--dorfmller-u9a.com/die-handschelle" target="_blank" rel="noopener noreferrer" class="hs-disclaimer-link">xn--dorfmller-u9a.com/die-handschelle</a>
+                <a href="mailto:Info@die-handschelle.de" class="hs-disclaimer-link">Info@die-handschelle.de</a>
+                &nbsp;&middot;&nbsp;
+                <a href="https://buymeacoffee.com/dorfmuellersak47" target="_blank" rel="noopener noreferrer" class="hs-disclaimer-link">&#9749; Unterstützen</a>
             </p>
         </div>
         <?php
@@ -738,8 +767,11 @@ class Handschelle_Shortcodes {
                 <div class="hs-search-results">
                     <h4>Einträge für: <em><?php echo esc_html($selected); ?></em> <span class="hs-count">(<?php echo count($entries); ?>)</span></h4>
                     <div class="hs-search-buttons">
-                        <a href="<?php echo esc_url( 'https://www.google.com/search?q=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 Suche mit GOOGLE</a>
-                        <a href="<?php echo esc_url( 'https://www.abgeordnetenwatch.de/profile?politician_search_keys=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🏛 Suche mit Abgeordnetenwatch</a>
+                        <a href="<?php echo esc_url( 'https://www.google.com/search?q=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 GOOGLE</a>
+                        <a href="<?php echo esc_url( 'https://www.qwant.com/?l=de&q=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 Qwant</a>
+                        <a href="<?php echo esc_url( 'https://duckduckgo.com/?q=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 DuckDuckGo</a>
+                        <a href="<?php echo esc_url( 'https://www.bing.com/search?q=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 Bing</a>
+                        <a href="<?php echo esc_url( 'https://www.abgeordnetenwatch.de/profile?politician_search_keys=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🏛 Abgeordnetenwatch</a>
                     </div>
                     <?php if ( empty($entries) ) : ?>
                         <p class="hs-empty">Keine Einträge für diese Person.</p>
@@ -797,6 +829,20 @@ class Handschelle_Shortcodes {
             </div>
             <div class="hs-card-body">
                 <div class="hs-card-straftat"><span class="hs-label">⚖ Straftat:</span><p><?php echo nl2br(esc_html($e->straftat)); ?></p></div>
+                <?php
+                $age = handschelle_calc_age( $e->geburtsdatum ?? '' );
+                if ( ! empty( $e->geburtsort ) || ! empty( $e->geburtsdatum ) ) : ?>
+                    <div class="hs-card-row">
+                        <span class="hs-label">🎂 Geburt:</span>
+                        <?php
+                        if ( ! empty( $e->geburtsdatum ) && $e->geburtsdatum !== '0000-00-00' ) {
+                            echo esc_html( date_i18n( 'd.m.Y', strtotime( $e->geburtsdatum ) ) );
+                            if ( $age !== null ) echo ' (Alter: ' . $age . ')';
+                        }
+                        if ( ! empty( $e->geburtsort ) ) echo ' &mdash; ' . esc_html( $e->geburtsort );
+                        ?>
+                    </div>
+                <?php endif; ?>
                 <?php if ( $e->urteil ) : ?><div class="hs-card-row"><span class="hs-label">📋 Urteil:</span> <?php echo esc_html($e->urteil); ?></div><?php endif; ?>
                 <?php if ( $e->aktenzeichen ) : ?><div class="hs-card-row"><span class="hs-label">📁 Aktenzeichen:</span> <?php echo esc_html($e->aktenzeichen); ?></div><?php endif; ?>
                 <div class="hs-card-row">
@@ -811,8 +857,11 @@ class Handschelle_Shortcodes {
             if ( ! empty( $e->link_quelle ) ) {
                 $footer_links[] = '<a href="'.esc_url($e->link_quelle).'" target="_blank" rel="noopener noreferrer" class="hs-sm-link" data-sm="link" title="Quelle">'.$this->svg_link().' Quelle</a>';
             }
-            // Google + Abgeordnetenwatch
+            // Suchmaschinen + Abgeordnetenwatch
             $footer_links[] = '<a href="'.esc_url( 'https://www.google.com/search?q=' . urlencode( $e->name ) ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="google" title="Google-Suche">🔍 Google</a>';
+            $footer_links[] = '<a href="'.esc_url( 'https://www.qwant.com/?l=de&q=' . urlencode( $e->name ) ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="qwant" title="Qwant-Suche">🔍 Qwant</a>';
+            $footer_links[] = '<a href="'.esc_url( 'https://duckduckgo.com/?q=' . urlencode( $e->name ) ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="duckduckgo" title="DuckDuckGo-Suche">🔍 DuckDuckGo</a>';
+            $footer_links[] = '<a href="'.esc_url( 'https://www.bing.com/search?q=' . urlencode( $e->name ) ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="bing" title="Bing-Suche">🔍 Bing</a>';
             $footer_links[] = '<a href="'.esc_url( 'https://www.abgeordnetenwatch.de/profile?politician_search_keys=' . urlencode( $e->name ) ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="abgeordnetenwatch" title="Abgeordnetenwatch">🏛 Abgeordnetenwatch</a>';
             // Social media
             foreach ( $this->sm_fields() as $field => list( $icon, $label ) ) {
@@ -846,11 +895,16 @@ class Handschelle_Shortcodes {
                             <label>Name <span>(max. 50)</span></label>
                             <input type="text" name="name" maxlength="50" value="<?php echo esc_attr($e->name); ?>" required>
                             <div class="hs-search-buttons">
-                                <a href="<?php echo esc_url( 'https://www.google.com/search?q=' . urlencode( $e->name ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Suche mit GOOGLE</a>
-                                <a href="<?php echo esc_url( 'https://www.abgeordnetenwatch.de/profile?politician_search_keys=' . urlencode( $e->name ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🏛 Suche mit Abgeordnetenwatch</a>
+                                <a href="<?php echo esc_url( 'https://www.google.com/search?q=' . urlencode( $e->name ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Google</a>
+                                <a href="<?php echo esc_url( 'https://www.qwant.com/?l=de&q=' . urlencode( $e->name ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Qwant</a>
+                                <a href="<?php echo esc_url( 'https://duckduckgo.com/?q=' . urlencode( $e->name ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 DDG</a>
+                                <a href="<?php echo esc_url( 'https://www.bing.com/search?q=' . urlencode( $e->name ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Bing</a>
+                                <a href="<?php echo esc_url( 'https://www.abgeordnetenwatch.de/profile?politician_search_keys=' . urlencode( $e->name ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🏛 Abgeordnetenwatch</a>
                             </div>
                         </div>
                         <div class="hs-field"><label>Beruf <span>(max. 50)</span></label><input type="text" name="beruf" maxlength="50" value="<?php echo esc_attr($e->beruf); ?>"></div>
+                        <div class="hs-field"><label>Geburtsort <span>(max. 100)</span></label><input type="text" name="geburtsort" maxlength="100" value="<?php echo esc_attr($e->geburtsort ?? ''); ?>"></div>
+                        <div class="hs-field"><label>Geburtsdatum</label><input type="date" name="geburtsdatum" value="<?php echo esc_attr( ( ! empty($e->geburtsdatum) && $e->geburtsdatum !== '0000-00-00' ) ? $e->geburtsdatum : '' ); ?>"></div>
                         <div class="hs-field hs-field-full">
                             <label>Bild ersetzen <span>(optional)</span></label>
                             <input type="file" name="bild_upload" accept="image/*" class="hs-file-input">
@@ -903,13 +957,16 @@ class Handschelle_Shortcodes {
                         <!-- Social Media -->
                         <div class="hs-edit-section-title">📱 Social-Media</div>
                         <?php foreach ( array(
-                            'sm_facebook'  => '📘 Facebook',
-                            'sm_youtube'   => '▶ YouTube',
-                            'sm_personal'  => '👤 Persönliches Profil',
-                            'sm_twitter'   => '🐦 Twitter / X',
-                            'sm_homepage'  => '🌐 Homepage',
-                            'sm_wikipedia' => '📖 Wikipedia',
-                            'sm_sonstige'  => '🔗 Sonstige',
+                            'sm_facebook'     => '📘 Facebook',
+                            'sm_youtube'      => '▶ YouTube',
+                            'sm_personal'     => '👤 Persönliches Profil',
+                            'sm_twitter'      => '🐦 Twitter / X',
+                            'sm_homepage'     => '🌐 Homepage',
+                            'sm_wikipedia'    => '📖 Wikipedia',
+                            'sm_linkedin'     => '💼 LinkedIn',
+                            'sm_xing'         => '💼 Xing',
+                            'sm_truth_social' => '🗣 Truth Social',
+                            'sm_sonstige'     => '🔗 Sonstige',
                         ) as $field => $label ) : ?>
                             <div class="hs-field"><label><?php echo $label; ?></label><input type="url" name="<?php echo esc_attr($field); ?>" value="<?php echo esc_attr($e->$field ?? ''); ?>" placeholder="https://…"></div>
                         <?php endforeach; ?>
@@ -942,6 +999,8 @@ class Handschelle_Shortcodes {
        [handschelle-bilder] – Bildergalerie aller freigegebenen Einträge
     ================================================================ */
     public function sc_bilder( $atts ) {
+        $atts = shortcode_atts( array( 'link' => '' ), $atts );
+        $link_base = ! empty( $atts['link'] ) ? trailingslashit( $atts['link'] ) : get_permalink();
         $entries = Handschelle_Database::get_all( array( 'freigegeben' => 1 ) );
         $mit_bild = array_filter( $entries, function( $e ) {
             return ! empty( $e->bild );
@@ -955,14 +1014,16 @@ class Handschelle_Shortcodes {
                 <?php else : ?>
                     <div class="hs-bilder-grid">
                         <?php foreach ( $mit_bild as $e ) :
-                            $img_url = handschelle_get_image_url( $e->bild );
+                            $img_url  = handschelle_get_image_url( $e->bild );
                             if ( ! $img_url ) continue;
+                            $name_url = add_query_arg( 'hs_name', urlencode( $e->name ), $link_base );
                         ?>
                         <div class="hs-bild-item">
                             <div class="hs-bild-img-wrap">
+                                <a href="<?php echo esc_url( $name_url ); ?>" title="<?php echo esc_attr( $e->name ); ?> – Details anzeigen">
                                 <img src="<?php echo esc_url( $img_url ); ?>"
                                      alt="<?php echo esc_attr( $e->name ); ?>"
-                                     style="max-width:300px;max-height:300px;width:auto;height:auto;display:block;">
+                                     style="max-width:300px;max-height:300px;width:auto;height:auto;display:block;"></a>
                                 <div class="hs-bild-tooltip" role="tooltip">
                                     <strong><?php echo esc_html( $e->name ); ?></strong>
                                     <?php if ( ! empty( $e->partei ) ) : ?>
@@ -1020,13 +1081,16 @@ class Handschelle_Shortcodes {
     ================================================================ */
     private function sm_fields() {
         return array(
-            'sm_facebook'  => array( $this->svg_facebook(),  'Facebook' ),
-            'sm_youtube'   => array( $this->svg_youtube(),   'YouTube' ),
-            'sm_personal'  => array( $this->svg_person(),    'Persönliches Profil' ),
-            'sm_twitter'   => array( $this->svg_twitter(),   'Twitter / X' ),
-            'sm_homepage'  => array( $this->svg_homepage(),  'Persönliche Homepage' ),
-            'sm_wikipedia' => array( $this->svg_wikipedia(), 'Wikipedia' ),
-            'sm_sonstige'  => array( $this->svg_link(),      'Sonstige' ),
+            'sm_facebook'     => array( $this->svg_facebook(),     'Facebook' ),
+            'sm_youtube'      => array( $this->svg_youtube(),      'YouTube' ),
+            'sm_personal'     => array( $this->svg_person(),       'Persönliches Profil' ),
+            'sm_twitter'      => array( $this->svg_twitter(),      'Twitter / X' ),
+            'sm_homepage'     => array( $this->svg_homepage(),     'Persönliche Homepage' ),
+            'sm_wikipedia'    => array( $this->svg_wikipedia(),    'Wikipedia' ),
+            'sm_linkedin'     => array( $this->svg_linkedin(),     'LinkedIn' ),
+            'sm_xing'         => array( $this->svg_xing(),         'Xing' ),
+            'sm_truth_social' => array( $this->svg_truth_social(), 'Truth Social' ),
+            'sm_sonstige'     => array( $this->svg_link(),         'Sonstige' ),
         );
     }
 
@@ -1056,6 +1120,15 @@ class Handschelle_Shortcodes {
     }
     private function svg_link() {
         return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="#555"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>';
+    }
+    private function svg_linkedin() {
+        return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="#0A66C2"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>';
+    }
+    private function svg_xing() {
+        return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="#026466"><path d="M18.188 0c-.517 0-.741.325-.927.66 0 0-7.455 13.224-7.702 13.657.015.024 4.919 9.023 4.919 9.023.17.308.436.66.967.66h3.454c.211 0 .375-.078.463-.22.089-.151.089-.346-.009-.536l-4.879-8.916c-.004-.006-.004-.016 0-.022L22.139.756c.095-.191.097-.387.006-.535C22.056.078 21.894 0 21.686 0h-3.498zM3.648 4.74c-.211 0-.385.074-.473.216-.09.149-.078.339.02.531l2.34 4.05c.004.01.004.016 0 .021L1.86 16.051c-.099.188-.093.381 0 .529.085.142.239.234.455.234h3.461c.518 0 .766-.348.945-.667l3.734-6.609-2.378-4.155c-.172-.315-.434-.659-.962-.659H3.648v.016z"/></svg>';
+    }
+    private function svg_truth_social() {
+        return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="#FF6600"><path d="M5 4v3h5.5v12h3V7H19V4z"/></svg>';
     }
 }
 
