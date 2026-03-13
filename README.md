@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 3.04 |
+| **Version** | 3.05 |
 | **Autor** | Bernd K.R. Dorfmüller |
 | **E-Mail** | bernd@xn--dorfmller-u9a.com |
 | **Website** | https://xn--dorfmller-u9a.com/die-handschelle |
@@ -112,7 +112,8 @@ All shortcodes output HTML and can be placed on any WordPress page or post.
 | `[handschelle-suche]` | Search dropdowns: Party + Person name |
 | `[handschelle-partei]` | Party search dropdown only |
 | `[handschelle-name]` | Person name search dropdown only |
-| `[handschelle-statistik]` | Statistics table with bar chart per party |
+| `[handschelle-statistik]` | Statistics table with bar chart per party (party names are links) |
+| `[handschelle-statistik-nolink]` | Same as `[handschelle-statistik]` but without links on party names |
 | `[handschelle-statistik-partei]` | Table: party / entry count (party links to filter) |
 | `[handschelle-statistik-name]` | Table: person name / entry count |
 | `[handschelle-statistik-ol]` | Ordered list: party – number of distinct names |
@@ -245,6 +246,16 @@ Displays a statistics table titled **"Einträge je Partei"** listing the number 
 ```
 
 **Output columns:** Party name (linked) · Count · Relative bar chart
+
+---
+
+### `[handschelle-statistik-nolink]`
+
+Same as `[handschelle-statistik]` but the party names in the table are plain text — no hyperlinks. Useful for embedding the statistics on a page where the party-filter page is not available.
+
+```
+[handschelle-statistik-nolink]
+```
 
 ---
 
@@ -755,6 +766,14 @@ die-handschelle/
 - **Card image clickable**: Profile photo is now wrapped in a link (`?hs_name=<name>`) that navigates to the name details on the same page
 - **Inline search links on card name**: Every entry card now shows compact Google and Abgeordnetenwatch links directly below the person's name in the card header
 - **Full-width name results**: When viewing cards via a name selection, results now use `.hs-cards-single` (full-width single-column layout) instead of the default multi-column grid
+
+### 3.05 *(2026-03-13)*
+- **Keine Hintergrundfarben**: Hintergrundfarben von Frontend-Containern (`.hs-form`, `.hs-search-box`, `.hs-card-straftat`, `.hs-card-bemerkung`, `.hs-card-footer`, `.hs-card-date`, `.hs-form-actions`, `.hs-stat-total`) entfernt – Plugin integriert sich neutral in das Theme
+- **Volle Breite**: Alle Shortcode-Wrapper verwenden durchgängig `hs-full-width` (100% Breite, kein max-width)
+- **Alle Links im Karten-Footer**: Google- und Abgeordnetenwatch-Links aus dem Karten-Header entfernt; Quelle-Link aus dem Karten-Body entfernt; alle Links (Quelle, Google, Abgeordnetenwatch, Social Media) befinden sich nun im `.hs-card-footer`
+- **Neuer Shortcode `[handschelle-statistik-nolink]`**: Identisch mit `[handschelle-statistik]`, aber Parteinamen sind einfacher Text ohne Verlinkung
+- **MediaID-Remapping beim Backup/Restore**: `backup_full()` schreibt jetzt eine `bild-map.json` in die ZIP-Datei (Attachment-ID → Dateiname); `restore_full()` nutzt diese Map, um die alten Attachment-IDs beim Import auf die neuen IDs der importierten Bilder umzuschreiben
+- **CSV-Import**: Beim Import wird geprüft, ob die gespeicherte numerische Attachment-ID auf dem Zielsystem existiert; ungültige IDs werden geleert statt übernommen
 
 ### 3.03 *(2026-03-13)*
 - **Image rename pattern changed** to `<Name>-HA.<ext>` (e.g. `max-mustermann-HA.jpg`); party name no longer part of filename
