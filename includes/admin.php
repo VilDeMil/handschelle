@@ -1,6 +1,6 @@
 <?php
 /**
- * Die-Handschelle 2.09 – Admin-Panel
+ * Die-Handschelle 3.00 – Admin-Panel
  *
  * DISCLAIMER:
  * Dieses Plugin dient ausschließlich der sachlichen Dokumentation öffentlich
@@ -95,6 +95,30 @@ class Handschelle_Admin {
                     Handschelle_Database::update( $id, array( 'status_aktiv' => $entry->status_aktiv ? 0 : 1 ) );
                     $this->redirect( admin_url( 'admin.php?page=handschelle' ), 'Status geändert.' );
                 }
+                break;
+
+            case 'bulk_action':
+                $op  = sanitize_text_field( $_POST['hs_bulk_op'] ?? '' );
+                $ids = array_map( 'intval', (array) ( $_POST['hs_bulk_ids'] ?? array() ) );
+                $ids = array_filter( $ids );
+                if ( ! empty( $ids ) && in_array( $op, array( 'approve', 'reject', 'delete' ), true ) ) {
+                    foreach ( $ids as $bulk_id ) {
+                        if ( $op === 'approve' ) {
+                            Handschelle_Database::update( $bulk_id, array( 'freigegeben' => 1 ) );
+                        } elseif ( $op === 'reject' ) {
+                            Handschelle_Database::update( $bulk_id, array( 'freigegeben' => 0 ) );
+                        } elseif ( $op === 'delete' ) {
+                            $entry = Handschelle_Database::get_one( $bulk_id );
+                            if ( $entry && ! empty( $entry->bild ) && is_numeric( $entry->bild ) ) {
+                                wp_delete_attachment( intval( $entry->bild ), true );
+                            }
+                            Handschelle_Database::delete( $bulk_id );
+                        }
+                    }
+                    $label = array( 'approve' => 'freigegeben', 'reject' => 'gesperrt', 'delete' => 'gelöscht' );
+                    $this->redirect( admin_url( 'admin.php?page=handschelle' ), count( $ids ) . ' Eintrag/Einträge ' . $label[ $op ] . '.' );
+                }
+                $this->redirect( admin_url( 'admin.php?page=handschelle' ), 'Keine Einträge ausgewählt.' );
                 break;
 
             case 'export_csv':        $this->export_csv(); break;
@@ -210,62 +234,119 @@ class Handschelle_Admin {
        SEITE: ÜBERSICHT
     ================================================================ */
     public function page_overview() {
-        $entries = Handschelle_Database::get_all( array( 'freigegeben' => 'all', 'orderby' => 'erstellt_am', 'order' => 'DESC' ) );
-        $total   = count( $entries );
-        $pending = count( array_filter( $entries, fn( $e ) => ! $e->freigegeben ) );
-        $nonce   = wp_create_nonce( 'handschelle_admin_action' );
+        $filter      = sanitize_text_field( $_GET['hs_filter'] ?? 'all' );
+        $fg_filter   = $filter === 'approved' ? 1 : ( $filter === 'pending' ? 0 : 'all' );
+        $entries     = Handschelle_Database::get_all( array( 'freigegeben' => $fg_filter, 'orderby' => 'erstellt_am', 'order' => 'DESC' ) );
+        $all_entries = Handschelle_Database::get_all( array( 'freigegeben' => 'all', 'orderby' => 'erstellt_am', 'order' => 'DESC' ) );
+        $total       = count( $all_entries );
+        $pending     = count( array_filter( $all_entries, fn( $e ) => ! $e->freigegeben ) );
+        $approved    = $total - $pending;
+        $nonce       = wp_create_nonce( 'handschelle_admin_action' );
         ?>
         <div class="wrap hs-wrap">
-            <h1>🔒 Die-Handschelle <span class="hs-version">2.0 A</span></h1>
+            <h1>🔒 Die-Handschelle <span class="hs-version">3.0</span></h1>
             <div class="hs-stats-bar">
                 <span>Gesamt: <strong><?php echo $total; ?></strong></span>
                 <span>Ausstehend: <strong class="<?php echo $pending ? 'hs-warn' : ''; ?>"><?php echo $pending; ?></strong></span>
                 <a href="<?php echo esc_url( admin_url( 'admin.php?page=handschelle-add' ) ); ?>" class="button button-primary hs-btn">+ Neuer Eintrag</a>
             </div>
-            <table class="widefat fixed striped hs-admin-table">
-                <thead>
-                    <tr>
-                        <th style="width:70px">Bild</th>
-                        <th>Name</th>
-                        <th>Partei</th>
-                        <th>Straftat</th>
-                        <th style="width:90px">Status</th>
-                        <th style="width:120px">Freigabe</th>
-                        <th style="width:320px">Aktionen</th>
-                    </tr>
-                </thead>
-                <tbody>
-                <?php if ( empty( $entries ) ) : ?>
-                    <tr><td colspan="7" style="text-align:center;padding:2rem;color:#999;">Noch keine Einträge.</td></tr>
-                <?php endif; ?>
-                <?php foreach ( $entries as $e ) :
-                    $img_url = handschelle_get_image_url( $e->bild );
-                ?>
-                    <tr>
-                        <td>
-                            <?php if ( $img_url ) : ?>
-                                <img src="<?php echo esc_url( $img_url ); ?>" style="width:56px;height:56px;object-fit:cover;border-radius:4px;">
-                            <?php else : ?>
-                                <div style="width:56px;height:56px;background:#eee;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;">👤</div>
-                            <?php endif; ?>
-                        </td>
-                        <td><strong><?php echo esc_html( $e->name ); ?></strong><br><small><?php echo esc_html( $e->beruf ); ?></small></td>
-                        <td><?php echo esc_html( $e->partei ); ?><br><small><?php echo esc_html( $e->aufgabe_partei ); ?></small></td>
-                        <td><?php echo esc_html( mb_substr( $e->straftat, 0, 90 ) ) . ( mb_strlen( $e->straftat ) > 90 ? '…' : '' ); ?></td>
-                        <td><?php echo $e->status_aktiv ? '<span class="hs-badge hs-badge-aktiv">Aktiv</span>' : '<span class="hs-badge hs-badge-inaktiv">Inaktiv</span>'; ?></td>
-                        <td><?php echo $e->freigegeben ? '<span class="hs-badge hs-badge-aktiv">✅ Freigegeben</span>' : '<span class="hs-badge hs-badge-pending">⏳ Ausstehend</span>'; ?></td>
-                        <td class="hs-actions">
-                            <a href="<?php echo esc_url( admin_url( "admin.php?page=handschelle-edit&id={$e->id}" ) ); ?>" class="button button-small">✏ Bearbeiten</a>
-                            <a href="<?php echo esc_url( admin_url( "admin.php?page=handschelle&hs_action=toggle_freigabe&id={$e->id}&_wpnonce={$nonce}" ) ); ?>" class="button button-small"><?php echo $e->freigegeben ? '🚫 Sperren' : '✅ Freigeben'; ?></a>
-                            <a href="<?php echo esc_url( admin_url( "admin.php?page=handschelle&hs_action=toggle_aktiv&id={$e->id}&_wpnonce={$nonce}" ) ); ?>" class="button button-small"><?php echo $e->status_aktiv ? '⏸ Deaktiv.' : '▶ Aktivieren'; ?></a>
-                            <a href="<?php echo esc_url( admin_url( "admin.php?page=handschelle&hs_action=delete&id={$e->id}&_wpnonce={$nonce}" ) ); ?>" class="button button-small hs-btn-delete" onclick="return confirm('Eintrag wirklich löschen?')">🗑 Löschen</a>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-                </tbody>
-            </table>
+
+            <!-- Filter Tabs -->
+            <div class="hs-filter-tabs">
+                <a href="<?php echo esc_url( admin_url( 'admin.php?page=handschelle&hs_filter=all' ) ); ?>"
+                   class="hs-filter-tab <?php echo $filter === 'all' ? 'active' : ''; ?>">
+                    Alle <span class="hs-filter-count"><?php echo $total; ?></span>
+                </a>
+                <a href="<?php echo esc_url( admin_url( 'admin.php?page=handschelle&hs_filter=pending' ) ); ?>"
+                   class="hs-filter-tab <?php echo $filter === 'pending' ? 'active' : ''; ?>">
+                    ⏳ Ausstehend <span class="hs-filter-count"><?php echo $pending; ?></span>
+                </a>
+                <a href="<?php echo esc_url( admin_url( 'admin.php?page=handschelle&hs_filter=approved' ) ); ?>"
+                   class="hs-filter-tab <?php echo $filter === 'approved' ? 'active' : ''; ?>">
+                    ✅ Freigegeben <span class="hs-filter-count"><?php echo $approved; ?></span>
+                </a>
+            </div>
+
+            <!-- Bulk Action Form -->
+            <form method="post" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>" id="hs-bulk-form">
+                <?php wp_nonce_field( 'handschelle_admin_action' ); ?>
+                <input type="hidden" name="page"      value="handschelle">
+                <input type="hidden" name="hs_action" value="bulk_action">
+
+                <div class="hs-bulk-bar">
+                    <label class="hs-bulk-select-all">
+                        <input type="checkbox" id="hs-bulk-all" class="hs-bulk-checkbox"> Alle auswählen
+                    </label>
+                    <select name="hs_bulk_op" class="hs-bulk-select">
+                        <option value="">-- Bulk-Aktion wählen --</option>
+                        <option value="approve">✅ Freigeben</option>
+                        <option value="reject">🚫 Sperren</option>
+                        <option value="delete">🗑 Löschen</option>
+                    </select>
+                    <button type="submit" class="button hs-btn"
+                            onclick="return document.querySelectorAll('.hs-bulk-ids:checked').length > 0 || alert('Bitte mindestens einen Eintrag auswählen.')">
+                        Ausführen
+                    </button>
+                </div>
+
+                <table class="widefat fixed striped hs-admin-table">
+                    <thead>
+                        <tr>
+                            <th style="width:36px"><input type="checkbox" id="hs-bulk-all-top" class="hs-bulk-checkbox"></th>
+                            <th style="width:70px">Bild</th>
+                            <th>Name</th>
+                            <th>Partei</th>
+                            <th>Straftat</th>
+                            <th style="width:90px">Status</th>
+                            <th style="width:120px">Freigabe</th>
+                            <th style="width:300px">Aktionen</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <?php if ( empty( $entries ) ) : ?>
+                        <tr><td colspan="8" style="text-align:center;padding:2rem;color:#999;">Keine Einträge vorhanden.</td></tr>
+                    <?php endif; ?>
+                    <?php foreach ( $entries as $e ) :
+                        $img_url = handschelle_get_image_url( $e->bild );
+                    ?>
+                        <tr>
+                            <td><input type="checkbox" name="hs_bulk_ids[]" value="<?php echo intval( $e->id ); ?>" class="hs-bulk-ids hs-bulk-checkbox"></td>
+                            <td>
+                                <?php if ( $img_url ) : ?>
+                                    <img src="<?php echo esc_url( $img_url ); ?>" style="width:56px;height:56px;object-fit:cover;border-radius:4px;">
+                                <?php else : ?>
+                                    <div style="width:56px;height:56px;background:#eee;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;">👤</div>
+                                <?php endif; ?>
+                            </td>
+                            <td><strong><?php echo esc_html( $e->name ); ?></strong><br><small><?php echo esc_html( $e->beruf ); ?></small></td>
+                            <td><?php echo esc_html( $e->partei ); ?><br><small><?php echo esc_html( $e->aufgabe_partei ); ?></small></td>
+                            <td><?php echo esc_html( mb_substr( $e->straftat, 0, 80 ) ) . ( mb_strlen( $e->straftat ) > 80 ? '…' : '' ); ?></td>
+                            <td><?php echo $e->status_aktiv ? '<span class="hs-badge hs-badge-aktiv">Aktiv</span>' : '<span class="hs-badge hs-badge-inaktiv">Inaktiv</span>'; ?></td>
+                            <td><?php echo $e->freigegeben ? '<span class="hs-badge hs-badge-aktiv">✅ Freigegeben</span>' : '<span class="hs-badge hs-badge-pending">⏳ Ausstehend</span>'; ?></td>
+                            <td class="hs-actions">
+                                <a href="<?php echo esc_url( admin_url( "admin.php?page=handschelle-edit&id={$e->id}" ) ); ?>" class="button button-small">✏ Bearbeiten</a>
+                                <a href="<?php echo esc_url( admin_url( "admin.php?page=handschelle&hs_action=toggle_freigabe&id={$e->id}&_wpnonce={$nonce}" ) ); ?>" class="button button-small"><?php echo $e->freigegeben ? '🚫 Sperren' : '✅ Freigeben'; ?></a>
+                                <a href="<?php echo esc_url( admin_url( "admin.php?page=handschelle&hs_action=toggle_aktiv&id={$e->id}&_wpnonce={$nonce}" ) ); ?>" class="button button-small"><?php echo $e->status_aktiv ? '⏸ Deaktiv.' : '▶ Aktivieren'; ?></a>
+                                <a href="<?php echo esc_url( admin_url( "admin.php?page=handschelle&hs_action=delete&id={$e->id}&_wpnonce={$nonce}" ) ); ?>" class="button button-small hs-btn-delete" onclick="return confirm('Eintrag wirklich löschen?')">🗑 Löschen</a>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </form>
             <?php echo $this->hs_footer(); ?>
         </div>
+        <script>
+        (function(){
+            function syncCheckboxes(source) {
+                document.querySelectorAll('.hs-bulk-ids').forEach(function(cb){ cb.checked = source.checked; });
+            }
+            var bulkAll = document.getElementById('hs-bulk-all');
+            var bulkAllTop = document.getElementById('hs-bulk-all-top');
+            if (bulkAll) bulkAll.addEventListener('change', function(){ syncCheckboxes(this); if(bulkAllTop) bulkAllTop.checked = this.checked; });
+            if (bulkAllTop) bulkAllTop.addEventListener('change', function(){ syncCheckboxes(this); if(bulkAll) bulkAll.checked = this.checked; });
+        })();
+        </script>
         <?php
     }
 

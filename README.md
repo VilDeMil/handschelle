@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 2.09 |
+| **Version** | 3.00 |
 | **Autor** | Bernd K.R. Dorfmüller |
 | **E-Mail** | bernd@xn--dorfmller-u9a.com |
 | **Website** | https://xn--dorfmller-u9a.com/die-handschelle |
@@ -118,6 +118,7 @@ All shortcodes output HTML and can be placed on any WordPress page or post.
 | `[handschelle-name-anzeige]` | Name dropdown – shows cards for selected person |
 | `[handschelle-name-partei]` | Party dropdown – shows cards for selected party |
 | `[handschelle-bilder]` | Gallery of all approved entry images (max 300×300 px) |
+| `[handschelle-karte]` | Single entry card by ID: `[handschelle-karte id="5"]` |
 | `[handschelle-disclaimer]` | Copyright notice |
 
 ---
@@ -149,24 +150,48 @@ Renders a public submission form. New submissions are saved with `freigegeben = 
 
 ### `[handschelle-anzeige]`
 
-Displays all approved entries (`freigegeben = 1`) as responsive cards with social media icons.
+Displays approved entries (`freigegeben = 1`) as responsive cards with social media icons. Supports **pagination** and **text search** via URL parameters.
 
 ```
 [handschelle-anzeige]
+[handschelle-anzeige limit="12"]
 ```
 
-**Optional filter attributes:**
+**Optional shortcode attributes:**
 
 ```
 [handschelle-anzeige partei="CDU"]
 [handschelle-anzeige name="Max Mustermann"]
 [handschelle-anzeige partei="SPD" name="Jane Doe"]
+[handschelle-anzeige limit="10"]
+```
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `partei` | string | — | Filter cards by political party name |
+| `name` | string | — | Filter cards by person name |
+| `limit` | int | `12` | Cards per page (0 = all, disables pagination) |
+
+**URL parameters (set automatically by search/pagination UI):**
+
+| Parameter | Description |
+|---|---|
+| `hs_paged` | Current page number (pagination) |
+| `hs_search` | Full-text search term (searches name, party, crime description) |
+
+---
+
+### `[handschelle-karte]`
+
+Displays a single entry card by database ID. Only shows approved entries.
+
+```
+[handschelle-karte id="5"]
 ```
 
 | Attribute | Type | Description |
 |---|---|---|
-| `partei` | string | Filter cards by political party name |
-| `name` | string | Filter cards by person name |
+| `id` | int | Database ID of the entry to display |
 
 **Card contents:**
 - Profile photo (resized to max 450px height)
@@ -181,7 +206,7 @@ Displays all approved entries (`freigegeben = 1`) as responsive cards with socia
 
 ### `[handschelle-suche]`
 
-Renders two auto-submitting dropdowns (Party and Person name) that filter the entry display on the same page. Combine with `[handschelle-anzeige]`.
+Renders a **full-text search field** and two auto-submitting dropdowns (Party and Person name) that filter the entry display on the same page. Combine with `[handschelle-anzeige]`. The text search queries name, party, and crime description simultaneously.
 
 ```
 [handschelle-suche]
@@ -411,7 +436,7 @@ Outputs the copyright/disclaimer block:
 Defined in `die-handschelle.php`:
 
 ```php
-HANDSCHELLE_VERSION     // '2.09'
+HANDSCHELLE_VERSION     // '3.00'
 HANDSCHELLE_PLUGIN_DIR  // Absolute path to plugin directory
 HANDSCHELLE_PLUGIN_URL  // URL to plugin directory
 HANDSCHELLE_DB_TABLE    // Full table name, e.g. 'wp_die_handschelle'
@@ -587,12 +612,16 @@ Registered in `includes/admin.php`:
 | Menu Item | Slug | Description |
 |---|---|---|
 | Die Handschelle | `die-handschelle` | Main menu (Overview) |
-| Übersicht | `die-handschelle` | List all entries |
+| Übersicht | `die-handschelle` | List all entries with filter tabs + bulk actions |
 | + Neuer Eintrag | `die-handschelle-add` | Add new entry form |
 | *(Bearbeiten)* | `die-handschelle-edit` | Edit entry (hidden from sidebar) |
 | Import / Export | `die-handschelle-importexport` | CSV import & export |
 | Bilder | `die-handschelle-bilder` | Image list, ZIP export & ZIP import |
 | Datenbank | `die-handschelle-db` | Database management |
+
+**v3.0 Admin features:**
+- **Filter tabs:** Switch between Alle / Ausstehend / Freigegeben with entry counts
+- **Bulk actions:** Select multiple entries via checkboxes → Freigeben / Sperren / Löschen
 
 ---
 
@@ -643,6 +672,15 @@ die-handschelle/
 ---
 
 ## Release Notes
+
+### 3.00 *(2026-03-13)*
+- **Paginierung für `[handschelle-anzeige]`**: Neues `limit`-Attribut (Standard: 12 Einträge pro Seite), URL-Parameter `hs_paged` für Seitennavigation
+- **Volltext-Suche in `[handschelle-suche]`**: Neues Textsuchfeld durchsucht Name, Partei und Straftat gleichzeitig; URL-Parameter `hs_search`; alle Filter kombinierbar
+- **`[handschelle-karte id="X"]`**: Neuer Shortcode zur Anzeige einer einzelnen Eintragskarte per Datenbank-ID
+- **Admin-Übersicht: Filter-Tabs**: Schnellfilter Alle / Ausstehend / Freigegeben mit Anzahl-Badges
+- **Admin-Übersicht: Bulk-Aktionen**: Mehrere Einträge per Checkbox auswählen und gemeinsam freigeben, sperren oder löschen
+- **`Handschelle_Database::count_all()`** erweitert: unterstützt jetzt dieselben Filter wie `get_all()` (search, partei, name) – benötigt für genaue Paginierung
+- **`Handschelle_Database::recreate_table()`** als eigenständige Methode hinzugefügt
 
 ### 2.09 *(2026-03-13)*
 - Added "Buy Me A Coffee" support link to README.md
