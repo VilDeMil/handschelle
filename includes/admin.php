@@ -1,6 +1,6 @@
 <?php
 /**
- * Die-Handschelle 2.08 – Admin-Panel
+ * Die-Handschelle 2.09 – Admin-Panel
  *
  * DISCLAIMER:
  * Dieses Plugin dient ausschließlich der sachlichen Dokumentation öffentlich

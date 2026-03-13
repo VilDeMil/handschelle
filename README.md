@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 2.08 |
+| **Version** | 2.09 |
 | **Autor** | Bernd K.R. Dorfmüller |
 | **E-Mail** | bernd@xn--dorfmller-u9a.com |
 | **Website** | https://xn--dorfmller-u9a.com/die-handschelle |
@@ -33,6 +33,8 @@ Das Projekt „Die-Handschelle" steht noch ganz am Anfang. „Die-Handschelle" w
 Bitte unterstützt das Projekt, indem ihr dabei helft, Straftäter in unseren Parlamenten zu identifizieren.
 
 **Danke — „Die-Handschelle"**
+
+[![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://buymeacoffee.com/dorfmuellersak47)
 
 ---
 
@@ -409,7 +411,7 @@ Outputs the copyright/disclaimer block:
 Defined in `die-handschelle.php`:
 
 ```php
-HANDSCHELLE_VERSION     // '2.08'
+HANDSCHELLE_VERSION     // '2.09'
 HANDSCHELLE_PLUGIN_DIR  // Absolute path to plugin directory
 HANDSCHELLE_PLUGIN_URL  // URL to plugin directory
 HANDSCHELLE_DB_TABLE    // Full table name, e.g. 'wp_die_handschelle'
@@ -641,6 +643,9 @@ die-handschelle/
 ---
 
 ## Release Notes
+
+### 2.09 *(2026-03-13)*
+- Added "Buy Me A Coffee" support link to README.md
 
 ### 2.08 *(2026-03-13)*
 - Added Introduction / Einleitung section to README.md
