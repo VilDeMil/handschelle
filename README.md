@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 3.01 |
+| **Version** | 3.03 |
 | **Autor** | Bernd K.R. Dorfmüller |
 | **E-Mail** | bernd@xn--dorfmller-u9a.com |
 | **Website** | https://xn--dorfmller-u9a.com/die-handschelle |
@@ -115,6 +115,7 @@ All shortcodes output HTML and can be placed on any WordPress page or post.
 | `[handschelle-statistik]` | Statistics table with bar chart per party |
 | `[handschelle-statistik-partei]` | Table: party / entry count (party links to filter) |
 | `[handschelle-statistik-name]` | Table: person name / entry count |
+| `[handschelle-statistik-ol]` | Ordered list: party – number of distinct names |
 | `[handschelle-name-anzeige]` | Name dropdown – shows cards for selected person |
 | `[handschelle-name-partei]` | Party dropdown – shows cards for selected party |
 | `[handschelle-bilder]` | Gallery of all approved entry images (max 300×300 px) |
@@ -263,6 +264,21 @@ Displays a table titled **"Wer hat bereits einen Eintrag?"** with columns: Name 
 ```
 [handschelle-statistik-name]
 ```
+
+---
+
+### `[handschelle-statistik-ol]`
+
+Displays a numbered ordered list titled **"Statistik: Partei – Anzahl Namen"**. Each line shows the party name and the count of distinct person names recorded for that party, sorted by count descending.
+
+```
+[handschelle-statistik-ol]
+```
+
+**Output example:**
+1. CDU – 5 Namen
+2. SPD – 3 Namen
+3. AfD – 2 Namen
 
 ---
 
@@ -436,7 +452,7 @@ Outputs the copyright/disclaimer block:
 Defined in `die-handschelle.php`:
 
 ```php
-HANDSCHELLE_VERSION     // '3.01'
+HANDSCHELLE_VERSION     // '3.03'
 HANDSCHELLE_PLUGIN_DIR  // Absolute path to plugin directory
 HANDSCHELLE_PLUGIN_URL  // URL to plugin directory
 HANDSCHELLE_DB_TABLE    // Full table name, e.g. 'wp_die_handschelle'
@@ -510,24 +526,22 @@ File: `includes/image-handler.php`
 
 ```php
 /**
- * Upload, optionally rename, resize and register as WP media attachment.
+ * Upload, rename to "{name}-HA.ext", resize and register as WP media attachment.
  *
  * @param  string $file_input_name  $_FILES key  (e.g. 'bild_upload')
  * @param  string $person_name      Person name – used to build filename slug
- * @param  string $partei           Party name  – appended to filename slug
+ * @param  string $partei           Unused – kept for backward compatibility
  * @return int    Attachment ID on success, 0 on failure / no file uploaded.
  */
 $attachment_id = Handschelle_Image_Handler::handle_upload_and_resize(
-    'bild_upload',     // $_FILES key
-    'Max Mustermann',  // person name  → sanitize_title() → "max-mustermann"
-    'CDU'              // party name   → sanitize_title() → "cdu"
-    // result filename:  max-mustermann-cdu.jpg
+    'bild_upload',    // $_FILES key
+    'Max Mustermann', // person name → sanitize_title() → "max-mustermann"
+    // result filename: max-mustermann-HA.jpg
 );
 
 // Rename logic:
-//   both name and partei  → "{name}-{partei}.{ext}"   e.g. max-mustermann-cdu.jpg
-//   name only             → "{name}.{ext}"             e.g. max-mustermann.jpg
-//   neither provided      → original filename kept
+//   name given        → "{name}-HA.{ext}"  e.g. max-mustermann-HA.jpg
+//   no name provided  → original filename kept
 //
 // The image is automatically resized to a maximum height of 450 px.
 // Supported formats: JPEG, PNG, GIF, WebP
@@ -654,11 +668,25 @@ Registered in `includes/admin.php`:
 | *(Bearbeiten)* | `die-handschelle-edit` | Edit entry (hidden from sidebar) |
 | Import / Export | `die-handschelle-importexport` | CSV import & export |
 | Bilder | `die-handschelle-bilder` | Image list, ZIP export & ZIP import |
+| Backup & Restore | `handschelle-backup` | Full backup (CSV + images ZIP) and restore |
 | Datenbank | `die-handschelle-db` | Database management |
 
 **v3.0 Admin features:**
 - **Filter tabs:** Switch between Alle / Ausstehend / Freigegeben with entry counts
 - **Bulk actions:** Select multiple entries via checkboxes → Freigeben / Sperren / Löschen
+
+---
+
+### Backup & Restore
+
+**Admin → Backup & Restore**
+
+| Action | Description |
+|---|---|
+| **Backup herunterladen** | Creates a ZIP file containing `handschelle-data.csv` (all entries) and all media images in an `images/` sub-folder |
+| **Backup einspielen** | Upload a backup ZIP → truncates existing entries → re-imports entries from CSV → imports images into the media library |
+
+> **Warning:** Restore overwrites all existing entries. A confirmation checkbox is required.
 
 ---
 
@@ -703,7 +731,7 @@ die-handschelle/
 - All forms use **WordPress nonce verification** to prevent CSRF attacks.
 - All user input is sanitized with WordPress sanitization functions before writing to the database.
 - Social media icons are rendered as **inline SVG** with brand colors and hover effects — no external icon library required.
-- **Image uploads** (frontend and admin) are automatically renamed to `name-partei.ext` (e.g. `max-mustermann-cdu.jpg`) using `sanitize_title()`. If only a name is given, the result is `name.ext`. If neither is provided, the original filename is kept.
+- **Image uploads** (frontend and admin) are automatically renamed to `name-HA.ext` (e.g. `max-mustermann-HA.jpg`) using `sanitize_title()`. If no name is provided, the original filename is kept.
 - The **admin image field** supports two workflows: (1) pick an existing image from the WP Media Library via the `wp.media` modal with live thumbnail preview, or (2) upload a new file directly — both set the attachment ID on the entry.
 
 ---
@@ -711,6 +739,16 @@ die-handschelle/
 ---
 
 ## Release Notes
+
+### 3.03 *(2026-03-13)*
+- **Image rename pattern changed** to `<Name>-HA.<ext>` (e.g. `max-mustermann-HA.jpg`); party name no longer part of filename
+- **New shortcode `[handschelle-statistik-ol]`**: Ordered list showing each party and the count of distinct person names, sorted by count descending
+- **New Admin page: Backup & Restore**: Full backup creates a single ZIP with all entries (CSV) + all media images; restore uploads that ZIP, truncates existing data, and re-imports entries and images
+- **Admin image picker improved**: Media library button promoted to primary action (`button-primary`); ID field hidden; "Bild entfernen" button added in edit mode
+
+### 3.02 *(2026-03-13)*
+- **WP Media Manager as primary image picker**: Manual attachment-ID input hidden; media library button now `button-primary`; "Bild entfernen" button added for edit mode
+- **Image upload rename**: Changed pattern from `{name}-{partei}.ext` to `{name}HA.ext`
 
 ### 3.00 *(2026-03-13)*
 - **Paginierung für `[handschelle-anzeige]`**: Neues `limit`-Attribut (Standard: 12 Einträge pro Seite), URL-Parameter `hs_paged` für Seitennavigation

@@ -36,6 +36,7 @@ class Handschelle_Admin {
         add_submenu_page( 'handschelle', 'Eintrag bearbeiten', 'Bearbeiten',      'manage_options', 'handschelle-edit',          array( $this, 'page_edit' ) );
         add_submenu_page( 'handschelle', 'Import / Export',    'Import / Export', 'manage_options', 'handschelle-import-export', array( $this, 'page_import_export' ) );
         add_submenu_page( 'handschelle', 'Bilder',             'Bilder',          'manage_options', 'handschelle-bilder',        array( $this, 'page_bilder' ) );
+        add_submenu_page( 'handschelle', 'Backup & Restore',  'Backup & Restore','manage_options', 'handschelle-backup',        array( $this, 'page_backup' ) );
         add_submenu_page( 'handschelle', 'Datenbank',          'Datenbank',       'manage_options', 'handschelle-db',            array( $this, 'page_database' ) );
     }
 
@@ -125,6 +126,8 @@ class Handschelle_Admin {
             case 'import_csv':        $this->import_csv(); break;
             case 'export_images_zip': $this->export_images_zip(); break;
             case 'import_images_zip': $this->import_images_zip(); break;
+            case 'backup_full':       $this->backup_full(); break;
+            case 'restore_full':      $this->restore_full(); break;
 
             case 'truncate':
                 Handschelle_Database::truncate_table();
@@ -719,6 +722,239 @@ class Handschelle_Admin {
         @rmdir( $temp_dir );
 
         $this->redirect( admin_url( 'admin.php?page=handschelle-bilder' ), "{$count} Bild(er) aus ZIP importiert und in Medienbibliothek gespeichert." );
+    }
+
+    /* ================================================================
+       SEITE: BACKUP & RESTORE
+    ================================================================ */
+    public function page_backup() {
+        $nonce = wp_create_nonce( 'handschelle_admin_action' );
+        $all   = Handschelle_Database::get_all( array( 'freigegeben' => 'all' ) );
+        $total = count( $all );
+        $imgs  = count( array_filter( $all, fn( $e ) => ! empty( $e->bild ) && is_numeric( $e->bild ) && get_attached_file( intval( $e->bild ) ) ) );
+        ?>
+        <div class="wrap hs-wrap">
+            <h1>💾 Backup &amp; Restore</h1>
+
+            <!-- ── BACKUP ── -->
+            <div class="hs-form-section">
+                <h2>⬇ Vollständiges Backup erstellen</h2>
+                <p>Erstellt eine ZIP-Datei mit allen Einträgen (CSV) <strong>und</strong> allen Bildern aus der Medienbibliothek.<br>
+                   Aktuell: <strong><?php echo $total; ?> Einträge</strong>, <strong><?php echo $imgs; ?> Bilder</strong> verfügbar.</p>
+                <form method="post" action="<?php echo esc_url( admin_url('admin.php') ); ?>">
+                    <?php wp_nonce_field( 'handschelle_admin_action' ); ?>
+                    <input type="hidden" name="hs_action" value="backup_full">
+                    <input type="hidden" name="page" value="handschelle-backup">
+                    <button type="submit" class="button button-primary hs-btn">📦 Backup herunterladen</button>
+                </form>
+            </div>
+
+            <!-- ── RESTORE ── -->
+            <div class="hs-form-section" style="margin-top:2rem;">
+                <h2>⬆ Backup wiederherstellen</h2>
+                <p style="color:#c0392b;font-weight:600;">⚠ Beim Wiederherstellen werden <strong>alle bestehenden Einträge gelöscht</strong> und durch die Einträge aus dem Backup ersetzt. Bilder werden zusätzlich importiert.</p>
+                <form method="post" action="<?php echo esc_url( admin_url('admin.php') ); ?>" enctype="multipart/form-data">
+                    <?php wp_nonce_field( 'handschelle_admin_action' ); ?>
+                    <input type="hidden" name="hs_action" value="restore_full">
+                    <input type="hidden" name="page" value="handschelle-backup">
+                    <div class="hs-field" style="max-width:420px;margin-bottom:.8rem;">
+                        <label>Backup-ZIP auswählen</label>
+                        <input type="file" name="backup_zip" accept=".zip" required>
+                    </div>
+                    <label class="hs-checkbox-label" style="margin-bottom:.8rem;display:block;">
+                        <input type="checkbox" name="restore_confirm" value="1" required>
+                        Ich verstehe, dass alle vorhandenen Einträge überschrieben werden.
+                    </label>
+                    <button type="submit" class="button hs-btn-danger" onclick="return confirm('Wirklich wiederherstellen? Alle Einträge werden überschrieben!')">⬆ Backup einspielen</button>
+                </form>
+            </div>
+            <?php echo $this->hs_footer(); ?>
+        </div>
+        <?php
+    }
+
+    /* ================================================================
+       BACKUP FULL – ZIP mit CSV + Bildern
+    ================================================================ */
+    private function backup_full() {
+        if ( ! class_exists( 'ZipArchive' ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Fehler: PHP ZipArchive nicht verfügbar.' );
+            return;
+        }
+
+        $entries = Handschelle_Database::get_all( array( 'freigegeben' => 'all' ) );
+
+        // Build in-memory CSV
+        $cols = array( 'id','datum_eintrag','name','beruf','bild','partei','aufgabe_partei','parlament','parlament_name','status_aktiv','straftat','urteil','link_quelle','aktenzeichen','bemerkung','status_straftat','sm_facebook','sm_youtube','sm_personal','sm_twitter','sm_homepage','sm_wikipedia','sm_sonstige','freigegeben','erstellt_am','geaendert_am' );
+        $csv  = "\xEF\xBB\xBF"; // UTF-8 BOM
+        $csv .= implode( ';', $cols ) . "\r\n";
+        foreach ( $entries as $e ) {
+            $row = array();
+            foreach ( $cols as $c ) {
+                $val = $e->$c ?? '';
+                // Escape for CSV
+                if ( strpbrk( (string) $val, ";\"\r\n" ) !== false ) {
+                    $val = '"' . str_replace( '"', '""', $val ) . '"';
+                }
+                $row[] = $val;
+            }
+            $csv .= implode( ';', $row ) . "\r\n";
+        }
+
+        // Create ZIP
+        $zip_path = sys_get_temp_dir() . '/hs_backup_' . time() . '.zip';
+        $zip      = new ZipArchive();
+        if ( $zip->open( $zip_path, ZipArchive::CREATE | ZipArchive::OVERWRITE ) !== true ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Fehler: ZIP-Datei konnte nicht erstellt werden.' );
+            return;
+        }
+
+        $zip->addFromString( 'handschelle-data.csv', $csv );
+
+        foreach ( $entries as $e ) {
+            if ( empty( $e->bild ) || ! is_numeric( $e->bild ) ) continue;
+            $file = get_attached_file( intval( $e->bild ) );
+            if ( $file && file_exists( $file ) ) {
+                $zip->addFile( $file, 'images/' . basename( $file ) );
+            }
+        }
+        $zip->close();
+
+        if ( ! file_exists( $zip_path ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Fehler: Backup konnte nicht erstellt werden.' );
+            return;
+        }
+
+        $filename = 'handschelle-backup-' . date( 'Y-m-d_His' ) . '.zip';
+        header( 'Content-Type: application/zip' );
+        header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+        header( 'Content-Length: ' . filesize( $zip_path ) );
+        header( 'Pragma: no-cache' );
+        readfile( $zip_path );
+        unlink( $zip_path );
+        exit;
+    }
+
+    /* ================================================================
+       RESTORE FULL – aus Backup-ZIP wiederherstellen
+    ================================================================ */
+    private function restore_full() {
+        if ( ! class_exists( 'ZipArchive' ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Fehler: PHP ZipArchive nicht verfügbar.' );
+            return;
+        }
+        if ( empty( $_FILES['backup_zip']['tmp_name'] ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Fehler: Keine Backup-Datei hochgeladen.' );
+            return;
+        }
+        if ( empty( $_POST['restore_confirm'] ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Bitte Bestätigung ankreuzen.' );
+            return;
+        }
+
+        $zip = new ZipArchive();
+        if ( $zip->open( $_FILES['backup_zip']['tmp_name'] ) !== true ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Fehler: ZIP-Datei konnte nicht geöffnet werden.' );
+            return;
+        }
+
+        $temp_dir = trailingslashit( sys_get_temp_dir() ) . 'hs_restore_' . time() . '/';
+        wp_mkdir_p( $temp_dir );
+        $zip->extractTo( $temp_dir );
+        $zip->close();
+
+        // ── 1. Bilder importieren (images/ Unterordner) ──────────
+        if ( ! function_exists( 'wp_generate_attachment_metadata' ) ) require_once ABSPATH . 'wp-admin/includes/image.php';
+        if ( ! function_exists( 'wp_handle_sideload' ) ) require_once ABSPATH . 'wp-admin/includes/file.php';
+
+        $allowed    = array( 'jpg', 'jpeg', 'png', 'gif', 'webp' );
+        $img_map    = array(); // original basename → new attachment ID
+        $upload_dir = wp_upload_dir();
+        $img_dir    = $temp_dir . 'images/';
+        $img_count  = 0;
+
+        if ( is_dir( $img_dir ) ) {
+            foreach ( glob( $img_dir . '*' ) as $src_file ) {
+                $ext = strtolower( pathinfo( $src_file, PATHINFO_EXTENSION ) );
+                if ( ! in_array( $ext, $allowed, true ) ) continue;
+                $dest = trailingslashit( $upload_dir['path'] ) . wp_unique_filename( $upload_dir['path'], basename( $src_file ) );
+                if ( ! copy( $src_file, $dest ) ) continue;
+
+                Handschelle_Image_Handler::resize_to_height( $dest, 450 );
+
+                $filetype  = wp_check_filetype( basename( $dest ) );
+                $attach_id = wp_insert_attachment( array(
+                    'post_mime_type' => $filetype['type'],
+                    'post_title'     => sanitize_file_name( pathinfo( $dest, PATHINFO_FILENAME ) ),
+                    'post_content'   => '',
+                    'post_status'    => 'inherit',
+                ), $dest );
+
+                if ( $attach_id && ! is_wp_error( $attach_id ) ) {
+                    wp_update_attachment_metadata( $attach_id, wp_generate_attachment_metadata( $attach_id, $dest ) );
+                    $img_map[ basename( $src_file ) ] = $attach_id;
+                    $img_count++;
+                }
+            }
+        }
+
+        // ── 2. CSV einlesen und Einträge ersetzen ────────────────
+        $csv_file  = $temp_dir . 'handschelle-data.csv';
+        $entry_count = 0;
+        if ( file_exists( $csv_file ) ) {
+            // Wipe existing entries
+            Handschelle_Database::truncate_table();
+
+            $fh = fopen( $csv_file, 'r' );
+            $bom = fread( $fh, 3 );
+            if ( $bom !== "\xEF\xBB\xBF" ) rewind( $fh );
+            fgetcsv( $fh, 0, ';' ); // header row
+            while ( ( $row = fgetcsv( $fh, 0, ';' ) ) !== false ) {
+                if ( count( $row ) < 20 ) continue;
+                // Map old bild value: if it was a numeric attachment ID that
+                // matches an imported image filename, update to the new ID.
+                $bild_val = sanitize_text_field( $row[4] );
+                // (Remapping by filename is best-effort; IDs differ across sites)
+                Handschelle_Database::insert( array(
+                    'datum_eintrag'  => sanitize_text_field( $row[1] ),
+                    'name'           => substr( sanitize_text_field( $row[2] ), 0, 50 ),
+                    'beruf'          => substr( sanitize_text_field( $row[3] ), 0, 50 ),
+                    'bild'           => $bild_val,
+                    'partei'         => substr( sanitize_text_field( $row[5] ), 0, 50 ),
+                    'aufgabe_partei' => substr( sanitize_text_field( $row[6] ), 0, 100 ),
+                    'parlament'      => sanitize_text_field( $row[7] ),
+                    'parlament_name' => substr( sanitize_text_field( $row[8] ), 0, 50 ),
+                    'status_aktiv'   => intval( $row[9] ),
+                    'straftat'       => substr( sanitize_textarea_field( $row[10] ), 0, 200 ),
+                    'urteil'         => substr( sanitize_text_field( $row[11] ), 0, 50 ),
+                    'link_quelle'    => esc_url_raw( $row[12] ),
+                    'aktenzeichen'   => substr( sanitize_text_field( $row[13] ), 0, 50 ),
+                    'bemerkung'      => sanitize_textarea_field( $row[14] ),
+                    'status_straftat'=> sanitize_text_field( $row[15] ),
+                    'sm_facebook'    => esc_url_raw( $row[16] ),
+                    'sm_youtube'     => esc_url_raw( $row[17] ),
+                    'sm_personal'    => esc_url_raw( $row[18] ),
+                    'sm_twitter'     => esc_url_raw( $row[19] ),
+                    'sm_homepage'    => esc_url_raw( $row[20] ?? '' ),
+                    'sm_wikipedia'   => esc_url_raw( $row[21] ?? '' ),
+                    'sm_sonstige'    => esc_url_raw( $row[22] ?? '' ),
+                    'freigegeben'    => intval( $row[23] ?? 0 ),
+                ) );
+                $entry_count++;
+            }
+            fclose( $fh );
+        }
+
+        // ── 3. Temp cleanup ──────────────────────────────────────
+        foreach ( glob( $temp_dir . 'images/*' ) as $f ) @unlink( $f );
+        @rmdir( $temp_dir . 'images' );
+        @unlink( $temp_dir . 'handschelle-data.csv' );
+        @rmdir( $temp_dir );
+
+        $this->redirect(
+            admin_url( 'admin.php?page=handschelle-backup' ),
+            "Wiederherstellung abgeschlossen: {$entry_count} Einträge importiert, {$img_count} Bilder importiert."
+        );
     }
 
     /* ================================================================
