@@ -161,7 +161,7 @@ class Handschelle_Shortcodes {
         }
 
         $data      = handschelle_sanitize_entry( $_POST );
-        $attach_id = Handschelle_Image_Handler::handle_upload_and_resize( 'bild_upload' );
+        $attach_id = Handschelle_Image_Handler::handle_upload_and_resize( 'bild_upload', $data['name'] ?? '', $data['partei'] ?? '' );
         if ( $attach_id ) $data['bild'] = $attach_id;
         Handschelle_Database::insert( $data );
 
@@ -198,7 +198,7 @@ class Handschelle_Shortcodes {
         }
 
         $data      = handschelle_sanitize_entry( $_POST );
-        $attach_id = Handschelle_Image_Handler::handle_upload_and_resize( 'bild_upload' );
+        $attach_id = Handschelle_Image_Handler::handle_upload_and_resize( 'bild_upload', $data['name'] ?? '', $data['partei'] ?? '' );
         if ( $attach_id ) $data['bild'] = $attach_id;
 
         // Freigabe-Status nur für Admins änderbar

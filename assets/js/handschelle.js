@@ -133,6 +133,49 @@
             }
         });
 
+        // ── 10. WP Media Library Picker (Admin) ─────────────────
+        if ( typeof wp !== 'undefined' && wp.media ) {
+            $(document).on('click', '.hs-media-btn', function (e) {
+                e.preventDefault();
+                var $btn       = $(this);
+                var targetId   = $btn.data('target-id');
+                var previewId  = $btn.data('preview-id');
+                var $input     = targetId   ? $('#' + targetId)   : $btn.closest('.hs-media-picker').find('.hs-media-id');
+                var $preview   = previewId  ? $('#' + previewId)  : $btn.closest('.hs-media-picker').find('.hs-media-preview');
+
+                var frame = wp.media({
+                    title:    'Bild auswählen',
+                    button:   { text: 'Bild verwenden' },
+                    multiple: false,
+                    library:  { type: 'image' }
+                });
+
+                frame.on('select', function () {
+                    var attachment = frame.state().get('selection').first().toJSON();
+                    $input.val(attachment.id);
+                    var thumb = (attachment.sizes && attachment.sizes.thumbnail)
+                              ? attachment.sizes.thumbnail.url
+                              : attachment.url;
+                    $preview.html(
+                        '<img src="' + thumb + '" style="max-height:100px;border-radius:4px;display:block;margin-bottom:.4rem;">' +
+                        '<small>ID: ' + attachment.id + ' &mdash; ' + attachment.filename + '</small>'
+                    );
+                });
+
+                // Pre-select currently set attachment
+                var currentId = parseInt( $input.val(), 10 );
+                if ( currentId > 0 ) {
+                    var selection = frame.state().get('selection');
+                    var attachment = wp.media.attachment( currentId );
+                    attachment.fetch().then(function () {
+                        selection.add( attachment );
+                    });
+                }
+
+                frame.open();
+            });
+        }
+
     });
 
 })(jQuery);

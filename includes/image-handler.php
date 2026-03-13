@@ -1,6 +1,6 @@
 <?php
 /**
- * Die-Handschelle 2.0 A – Bild-Upload & Resize auf max. 450px Höhe
+ * Die-Handschelle 3.00 – Bild-Upload & Resize auf max. 450px Höhe
  *
  * DISCLAIMER:
  * Dieses Plugin dient ausschließlich der sachlichen Dokumentation öffentlich
@@ -14,9 +14,28 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 class Handschelle_Image_Handler {
 
-    public static function handle_upload_and_resize( $file_input_name ) {
+    /**
+     * Handles upload, optional rename to "{name}-{partei}.ext", resize and media-library insert.
+     *
+     * @param  string $file_input_name  $_FILES key
+     * @param  string $person_name      Person name – used for filename slug
+     * @param  string $partei           Party name  – appended to filename slug
+     * @return int    Attachment ID on success, 0 on failure / no file.
+     */
+    public static function handle_upload_and_resize( $file_input_name, $person_name = '', $partei = '' ) {
         if ( empty( $_FILES[ $file_input_name ]['name'] ) ) return 0;
         if ( ! function_exists( 'wp_handle_upload' ) ) require_once ABSPATH . 'wp-admin/includes/file.php';
+
+        // Rename to NAME-PARTEI.ext when person name is known
+        if ( ! empty( $person_name ) ) {
+            $ext   = strtolower( pathinfo( $_FILES[ $file_input_name ]['name'], PATHINFO_EXTENSION ) );
+            $parts = array_filter( array(
+                sanitize_title( $person_name ),
+                ! empty( $partei ) ? sanitize_title( $partei ) : '',
+            ) );
+            $slug = implode( '-', $parts );
+            $_FILES[ $file_input_name ]['name'] = $slug . ( $ext ? '.' . $ext : '' );
+        }
 
         $upload = wp_handle_upload( $_FILES[ $file_input_name ], array( 'test_form' => false ) );
         if ( isset( $upload['error'] ) || empty( $upload['file'] ) ) return 0;
