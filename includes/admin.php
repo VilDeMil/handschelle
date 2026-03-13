@@ -402,7 +402,20 @@ class Handschelle_Admin {
                 <h2>📋 Eintragsdetails</h2>
                 <div class="hs-form-grid">
                     <div class="hs-field"><label>Datum Eintrag</label><input type="date" name="datum_eintrag" value="<?php echo $v( 'datum_eintrag', date('Y-m-d') ); ?>" required></div>
-                    <div class="hs-field"><label>Name <span>(max. 50 Zeichen)</span></label><input type="text" name="name" maxlength="50" value="<?php echo $v('name'); ?>" placeholder="Vor- und Nachname" required></div>
+                    <div class="hs-field">
+                        <label>Name <span>(max. 50 Zeichen)</span></label>
+                        <input type="text" name="name" maxlength="50" value="<?php echo $v('name'); ?>" placeholder="Vor- und Nachname" required>
+                        <?php if ( $is_edit && $v('name') ) : ?>
+                        <div class="hs-search-buttons">
+                            <a href="<?php echo esc_url( 'https://www.google.com/search?q=' . urlencode( $entry->name ) ); ?>" target="_blank" rel="noopener" class="button button-secondary hs-search-btn">
+                                🔍 Suche mit GOOGLE
+                            </a>
+                            <a href="<?php echo esc_url( 'https://www.abgeordnetenwatch.de/profile?politician_search_keys=' . urlencode( $entry->name ) ); ?>" target="_blank" rel="noopener" class="button button-secondary hs-search-btn">
+                                🏛 Suche mit Abgeordnetenwatch
+                            </a>
+                        </div>
+                        <?php endif; ?>
+                    </div>
                     <div class="hs-field"><label>Beruf <span>(max. 50 Zeichen)</span></label><input type="text" name="beruf" maxlength="50" value="<?php echo $v('beruf'); ?>" placeholder="z.B. Politiker"></div>
                     <div class="hs-field hs-field-full">
                         <label>Bild</label>
