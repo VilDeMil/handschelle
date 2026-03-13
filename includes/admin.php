@@ -51,7 +51,7 @@ class Handschelle_Admin {
         switch ( $action ) {
             case 'add':
                 $data      = handschelle_sanitize_entry( $_POST );
-                $attach_id = Handschelle_Image_Handler::handle_upload_and_resize( 'bild_upload' );
+                $attach_id = Handschelle_Image_Handler::handle_upload_and_resize( 'bild_upload', $data['name'] ?? '', $data['partei'] ?? '' );
                 if ( $attach_id ) $data['bild'] = $attach_id;
                 Handschelle_Database::insert( $data );
                 $this->redirect( admin_url( 'admin.php?page=handschelle' ), 'Eintrag gespeichert – bitte freigeben.' );
@@ -61,7 +61,7 @@ class Handschelle_Admin {
                 $id = intval( $_POST['id'] ?? 0 );
                 if ( ! $id ) break;
                 $data      = handschelle_sanitize_entry( $_POST );
-                $attach_id = Handschelle_Image_Handler::handle_upload_and_resize( 'bild_upload' );
+                $attach_id = Handschelle_Image_Handler::handle_upload_and_resize( 'bild_upload', $data['name'] ?? '', $data['partei'] ?? '' );
                 if ( $attach_id ) $data['bild'] = $attach_id;
                 $data['freigegeben'] = isset( $_POST['freigegeben'] ) ? 1 : 0;
                 Handschelle_Database::update( $id, $data );
@@ -403,13 +403,28 @@ class Handschelle_Admin {
                     <div class="hs-field"><label>Beruf <span>(max. 50 Zeichen)</span></label><input type="text" name="beruf" maxlength="50" value="<?php echo $v('beruf'); ?>" placeholder="z.B. Politiker"></div>
                     <div class="hs-field hs-field-full">
                         <label>Bild</label>
-                        <?php if ( $is_edit && ! empty( $entry->bild ) ) :
-                            $img = handschelle_get_image_url( $entry->bild );
-                            if ( $img ) : ?><div class="hs-current-image"><img src="<?php echo esc_url($img); ?>" style="max-height:120px;border-radius:6px;"><br><small>ID: <?php echo esc_html($entry->bild); ?></small></div><?php endif;
-                        endif; ?>
-                        <input type="file" name="bild_upload" accept="image/*" class="hs-file-input">
-                        <small>Wird auf max. 450px Höhe skaliert. Oder Medienbibliothek-ID:</small>
-                        <input type="text" name="bild" placeholder="Medienbibliothek-ID" value="<?php echo $v('bild'); ?>">
+                        <div class="hs-media-picker">
+                            <?php $cur_img = $is_edit ? handschelle_get_image_url( $entry->bild ) : ''; ?>
+                            <div class="hs-media-preview" id="hs-media-preview-bild">
+                                <?php if ( $cur_img ) : ?>
+                                    <img src="<?php echo esc_url( $cur_img ); ?>" style="max-height:100px;border-radius:4px;display:block;margin-bottom:.4rem;">
+                                    <small>ID: <?php echo esc_html( $entry->bild ); ?></small>
+                                <?php endif; ?>
+                            </div>
+                            <div class="hs-media-picker-row">
+                                <input type="number" name="bild" id="hs-media-id-bild"
+                                       class="hs-media-id" placeholder="Medienbibliothek-ID"
+                                       value="<?php echo $v('bild'); ?>" style="width:160px;">
+                                <button type="button" class="button hs-media-btn"
+                                        data-target-id="hs-media-id-bild"
+                                        data-preview-id="hs-media-preview-bild">
+                                    🖼 Medienbibliothek
+                                </button>
+                                <span class="hs-media-sep">oder</span>
+                                <input type="file" name="bild_upload" accept="image/*" class="hs-file-input">
+                            </div>
+                            <small>Upload: wird auf max. 450&nbsp;px Höhe skaliert und in der Medienbibliothek gespeichert.</small>
+                        </div>
                     </div>
                 </div>
             </div>

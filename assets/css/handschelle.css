@@ -372,6 +372,18 @@
 .hs-filter-tab:not(.active) .hs-filter-count { background:#e9ecef; color:#555; }
 
 /* ================================================================
+   V3.0 – Media Library Picker
+================================================================ */
+.hs-media-picker { display:flex; flex-direction:column; gap:.55rem; }
+.hs-media-picker-row { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; }
+.hs-media-id { padding:.42rem .65rem; border:1.5px solid var(--hs-border); border-radius:var(--hs-radius); font-size:.88rem; font-family:var(--hs-font); background:#fafafa; color:#222; }
+.hs-media-id:focus { outline:none; border-color:var(--hs-accent); box-shadow:0 0 0 3px rgba(192,57,43,.1); }
+.hs-media-btn { white-space:nowrap; }
+.hs-media-sep { font-size:.8rem; color:var(--hs-muted); padding:0 .15rem; }
+.hs-media-preview img { max-height:100px; border-radius:4px; display:block; margin-bottom:.3rem; }
+.hs-media-preview small { display:block; font-size:.75rem; color:var(--hs-muted); }
+
+/* ================================================================
    V3.0 – Bulk Actions Bar
 ================================================================ */
 .hs-bulk-bar { display:flex; gap:.7rem; align-items:center; padding:.6rem 0 .8rem; flex-wrap:wrap; }
