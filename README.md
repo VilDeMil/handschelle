@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 3.08 |
+| **Version** | 3.09 |
 | **Autor** | Bernd K.R. Dorfmüller |
 | **E-Mail** | Info@die-handschelle.de |
 | **Website** | https://www.die-handschelle.de |
@@ -496,7 +496,7 @@ Copyright / contact block.
 Defined in `die-handschelle.php`:
 
 ```php
-HANDSCHELLE_VERSION     // '3.08'
+HANDSCHELLE_VERSION     // '3.09'
 HANDSCHELLE_PLUGIN_DIR  // Absolute path to plugin directory
 HANDSCHELLE_PLUGIN_URL  // URL to plugin directory
 HANDSCHELLE_DB_TABLE    // Table name suffix, e.g. 'die_handschelle'
@@ -657,7 +657,7 @@ File: `assets/css/handschelle.css`
     --hs-gold:     #f39c12;  /* Gold highlights */
     --hs-success:  #27ae60;  /* Green */
     --hs-muted:    #7f8c8d;  /* Muted gray */
-    --hs-bg:       #f4f6f8;  /* Page background */
+    --hs-bg:       #f0f0f0;  /* Page background (light grey) */
     --hs-card-bg:  #ffffff;  /* Card background */
 }
 ```
@@ -771,7 +771,7 @@ die-handschelle/
 - The **Edit page** is hidden from the admin sidebar but accessible via the ✏ button in the Overview table.
 - **Logged-in users** see an inline edit button on every entry card in the frontend — no need to use the admin backend.
 - The inline edit panel and admin form both include **Google, Qwant, DuckDuckGo, Bing, Abgeordnetenwatch** search buttons next to the name field.
-- All forms use **WordPress nonce verification** to prevent CSRF attacks.
+- All forms use **WordPress nonce verification** to prevent CSRF attacks. If nonce verification fails (e.g. after a long session or cached page), the user sees a visible error message (`⚠️ Fehler beim Speichern`) instead of a silent redirect.
 - All user input is sanitized with WordPress sanitization functions before writing to the database.
 - Social media icons are rendered as **inline SVG** with brand colors and hover effects — no external icon library required.
 - **Image uploads** are automatically renamed to `name-HA.ext` (e.g. `max-mustermann-HA.jpg`) using `sanitize_title()`.
@@ -781,6 +781,11 @@ die-handschelle/
 ---
 
 ## Release Notes
+
+### 3.09 *(2026-03-14)*
+- **Hintergrundfarbe**: `--hs-bg` auf `#f0f0f0` (neutrales Hellgrau) geändert; alle Eingabefelder und Dropdowns nutzen `var(--hs-bg)` statt #fafafa
+- **Bugfix – Neue Einträge nicht gespeichert**: Bei Nonce-Fehler (z. B. Cache) erhält der Nutzer jetzt eine sichtbare Fehlermeldung (`⚠️ Fehler beim Speichern. Bitte Seite neu laden…`) statt stiller Weiterleitung; `$wpdb->insert()`-Ergebnis wird geprüft — Erfolgsmeldung erscheint nur bei tatsächlich gespeichertem Eintrag; `datum_eintrag` fällt jetzt auch bei leerem String auf das aktuelle Datum zurück (`?:` statt `??`)
+- **Bugfix – Backup/Restore Feldzuordnung**: Im Restore-Code waren alle CSV-Spalten ab Index 4 um 2 Positionen verschoben (`geburtsort` und `geburtsdatum` wurden übersprungen); `bild`-ID wurde aus Spalte 4 (`geburtsort`) statt aus Spalte 6 gelesen → falsche Bildzuordnung; `geburtsort`, `geburtsdatum`, `sm_linkedin`, `sm_xing`, `sm_truth_social` wurden nie wiederhergestellt; `freigegeben` wurde aus Spalte 23 (`sm_wikipedia`) statt aus Spalte 28 gelesen — alles korrigiert
 
 ### 3.08 *(2026-03-14)*
 - **`[handschelle-asc]`**: Output is now horizontally centered (`justify-content: center`)
