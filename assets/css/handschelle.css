@@ -48,7 +48,7 @@
 .hs-field input[type="url"],
 .hs-field input[type="date"],
 .hs-field select,
-.hs-field textarea { width:100%; padding:.55rem .75rem; border:1.5px solid var(--hs-border); border-radius:calc(var(--hs-radius) - 2px); font-size:.9rem; font-family:var(--hs-font); background:#fafafa; transition:border-color .2s,box-shadow .2s; color:#222; }
+.hs-field textarea { width:100%; padding:.55rem .75rem; border:1.5px solid var(--hs-border); border-radius:calc(var(--hs-radius) - 2px); font-size:.9rem; font-family:var(--hs-font); background:var(--hs-bg); transition:border-color .2s,box-shadow .2s; color:#222; }
 .hs-field input:focus, .hs-field select:focus, .hs-field textarea:focus { outline:none; border-color:var(--hs-accent); box-shadow:0 0 0 3px rgba(192,57,43,.12); background:#fff; }
 .hs-file-input { padding:.4rem; font-size:.85rem; background:#fff; border:1.5px dashed var(--hs-border); border-radius:calc(var(--hs-radius) - 2px); cursor:pointer; }
 .hs-file-preview img { max-height:150px; margin-top:.5rem; border-radius:var(--hs-radius); border:2px solid var(--hs-border); display:block; }
@@ -119,7 +119,7 @@
 .hs-search-box { border-radius:var(--hs-radius); padding:1.5rem; margin-bottom:1.5rem; border:1px solid var(--hs-border); }
 .hs-search-title { margin:0 0 .9rem; font-size:1.05rem; font-weight:700; color:var(--hs-primary); }
 .hs-search-form { display:flex; gap:.8rem; flex-wrap:wrap; align-items:center; }
-.hs-select { padding:.55rem .75rem; border:1.5px solid var(--hs-border); border-radius:var(--hs-radius); font-size:.9rem; font-family:var(--hs-font); background:#fafafa; min-width:220px; cursor:pointer; transition:border-color .2s; }
+.hs-select { padding:.55rem .75rem; border:1.5px solid var(--hs-border); border-radius:var(--hs-radius); font-size:.9rem; font-family:var(--hs-font); background:var(--hs-bg); min-width:220px; cursor:pointer; transition:border-color .2s; }
 .hs-select:focus { outline:none; border-color:var(--hs-accent); }
 .hs-search-results { margin-top:1.5rem; border-top:2px solid var(--hs-border); padding-top:1.2rem; }
 .hs-search-results h4 { font-size:1rem; color:var(--hs-primary); margin:0 0 1rem; display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; }

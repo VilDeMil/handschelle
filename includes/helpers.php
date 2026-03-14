@@ -57,7 +57,7 @@ function handschelle_sanitize_entry( $post ) {
     $geburtsdatum_raw = sanitize_text_field( $post['geburtsdatum'] ?? '' );
     $geburtsdatum     = ( $geburtsdatum_raw && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $geburtsdatum_raw ) ) ? $geburtsdatum_raw : null;
     return array(
-        'datum_eintrag'   => sanitize_text_field( $post['datum_eintrag']   ?? date( 'Y-m-d' ) ),
+        'datum_eintrag'   => sanitize_text_field( $post['datum_eintrag']   ?: date( 'Y-m-d' ) ),
         'name'            => substr( sanitize_text_field( $post['name']           ?? '' ), 0, 50 ),
         'beruf'           => substr( sanitize_text_field( $post['beruf']          ?? '' ), 0, 50 ),
         'geburtsort'      => substr( sanitize_text_field( $post['geburtsort']     ?? '' ), 0, 100 ),

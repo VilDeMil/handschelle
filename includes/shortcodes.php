@@ -63,6 +63,8 @@ class Handschelle_Shortcodes {
 
                 <?php if ( ! empty( $_GET['hs_success'] ) ) : ?>
                     <div class="hs-alert hs-alert-success">✅ Danke! Eintrag empfangen!</div>
+                <?php elseif ( ! empty( $_GET['hs_error'] ) ) : ?>
+                    <div class="hs-alert hs-alert-error">⚠️ Fehler beim Speichern. Bitte Seite neu laden und erneut versuchen.</div>
                 <?php endif; ?>
 
                 <form method="post" enctype="multipart/form-data" class="hs-form" id="hs-eingabe-form">
@@ -161,17 +163,21 @@ class Handschelle_Shortcodes {
         if ( empty( $_POST['hs_submit'] ) ) return;
 
         if ( ! isset( $_POST['hs_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['hs_nonce'] ) ), 'hs_frontend_submit' ) ) {
-            wp_safe_redirect( $this->return_url() );
+            wp_safe_redirect( add_query_arg( 'hs_error', '1', $this->return_url() ) );
             exit;
         }
 
         $data      = handschelle_sanitize_entry( $_POST );
         $attach_id = Handschelle_Image_Handler::handle_upload_and_resize( 'bild_upload', $data['name'] ?? '', $data['partei'] ?? '' );
         if ( $attach_id ) $data['bild'] = $attach_id;
-        Handschelle_Database::insert( $data );
+        $inserted = Handschelle_Database::insert( $data );
 
         // PRG-Redirect – verhindert Doppel-Submit bei F5
-        wp_safe_redirect( add_query_arg( 'hs_success', '1', $this->return_url() ) );
+        if ( $inserted ) {
+            wp_safe_redirect( add_query_arg( 'hs_success', '1', $this->return_url() ) );
+        } else {
+            wp_safe_redirect( add_query_arg( 'hs_error', '1', $this->return_url() ) );
+        }
         exit;
     }
 
