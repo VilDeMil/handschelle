@@ -784,6 +784,7 @@ die-handschelle/
 
 ### 6.0 *(2026-03-14)*
 - **Dropdown styling**: Text color set to black (`#000`), background set to white (`#fff`), transparency removed — applies to all select elements (`.hs-select`, `.hs-field select`, `.hs-edit-form select`, `.hs-bulk-select`)
+- **Eintrag melden**: Every card now has a `⚠️ Eintrag melden!` mailto link in the footer — opens a pre-addressed e-mail to `info@die-handschelle.de` with subject `Meldung - <Name> - <Partei>`
 
 ### 3.09 *(2026-03-14)*
 - **Hintergrundfarbe**: `--hs-bg` auf `#f0f0f0` (neutrales Hellgrau) geändert; alle Eingabefelder und Dropdowns nutzen `var(--hs-bg)` statt #fafafa

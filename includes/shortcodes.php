@@ -931,6 +931,10 @@ class Handschelle_Shortcodes {
                     $footer_links[] = '<a href="'.esc_url($e->$field).'" target="_blank" rel="noopener noreferrer" class="hs-sm-link" data-sm="'.esc_attr($key).'" title="'.esc_attr($label).'">'.$icon.' '.esc_html($label).'</a>';
                 }
             }
+            // Eintrag melden
+            $melden_subject = 'Meldung - ' . $e->name . ' - ' . $e->partei;
+            $melden_href = 'mailto:info@die-handschelle.de?subject=' . rawurlencode( $melden_subject );
+            $footer_links[] = '<a href="' . esc_attr( $melden_href ) . '" class="hs-sm-link hs-melden-link" data-sm="melden" title="Eintrag melden">⚠️ Eintrag melden!</a>';
             ?>
             <div class="hs-card-footer"><?php echo implode( '', $footer_links ); ?></div>
             <div class="hs-card-date">Eingetragen am <?php echo esc_html( date_i18n('d.m.Y', strtotime($e->datum_eintrag)) ); ?></div>
