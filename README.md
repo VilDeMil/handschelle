@@ -784,8 +784,8 @@ die-handschelle/
 
 ### 6.0 *(2026-03-14)*
 - **Dropdown styling**: Text color set to black (`#000`), background set to white (`#fff`), transparency removed — applies to all select elements (`.hs-select`, `.hs-field select`, `.hs-edit-form select`, `.hs-bulk-select`)
-- **Eintrag melden**: Every card now has a `⚠️ Eintrag melden!` mailto link in the footer — opens a pre-addressed e-mail to `info@die-handschelle.de` with subject `Meldung - <Name> - <Partei>`
-- **Bilder-Hover Zoom**: Gallery images (`[handschelle-bilder]`) expand to 600 px height (proportional width) on hover via CSS transition; base size remains 300 px
+- **Eintrag melden**: Every card now has a `⚠️ Eintrag melden!` mailto link in the footer — opens a pre-addressed e-mail to `info@hanschelle.com` with subject `Meldung - <Name> - <Partei>`
+- **Bilder-Galerie**: Hover tooltip and click-link removed from gallery images — images display as plain `<img>` tags with name/crime captions only
 - **Edit-Button Sichtbarkeit**: Inline-edit button and panel on frontend cards are now visible only to users with role **Author or higher** (`publish_posts` capability) — Subscribers and Contributors no longer see the edit controls
 
 ### 3.09 *(2026-03-14)*
