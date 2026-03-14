@@ -195,7 +195,7 @@ class Handschelle_Shortcodes {
     ================================================================ */
     public function early_frontend_edit() {
         if ( empty( $_POST['hs_edit_submit'] ) ) return;
-        if ( ! is_user_logged_in() ) return;
+        if ( ! current_user_can( 'publish_posts' ) ) return; // Author or higher
 
         if ( ! isset( $_POST['hs_edit_nonce'] ) ||
              ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['hs_edit_nonce'] ) ), 'hs_frontend_edit' ) ) {
@@ -856,7 +856,7 @@ class Handschelle_Shortcodes {
             'Ermittlungen laufen' => 'hs-status-ermittlung',
             'Eingestellt'         => 'hs-status-eingestellt',
         );
-        $is_logged_in = is_user_logged_in();
+        $is_logged_in = current_user_can( 'publish_posts' ); // Author or higher
         $is_admin     = current_user_can( 'manage_options' );
         $edited       = isset( $_GET['hs_edited'] ) && intval( $_GET['hs_edited'] ) === intval( $e->id );
         ob_start();
@@ -931,6 +931,10 @@ class Handschelle_Shortcodes {
                     $footer_links[] = '<a href="'.esc_url($e->$field).'" target="_blank" rel="noopener noreferrer" class="hs-sm-link" data-sm="'.esc_attr($key).'" title="'.esc_attr($label).'">'.$icon.' '.esc_html($label).'</a>';
                 }
             }
+            // Eintrag melden
+            $melden_subject = 'Meldung - ' . $e->name . ' - ' . $e->partei;
+            $melden_href = 'mailto:info@hanschelle.com?subject=' . rawurlencode( $melden_subject );
+            $footer_links[] = '<a href="' . esc_attr( $melden_href ) . '" class="hs-sm-link hs-melden-link" data-sm="melden" title="Eintrag melden">⚠️ Eintrag melden!</a>';
             ?>
             <div class="hs-card-footer"><?php echo implode( '', $footer_links ); ?></div>
             <div class="hs-card-date">Eingetragen am <?php echo esc_html( date_i18n('d.m.Y', strtotime($e->datum_eintrag)) ); ?></div>
@@ -1077,39 +1081,13 @@ class Handschelle_Shortcodes {
                         <?php foreach ( $mit_bild as $e ) :
                             $img_url  = handschelle_get_image_url( $e->bild );
                             if ( ! $img_url ) continue;
-                            $name_url = add_query_arg( 'hs_name', urlencode( $e->name ), $link_base );
                         ?>
                         <div class="hs-bild-item">
                             <div class="hs-bild-img-wrap">
-                                <a href="<?php echo esc_url( $name_url ); ?>" title="<?php echo esc_attr( $e->name ); ?> – Details anzeigen">
                                 <img src="<?php echo esc_url( $img_url ); ?>"
                                      alt="<?php echo esc_attr( $e->name ); ?>"
-                                     style="max-width:300px;max-height:300px;width:auto;height:auto;display:block;"></a>
-                                <div class="hs-bild-tooltip" role="tooltip">
-                                    <strong><?php echo esc_html( $e->name ); ?></strong>
-                                    <?php if ( ! empty( $e->partei ) ) : ?>
-                                        <span><?php echo esc_html( $e->partei ); ?></span>
-                                    <?php endif; ?>
-                                    <?php if ( ! empty( $e->beruf ) ) : ?>
-                                        <span><?php echo esc_html( $e->beruf ); ?></span>
-                                    <?php endif; ?>
-                                    <?php if ( ! empty( $e->parlament ) ) : ?>
-                                        <span><?php echo esc_html( $e->parlament );
-                                            echo ! empty( $e->parlament_name ) ? ' – ' . esc_html( $e->parlament_name ) : ''; ?></span>
-                                    <?php endif; ?>
-                                    <?php if ( ! empty( $e->straftat ) ) : ?>
-                                        <span class="hs-bild-tooltip-straftat"><?php echo esc_html( $e->straftat ); ?></span>
-                                    <?php endif; ?>
-                                    <?php if ( ! empty( $e->status_straftat ) ) : ?>
-                                        <span><?php echo esc_html( $e->status_straftat ); ?></span>
-                                    <?php endif; ?>
-                                    <?php if ( ! empty( $e->urteil ) ) : ?>
-                                        <span>Urteil: <?php echo esc_html( $e->urteil ); ?></span>
-                                    <?php endif; ?>
-                                    <?php if ( ! empty( $e->aktenzeichen ) ) : ?>
-                                        <span>Az: <?php echo esc_html( $e->aktenzeichen ); ?></span>
-                                    <?php endif; ?>
-                                </div>
+                                     class="hs-bild-img"
+                                     style="max-height:300px;width:auto;height:auto;display:block;">
                             </div>
                             <p class="hs-bild-caption"><?php echo esc_html( $e->name ); ?></p>
                             <?php if ( ! empty( $e->straftat ) ) : ?>

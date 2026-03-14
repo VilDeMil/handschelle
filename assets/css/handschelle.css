@@ -485,7 +485,6 @@
 .hs-bild-tooltip strong { display:block; margin-bottom:5px; font-size:.92em; }
 .hs-bild-tooltip span   { display:block; font-size:.78em; opacity:.9; line-height:1.45; }
 .hs-bild-tooltip .hs-bild-tooltip-straftat { color:var(--hs-gold); margin-top:5px; opacity:1; }
-.hs-bild-img-wrap:hover .hs-bild-tooltip { display:block; }
 
 /* ================================================================
    V3.0 – Bulk Actions Bar
