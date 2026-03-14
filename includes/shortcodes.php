@@ -46,6 +46,8 @@ class Handschelle_Shortcodes {
         add_shortcode( 'handschelle-karte',            array( $this, 'sc_karte' ) );
         add_shortcode( 'handschelle-asc',              array( $this, 'sc_asc' ) );
         add_shortcode( 'handschelle-asc-link',         array( $this, 'sc_asc_link' ) );
+        add_shortcode( 'wordcloud-name',               array( $this, 'sc_wordcloud_name' ) );
+        add_shortcode( 'wordcloud-urteil',             array( $this, 'sc_wordcloud_urteil' ) );
 
         // Submit früh verarbeiten – BEVOR Header gesendet werden
         add_action( 'init', array( $this, 'early_frontend_submit' ) );
@@ -1168,6 +1170,92 @@ class Handschelle_Shortcodes {
     }
     private function svg_truth_social() {
         return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="#FF6600"><path d="M5 4v3h5.5v12h3V7H19V4z"/></svg>';
+    }
+
+    /* ================================================================
+       [wordcloud-name] – Wordcloud der Namen mit Partei
+    ================================================================ */
+    public function sc_wordcloud_name( $atts ) {
+        global $wpdb;
+        $table = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
+        $rows  = $wpdb->get_results(
+            "SELECT name, partei, COUNT(*) AS cnt
+             FROM `{$table}`
+             WHERE freigegeben = 1
+             GROUP BY name
+             ORDER BY cnt DESC"
+        );
+        if ( empty( $rows ) ) return '<p class="hs-wordcloud-empty">Keine Daten vorhanden.</p>';
+
+        $counts  = array_column( (array) $rows, 'cnt' );
+        $max     = max( $counts );
+        $min_em  = 0.85;
+        $max_em  = 2.8;
+        $colors  = array( '#1a1a2e', '#c0392b', '#e74c3c', '#f39c12', '#2980b9', '#27ae60', '#8e44ad' );
+
+        ob_start();
+        echo '<div class="hs-wordcloud">';
+        foreach ( $rows as $i => $r ) {
+            $size  = $max > 1
+                ? $min_em + ( $r->cnt / $max ) * ( $max_em - $min_em )
+                : ( $min_em + $max_em ) / 2;
+            $color = $colors[ $i % count( $colors ) ];
+            $label = esc_html( $r->name );
+            if ( ! empty( $r->partei ) ) {
+                $label .= ' <span class="hs-wc-partei">(' . esc_html( $r->partei ) . ')</span>';
+            }
+            printf(
+                '<span class="hs-wordcloud-item" style="font-size:%.2fem;color:%s;" title="%s (%d×)">%s</span>',
+                $size,
+                esc_attr( $color ),
+                esc_attr( $r->name ),
+                intval( $r->cnt ),
+                $label
+            );
+        }
+        echo '</div>';
+        return ob_get_clean();
+    }
+
+    /* ================================================================
+       [wordcloud-urteil] – Wordcloud der Urteile
+    ================================================================ */
+    public function sc_wordcloud_urteil( $atts ) {
+        global $wpdb;
+        $table = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
+        $rows  = $wpdb->get_results(
+            "SELECT urteil, COUNT(*) AS cnt
+             FROM `{$table}`
+             WHERE freigegeben = 1 AND urteil != ''
+             GROUP BY urteil
+             ORDER BY cnt DESC"
+        );
+        if ( empty( $rows ) ) return '<p class="hs-wordcloud-empty">Keine Urteile vorhanden.</p>';
+
+        $counts  = array_column( (array) $rows, 'cnt' );
+        $max     = max( $counts );
+        $min_em  = 0.85;
+        $max_em  = 2.8;
+        $colors  = array( '#1a1a2e', '#c0392b', '#e74c3c', '#f39c12', '#2980b9', '#27ae60', '#8e44ad' );
+
+        ob_start();
+        echo '<div class="hs-wordcloud">';
+        foreach ( $rows as $i => $r ) {
+            $size  = $max > 1
+                ? $min_em + ( $r->cnt / $max ) * ( $max_em - $min_em )
+                : ( $min_em + $max_em ) / 2;
+            $color = $colors[ $i % count( $colors ) ];
+            printf(
+                '<span class="hs-wordcloud-item" style="font-size:%.2fem;color:%s;" title="%s (%d×)">%s</span>',
+                $size,
+                esc_attr( $color ),
+                esc_attr( $r->urteil ),
+                intval( $r->cnt ),
+                esc_html( $r->urteil )
+            );
+        }
+        echo '</div>';
+        return ob_get_clean();
     }
 }
 

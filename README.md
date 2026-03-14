@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 6.0 |
+| **Version** | 6.2 |
 | **Autor** | Bernd K.R. Dorfmüller |
 | **E-Mail** | Info@die-handschelle.de |
 | **Website** | https://www.die-handschelle.de |
@@ -46,7 +46,9 @@ Bitte unterstützt das Projekt, indem ihr dabei helft, Straftäter in unseren Pa
 4. [Code Reference](#code-reference)
 5. [Plugin Structure](#plugin-structure)
 6. [Important Notes](#important-notes)
-7. [Release Notes](#release-notes)
+7. [Instructions for AI / LLM](#instructions-for-ai--llm)
+8. [Recreate from Scratch](#recreate-from-scratch)
+9. [Release Notes](#release-notes)
 
 ---
 
@@ -128,6 +130,8 @@ All shortcodes output HTML and can be placed on any WordPress page or post.
 | `[handschelle-karte]` | Single entry card by ID: `[handschelle-karte id="5"]` |
 | `[handschelle-asc]` | Horizontal centered list: Partei (Anzahl), alphabetical, no header |
 | `[handschelle-disclaimer]` | Copyright / contact notice |
+| `[wordcloud-name]` | Word cloud of person names (sized by entry count) — shows Name (Partei) |
+| `[wordcloud-urteil]` | Word cloud of verdicts (`urteil`) sized by frequency |
 
 ---
 
@@ -496,7 +500,7 @@ Copyright / contact block.
 Defined in `die-handschelle.php`:
 
 ```php
-HANDSCHELLE_VERSION     // '6.0'
+HANDSCHELLE_VERSION     // '6.2'
 HANDSCHELLE_PLUGIN_DIR  // Absolute path to plugin directory
 HANDSCHELLE_PLUGIN_URL  // URL to plugin directory
 HANDSCHELLE_DB_TABLE    // Table name suffix, e.g. 'die_handschelle'
@@ -780,9 +784,346 @@ die-handschelle/
 
 ---
 
+## Instructions for AI / LLM
+
+> This section is written for AI assistants (Claude, GPT, Gemini, etc.) that contribute to this codebase. Follow these rules every time you make changes.
+
+### Version Bumping
+
+**Bump the version by `0.1` with every commit / merge.**
+
+Update the version string in **all three places** — they must always be in sync:
+
+| File | Location | Example |
+|---|---|---|
+| `die-handschelle.php` | `* Version:` header comment (line ~6) | `* Version:     6.2` |
+| `die-handschelle.php` | `HANDSCHELLE_VERSION` constant (line ~24) | `define( 'HANDSCHELLE_VERSION', '6.2' );` |
+| `includes/admin.php` | `<span class="hs-version">` in admin header | `<span class="hs-version">6.2</span>` |
+| `README.md` | Version row in the header table | `\| **Version** \| 6.2 \|` |
+
+**How to calculate the new version:**
+Take the current version shown in `README.md` → add `0.1` → round to one decimal place.
+Examples: `6.1 → 6.2`, `6.9 → 7.0`, `7.0 → 7.1`.
+
+### Adding a Release Note
+
+Every commit must add a bullet point under the matching version heading in the **Release Notes** section of `README.md`:
+
+```markdown
+### 6.2 *(YYYY-MM-DD)*
+- **Feature name**: Short description of what changed and why.
+```
+
+If the version heading already exists (e.g. multiple changes in one session), append bullet points to it.
+
+### Shortcode Checklist
+
+When adding a new shortcode:
+
+1. Register it in `Handschelle_Shortcodes::__construct()` in `includes/shortcodes.php`
+2. Implement the method in the same class
+3. Add CSS in `assets/css/handschelle.css`
+4. Add a row to the **Shortcodes Overview** table in `README.md`
+5. Add a detailed section under `## Shortcodes` in `README.md`
+
+### Database / Schema Changes
+
+When adding a new column:
+
+1. Add it to `Handschelle_Database::create_table()` in `includes/database.php`
+2. Add it to `Handschelle_Database::maybe_upgrade_table()` so existing installs migrate automatically
+3. Update the **Fields / Database Schema** table in `README.md`
+
+### General Rules
+
+- **Never skip the version bump** — every push must increment the version.
+- **No destructive migrations** — `maybe_upgrade_table()` may only add columns, never drop or rename them.
+- All queries use `$wpdb` prepared statements — never concatenate user input into SQL.
+- All output uses `esc_html()` / `esc_url()` / `esc_attr()` — never echo raw data.
+- New admin pages must be added to the **Admin Menu Structure** table in `README.md`.
+- Keep German labels in UI, English in code (variable names, comments, README).
+
+---
+
+## Recreate from Scratch
+
+> Paste the prompt below into a new AI chat session to rebuild this plugin from scratch.
+
+---
+
+```
+Build me a WordPress plugin called "Die-Handschelle" — a database of crimes
+committed by political mandate holders (elected officials, MPs, councillors).
+
+────────────────────────────────────────────────────────────────
+GOAL
+────────────────────────────────────────────────────────────────
+A self-contained WordPress plugin that:
+- Stores entries in a custom DB table (not posts/CPT)
+- Lets visitors submit new entries via a frontend form
+- Requires admin approval before entries go public
+- Displays entries as responsive cards with search/filter
+- Has a full wp-admin backend for CRUD, CSV import/export,
+  image management, backup/restore, and DB maintenance
+
+────────────────────────────────────────────────────────────────
+FILE STRUCTURE
+────────────────────────────────────────────────────────────────
+die-handschelle/
+├── die-handschelle.php           ← main plugin file
+├── includes/
+│   ├── helpers.php               ← parliament list, sanitizer, helpers
+│   ├── database.php              ← Handschelle_Database (static CRUD class)
+│   ├── image-handler.php         ← Handschelle_Image_Handler (upload + GD resize)
+│   ├── admin.php                 ← Handschelle_Admin (all WP admin pages)
+│   └── shortcodes.php            ← Handschelle_Shortcodes (all shortcodes)
+└── assets/
+    ├── css/handschelle.css       ← full stylesheet, CSS custom properties
+    └── js/handschelle.js         ← frontend + admin JS (jQuery)
+
+────────────────────────────────────────────────────────────────
+DATABASE TABLE:  {prefix}die_handschelle  (32 fields)
+────────────────────────────────────────────────────────────────
+Core:      id, datum_eintrag, erstellt_am, geaendert_am
+Person:    name (VARCHAR 50, required), beruf (50), geburtsort (100),
+           geburtsdatum (DATE), bild (TEXT – WP attachment ID or URL),
+           partei (50), aufgabe_partei (100),
+           parlament (VARCHAR 100 – see list below),
+           parlament_name (50), status_aktiv (TINYINT, default 1)
+Crime:     straftat (VARCHAR 200, required),
+           status_straftat (VARCHAR 50: "Ermittlungen laufen" |
+             "Verurteilt" | "Eingestellt"),
+           urteil (50), aktenzeichen (50),
+           link_quelle (TEXT), bemerkung (TEXT)
+Publish:   freigegeben (TINYINT, default 0)
+Social:    sm_facebook, sm_youtube, sm_personal, sm_twitter,
+           sm_homepage, sm_wikipedia, sm_linkedin, sm_xing,
+           sm_truth_social, sm_sonstige  (all TEXT)
+Indexes:   idx_freigegeben, idx_name, idx_partei
+
+parlament options (23):
+  Europäisches Parlament, Bundestag, Bundesrat,
+  Landtag Baden-Württemberg, Landtag Bayern (Bayerischer Landtag),
+  Abgeordnetenhaus Berlin, Brandenburgischer Landtag,
+  Bürgerschaft Bremen, Bürgerschaft Hamburg, Hessischer Landtag,
+  Landtag Mecklenburg-Vorpommern, Niedersächsischer Landtag,
+  Landtag Nordrhein-Westfalen, Landtag Rheinland-Pfalz,
+  Landtag des Saarlandes, Sächsischer Landtag,
+  Landtag Sachsen-Anhalt, Schleswig-Holsteinischer Landtag,
+  Thüringer Landtag, Stadtrat / Gemeinderat, Kreistag,
+  Bezirkstag, Sonstiges
+
+────────────────────────────────────────────────────────────────
+SHORTCODES  (all in Handschelle_Shortcodes class)
+────────────────────────────────────────────────────────────────
+[handschelle]
+  Public submission form. Saves with freigegeben=0.
+  Fields: all person + crime + social fields, photo upload.
+  Submit handler runs on 'init' hook (PRG pattern).
+  Nonce verified; on failure show visible error, no silent redirect.
+
+[handschelle-anzeige partei="" name="" limit="0"]
+  Responsive card grid of approved entries.
+  URL params: hs_search (full-text), hs_paged (pagination).
+  limit=0 → show all (no pagination).
+
+[handschelle-karte id="X"]
+  Single entry card by DB id. Approved only.
+
+[handschelle-suche]
+  Full-text search input + auto-submit party dropdown +
+  auto-submit name dropdown. Combine with [handschelle-anzeige].
+
+[handschelle-partei]   Party dropdown only.
+[handschelle-name]     Name dropdown only + search-engine buttons.
+
+[handschelle-statistik]          Party stats table + bar chart, party names link to ?hs_partei=
+[handschelle-statistik-nolink]   Same but no links.
+[handschelle-statistik-partei]   Table: party → count (links to ?hs_name_partei=)
+[handschelle-statistik-name]     Table: name → count
+[handschelle-statistik-ol]       Ordered list: party – distinct name count
+
+[handschelle-name-anzeige]   Name dropdown + cards for selected person
+[handschelle-name-partei]    Party dropdown + cards for selected party
+
+[handschelle-bilder link=""]
+  Gallery of entries with photos. Plain <img> tags, no links, no hover.
+  Name + Straftat as captions. max-height 300px, width auto.
+
+[handschelle-asc]
+  Horizontal centred list: Partei (Anzahl), A→Z, small font.
+
+[handschelle-disclaimer]
+  Copyright block: Die-Handschelle © 2026, tagline, email, website,
+  Buy-Me-A-Coffee link.
+
+[wordcloud-name]
+  Flex word cloud of person names. Font size ∝ entry count (0.85em–2.8em).
+  Shows "Name (Partei)". 7-colour palette cycling. Hover: scale(1.1).
+
+[wordcloud-urteil]
+  Flex word cloud of distinct urteil values. Same sizing logic.
+  Only entries where urteil != '' are included.
+
+────────────────────────────────────────────────────────────────
+ENTRY CARD  (render_card method, reused by all display shortcodes)
+────────────────────────────────────────────────────────────────
+Header (dark bg): profile photo (circle, 88px, links to ?hs_name=),
+  name, profession, birth date + calculated age, birth place,
+  party + role badge, parliament.
+Body: crime description, status badge
+  (Verurteilt=red / Ermittlungen laufen=orange / Eingestellt=grey),
+  verdict, case number, source link, notes.
+Footer: Quelle · Google · Qwant · DuckDuckGo · Bing ·
+  Abgeordnetenwatch · social media icons (inline SVG, brand colours)
+  · ⚠️ Eintrag melden! (mailto:info@hanschelle.com?subject=Meldung - NAME - PARTEI)
+Date: "Eingetragen am DD.MM.YYYY"
+Edit button: visible only to users with publish_posts capability
+  (Author, Editor, Administrator). Opens inline collapsible edit panel.
+  Same panel includes search-engine buttons next to name field.
+
+────────────────────────────────────────────────────────────────
+IMAGE HANDLING
+────────────────────────────────────────────────────────────────
+- GD library required (check with extension_loaded('gd'))
+- Upload via Handschelle_Image_Handler::handle_upload_and_resize()
+- Rename to "{sanitize_title(name)}-HA.{ext}" (e.g. max-mustermann-HA.jpg)
+- Resize to max height 450px, preserve aspect ratio, preserve PNG/GIF transparency
+- Register as WP media attachment, store attachment ID in bild field
+- Admin image field: WP Media Library picker (wp.media modal) OR direct upload
+- handschelle_get_image_url($bild) resolves attachment ID or URL to display URL
+
+────────────────────────────────────────────────────────────────
+ADMIN BACKEND  (Handschelle_Admin class)
+────────────────────────────────────────────────────────────────
+Menu: Die Handschelle
+  ├── Übersicht          Filter tabs (Alle / Ausstehend / Freigegeben + counts).
+  │                      Table: checkbox, name, partei, straftat, status, age,
+  │                      datum, actions (✏ Bearbeiten / ✅ Freigeben / 🗑 Löschen).
+  │                      Bulk actions: freigeben / sperren / löschen.
+  ├── + Neuer Eintrag    Full add form.
+  ├── (Bearbeiten)       Hidden from sidebar; full edit form + search buttons.
+  ├── Import / Export    CSV download (UTF-8 BOM, semicolon) + CSV upload/import.
+  ├── Bilder             List of media images with ZIP export + ZIP import.
+  ├── Backup & Restore   ZIP download (CSV + images/ + bild-map.json for ID remapping).
+  │                      Restore: upload ZIP → truncate → re-import with ID remapping.
+  │                      Requires confirmation checkbox.
+  └── Datenbank          Truncate / Recreate / Drop table buttons.
+
+────────────────────────────────────────────────────────────────
+DATABASE CLASS  Handschelle_Database (all static, all $wpdb prepared)
+────────────────────────────────────────────────────────────────
+create_table()                  called on register_activation_hook
+maybe_upgrade_table()           called on plugins_loaded; adds missing columns via dbDelta; never drops
+get_all($args)                  freigegeben, partei, name, search, orderby, order, limit, offset
+get_one($id)
+insert($data)                   always sets freigegeben=0; returns new ID
+update($id, $data)
+delete($id)
+count_all($args)
+get_distinct_parteien()
+get_distinct_namen()
+truncate_table() / drop_table() / recreate_table()
+
+────────────────────────────────────────────────────────────────
+CSV FORMAT
+────────────────────────────────────────────────────────────────
+UTF-8 with BOM, semicolon delimiters (Excel-compatible).
+32 columns in this order:
+id · datum_eintrag · name · beruf · geburtsort · geburtsdatum · bild ·
+partei · aufgabe_partei · parlament · parlament_name · status_aktiv ·
+straftat · urteil · link_quelle · aktenzeichen · bemerkung · status_straftat ·
+sm_facebook · sm_youtube · sm_personal · sm_twitter · sm_homepage ·
+sm_wikipedia · sm_sonstige · sm_linkedin · sm_xing · sm_truth_social ·
+freigegeben · erstellt_am · geaendert_am
+Import is header-based (reads first row for column order) → backward-compatible
+with old CSVs. id / erstellt_am / geaendert_am are auto-generated on import.
+
+────────────────────────────────────────────────────────────────
+CSS DESIGN SYSTEM  (assets/css/handschelle.css)
+────────────────────────────────────────────────────────────────
+:root {
+  --hs-primary:  #1a1a2e;   /* dark navy */
+  --hs-accent:   #c0392b;   /* red */
+  --hs-accent-h: #e74c3c;   /* red hover */
+  --hs-gold:     #f39c12;   /* gold */
+  --hs-success:  #27ae60;   /* green */
+  --hs-muted:    #7f8c8d;   /* grey */
+  --hs-bg:       #f0f0f0;   /* light grey */
+  --hs-card-bg:  #ffffff;
+}
+All selects: background #fff, color #000 (no transparency).
+Card grid: CSS Grid, responsive, min-width 300px columns.
+Prefix all classes with .hs- to avoid theme conflicts.
+No external icon or font libraries — inline SVG for all brand icons.
+
+────────────────────────────────────────────────────────────────
+JAVASCRIPT  (assets/js/handschelle.js, jQuery, frontend + admin)
+────────────────────────────────────────────────────────────────
+- Character counter for <textarea maxlength> inside .hs-form
+- Image preview for <input type="file" class="hs-file-input">
+- Auto-submit on <select class="hs-select"> change
+- Delete confirmation on .hs-btn-delete
+- Required field validation on #hs-eingabe-form submit
+- Alert fade-in for .hs-alert on page load
+- Smooth scroll to URL hash on page load
+- Scroll to ?hs_edited=ID after save
+- ESC key closes inline edit panel
+- WP Media Library modal on click of .hs-media-btn (admin only)
+Localised object: handschelle_ajax.ajax_url, handschelle_ajax.nonce
+
+────────────────────────────────────────────────────────────────
+SECURITY REQUIREMENTS
+────────────────────────────────────────────────────────────────
+- All forms: wp_nonce_field() + wp_verify_nonce(); on failure show
+  "⚠️ Fehler beim Speichern. Bitte Seite neu laden…" — no silent redirect
+- All DB queries: $wpdb prepared statements only, never concatenate user input
+- All output: esc_html() / esc_url() / esc_attr() everywhere
+- All input: sanitize_text_field() / sanitize_url() / wp_kses_post()
+  via handschelle_sanitize_entry($_POST)
+- Inline edit + early_frontend_edit(): require current_user_can('publish_posts')
+- Admin pages: require current_user_can('manage_options')
+- File uploads: validate mime type and file extension
+
+────────────────────────────────────────────────────────────────
+VERSION CONVENTION
+────────────────────────────────────────────────────────────────
+Start at 6.2. Bump by 0.1 with every commit.
+Update in 4 places simultaneously:
+  die-handschelle.php  → * Version: X.Y
+  die-handschelle.php  → define('HANDSCHELLE_VERSION', 'X.Y')
+  includes/admin.php   → <span class="hs-version">X.Y</span>
+  README.md            → | **Version** | X.Y |
+Add a release note entry for each version in README.md ## Release Notes.
+
+────────────────────────────────────────────────────────────────
+IMPORTANT BEHAVIOURS
+────────────────────────────────────────────────────────────────
+- New submissions always saved with freigegeben=0; admin must approve
+- datum_eintrag defaults to today; falls back to today if empty string
+- $wpdb->insert() result is checked; success message only on actual save
+- maybe_upgrade_table() only adds columns — never drops or renames
+- Backup restore: truncates table, then re-imports, remaps bild IDs via bild-map.json
+- German UI labels everywhere; English variable names and code comments
+- Plugin integrates neutrally into any theme (no forced background colours
+  on frontend wrappers)
+```
+
+---
+
 ## Release Notes
 
+### 6.2 *(2026-03-14)*
+- **Recreate from Scratch**: Added `## Recreate from Scratch` section to README — a complete, self-contained prompt for rebuilding the entire plugin with an AI assistant from a blank slate
+- **ToC**: Added entry for new section; fixed stale `HANDSCHELLE_VERSION // '6.0'` reference in Code Reference
+
+### 6.1 *(2026-03-14)*
+- **Version policy**: Version is now bumped by `0.1` per commit (was `0.01`); old comment in `die-handschelle.php` corrected accordingly
+- **LLM Instructions**: Added `## Instructions for AI / LLM` section to README with version-bump rules, shortcode checklist, schema rules, and general coding standards
+
 ### 6.0 *(2026-03-14)*
+- **`[wordcloud-name]`**: Word cloud of all approved person names — font size proportional to entry count, shows Name (Partei), tooltip shows exact count; pure CSS/HTML, no external library
+- **`[wordcloud-urteil]`**: Word cloud of all distinct verdicts (`urteil`) — font size proportional to frequency; only entries with a non-empty verdict are included
 - **Dropdown styling**: Text color set to black (`#000`), background set to white (`#fff`), transparency removed — applies to all select elements (`.hs-select`, `.hs-field select`, `.hs-edit-form select`, `.hs-bulk-select`)
 - **Eintrag melden**: Every card now has a `⚠️ Eintrag melden!` mailto link in the footer — opens a pre-addressed e-mail to `info@hanschelle.com` with subject `Meldung - <Name> - <Partei>`
 - **Bilder-Galerie**: Hover tooltip and click-link removed from gallery images — images display as plain `<img>` tags with name/crime captions only
