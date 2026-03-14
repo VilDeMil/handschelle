@@ -116,8 +116,8 @@
 .hs-sm-link[data-sm="wikipedia"]:hover svg { fill:#fff; }
 
 /* ── Suchboxen ──────────────────────────────────────────────── */
-.hs-search-box { border-radius:var(--hs-radius); padding:1.5rem; margin-bottom:1.5rem; border:1px solid var(--hs-border); }
-.hs-search-title { margin:0 0 .9rem; font-size:1.05rem; font-weight:700; color:var(--hs-primary); }
+.hs-search-box { border-radius:var(--hs-radius); padding:1.5rem; margin-bottom:1.5rem; border:1px solid var(--hs-border); background:#f0f0f0; color:#000; }
+.hs-search-title { margin:0 0 .9rem; font-size:1.05rem; font-weight:700; color:#000; }
 .hs-search-form { display:flex; gap:.8rem; flex-wrap:wrap; align-items:center; }
 .hs-select { padding:.55rem .75rem; border:1.5px solid var(--hs-border); border-radius:var(--hs-radius); font-size:.9rem; font-family:var(--hs-font); background:var(--hs-bg); min-width:220px; cursor:pointer; transition:border-color .2s; }
 .hs-select:focus { outline:none; border-color:var(--hs-accent); }
@@ -407,6 +407,44 @@
 .hs-asc-item:not(:last-child)::after { content:'·'; margin-left:.7rem; color:#ccc; }
 .hs-asc-partei { font-weight:600; color:var(--hs-primary); }
 .hs-asc-count  { color:var(--hs-muted); }
+
+/* ================================================================
+   [handschelle-asc-link] – Horizontale Parteiliste mit Links & Hover-Namen
+================================================================ */
+.hs-asc-link-item { position:relative; font-size:.82em; color:#555; white-space:nowrap; }
+.hs-asc-link-item:not(:last-child)::after { content:'·'; margin-left:.7rem; color:#ccc; }
+.hs-asc-link { font-weight:600; color:var(--hs-primary); text-decoration:none; transition:color .2s; cursor:pointer; }
+.hs-asc-link:hover { color:var(--hs-accent); text-decoration:underline; }
+.hs-asc-link-tooltip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--hs-primary);
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: var(--hs-radius);
+    min-width: 160px;
+    max-width: 260px;
+    text-align: left;
+    z-index: 200;
+    box-shadow: 0 4px 18px rgba(0,0,0,.45);
+    pointer-events: none;
+    font-size:.8em;
+    line-height: 1.6;
+    white-space: normal;
+}
+.hs-asc-link-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: var(--hs-primary);
+}
+.hs-asc-link-item:hover .hs-asc-link-tooltip { display:block; }
 
 /* ================================================================
    Bilder-Galerie
