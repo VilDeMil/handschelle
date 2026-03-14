@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 3.09 |
+| **Version** | 6.0 |
 | **Autor** | Bernd K.R. Dorfmüller |
 | **E-Mail** | Info@die-handschelle.de |
 | **Website** | https://www.die-handschelle.de |
@@ -496,7 +496,7 @@ Copyright / contact block.
 Defined in `die-handschelle.php`:
 
 ```php
-HANDSCHELLE_VERSION     // '3.09'
+HANDSCHELLE_VERSION     // '6.0'
 HANDSCHELLE_PLUGIN_DIR  // Absolute path to plugin directory
 HANDSCHELLE_PLUGIN_URL  // URL to plugin directory
 HANDSCHELLE_DB_TABLE    // Table name suffix, e.g. 'die_handschelle'
@@ -781,6 +781,9 @@ die-handschelle/
 ---
 
 ## Release Notes
+
+### 6.0 *(2026-03-14)*
+- **Dropdown styling**: Text color set to black (`#000`), background set to white (`#fff`), transparency removed — applies to all select elements (`.hs-select`, `.hs-field select`, `.hs-edit-form select`, `.hs-bulk-select`)
 
 ### 3.09 *(2026-03-14)*
 - **Hintergrundfarbe**: `--hs-bg` auf `#f0f0f0` (neutrales Hellgrau) geändert; alle Eingabefelder und Dropdowns nutzen `var(--hs-bg)` statt #fafafa
