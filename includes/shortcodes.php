@@ -45,6 +45,7 @@ class Handschelle_Shortcodes {
         add_shortcode( 'handschelle-bilder',           array( $this, 'sc_bilder' ) );
         add_shortcode( 'handschelle-karte',            array( $this, 'sc_karte' ) );
         add_shortcode( 'handschelle-asc',              array( $this, 'sc_asc' ) );
+        add_shortcode( 'handschelle-asc-link',         array( $this, 'sc_asc_link' ) );
 
         // Submit früh verarbeiten – BEVOR Header gesendet werden
         add_action( 'init', array( $this, 'early_frontend_submit' ) );
@@ -688,6 +689,52 @@ class Handschelle_Shortcodes {
         echo '<div class="hs-frontend hs-full-width"><ul class="hs-asc-list">';
         foreach ( $rows as $r ) {
             echo '<li class="hs-asc-item"><span class="hs-asc-partei">' . esc_html( $r->partei ) . '</span> <span class="hs-asc-count">(' . intval( $r->anzahl ) . ')</span></li>';
+        }
+        echo '</ul></div>';
+        return ob_get_clean();
+    }
+
+    /* ================================================================
+       [handschelle-asc-link] – Horizontale Parteiliste mit Links & Hover-Namen
+    ================================================================ */
+    public function sc_asc_link( $atts ) {
+        global $wpdb;
+        $table = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
+
+        // Get parties with counts
+        $rows = $wpdb->get_results(
+            "SELECT partei, COUNT(*) AS anzahl FROM `{$table}`
+             WHERE freigegeben = 1 AND partei != ''
+             GROUP BY partei ORDER BY partei ASC"
+        );
+        if ( empty( $rows ) ) return '';
+
+        // Get names grouped by party
+        $namen_rows = $wpdb->get_results(
+            "SELECT partei, name FROM `{$table}`
+             WHERE freigegeben = 1 AND partei != '' AND name != ''
+             ORDER BY partei ASC, name ASC"
+        );
+        $namen_by_partei = array();
+        foreach ( $namen_rows as $nr ) {
+            $namen_by_partei[ $nr->partei ][] = $nr->name;
+        }
+
+        $base_url = get_permalink();
+        ob_start();
+        echo '<div class="hs-frontend hs-full-width"><ul class="hs-asc-list">';
+        foreach ( $rows as $r ) {
+            $partei  = $r->partei;
+            $url     = add_query_arg( 'hs_partei', urlencode( $partei ), $base_url );
+            $namen   = isset( $namen_by_partei[ $partei ] ) ? $namen_by_partei[ $partei ] : array();
+            $tooltip = implode( '<br>', array_map( 'esc_html', $namen ) );
+            echo '<li class="hs-asc-link-item">';
+            echo '<a class="hs-asc-link" href="' . esc_url( $url ) . '">' . esc_html( $partei ) . '</a>';
+            echo ' <span class="hs-asc-count">(' . intval( $r->anzahl ) . ')</span>';
+            if ( $tooltip ) {
+                echo '<div class="hs-asc-link-tooltip">' . $tooltip . '</div>';
+            }
+            echo '</li>';
         }
         echo '</ul></div>';
         return ob_get_clean();
