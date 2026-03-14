@@ -128,6 +128,8 @@ All shortcodes output HTML and can be placed on any WordPress page or post.
 | `[handschelle-karte]` | Single entry card by ID: `[handschelle-karte id="5"]` |
 | `[handschelle-asc]` | Horizontal centered list: Partei (Anzahl), alphabetical, no header |
 | `[handschelle-disclaimer]` | Copyright / contact notice |
+| `[wordcloud-name]` | Word cloud of person names (sized by entry count) — shows Name (Partei) |
+| `[wordcloud-urteil]` | Word cloud of verdicts (`urteil`) sized by frequency |
 
 ---
 
@@ -783,6 +785,8 @@ die-handschelle/
 ## Release Notes
 
 ### 6.0 *(2026-03-14)*
+- **`[wordcloud-name]`**: Word cloud of all approved person names — font size proportional to entry count, shows Name (Partei), tooltip shows exact count; pure CSS/HTML, no external library
+- **`[wordcloud-urteil]`**: Word cloud of all distinct verdicts (`urteil`) — font size proportional to frequency; only entries with a non-empty verdict are included
 - **Dropdown styling**: Text color set to black (`#000`), background set to white (`#fff`), transparency removed — applies to all select elements (`.hs-select`, `.hs-field select`, `.hs-edit-form select`, `.hs-bulk-select`)
 - **Eintrag melden**: Every card now has a `⚠️ Eintrag melden!` mailto link in the footer — opens a pre-addressed e-mail to `info@hanschelle.com` with subject `Meldung - <Name> - <Partei>`
 - **Bilder-Galerie**: Hover tooltip and click-link removed from gallery images — images display as plain `<img>` tags with name/crime captions only

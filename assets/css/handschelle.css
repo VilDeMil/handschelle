@@ -493,3 +493,12 @@
 .hs-bulk-select-all { display:inline-flex; align-items:center; gap:.4rem; font-size:.85rem; font-weight:600; color:#444; cursor:pointer; }
 .hs-bulk-checkbox { width:16px; height:16px; cursor:pointer; accent-color:var(--hs-accent); }
 .hs-bulk-select { padding:.42rem .65rem; border:1.5px solid var(--hs-border); border-radius:var(--hs-radius); font-size:.88rem; font-family:var(--hs-font); background:#fff; color:#000; }
+
+/* ================================================================
+   Wordcloud
+================================================================ */
+.hs-wordcloud { display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:.6rem 1.1rem; padding:1.5rem; background:var(--hs-card-bg); border-radius:var(--hs-radius); border:1px solid var(--hs-border); box-shadow:var(--hs-shadow); }
+.hs-wordcloud-item { cursor:default; font-weight:700; line-height:1.4; display:inline-block; transition:opacity .2s,transform .15s; }
+.hs-wordcloud-item:hover { opacity:.7; transform:scale(1.1); }
+.hs-wc-partei { font-size:.72em; font-weight:400; opacity:.65; }
+.hs-wordcloud-empty { color:var(--hs-muted); font-style:italic; }
