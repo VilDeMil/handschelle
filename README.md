@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 6.0 |
+| **Version** | 6.1 |
 | **Autor** | Bernd K.R. Dorfmüller |
 | **E-Mail** | Info@die-handschelle.de |
 | **Website** | https://www.die-handschelle.de |
@@ -46,7 +46,8 @@ Bitte unterstützt das Projekt, indem ihr dabei helft, Straftäter in unseren Pa
 4. [Code Reference](#code-reference)
 5. [Plugin Structure](#plugin-structure)
 6. [Important Notes](#important-notes)
-7. [Release Notes](#release-notes)
+7. [Instructions for AI / LLM](#instructions-for-ai--llm)
+8. [Release Notes](#release-notes)
 
 ---
 
@@ -782,7 +783,72 @@ die-handschelle/
 
 ---
 
+## Instructions for AI / LLM
+
+> This section is written for AI assistants (Claude, GPT, Gemini, etc.) that contribute to this codebase. Follow these rules every time you make changes.
+
+### Version Bumping
+
+**Bump the version by `0.1` with every commit / merge.**
+
+Update the version string in **all three places** — they must always be in sync:
+
+| File | Location | Example |
+|---|---|---|
+| `die-handschelle.php` | `* Version:` header comment (line ~6) | `* Version:     6.2` |
+| `die-handschelle.php` | `HANDSCHELLE_VERSION` constant (line ~24) | `define( 'HANDSCHELLE_VERSION', '6.2' );` |
+| `includes/admin.php` | `<span class="hs-version">` in admin header | `<span class="hs-version">6.2</span>` |
+| `README.md` | Version row in the header table | `\| **Version** \| 6.2 \|` |
+
+**How to calculate the new version:**
+Take the current version shown in `README.md` → add `0.1` → round to one decimal place.
+Examples: `6.1 → 6.2`, `6.9 → 7.0`, `7.0 → 7.1`.
+
+### Adding a Release Note
+
+Every commit must add a bullet point under the matching version heading in the **Release Notes** section of `README.md`:
+
+```markdown
+### 6.2 *(YYYY-MM-DD)*
+- **Feature name**: Short description of what changed and why.
+```
+
+If the version heading already exists (e.g. multiple changes in one session), append bullet points to it.
+
+### Shortcode Checklist
+
+When adding a new shortcode:
+
+1. Register it in `Handschelle_Shortcodes::__construct()` in `includes/shortcodes.php`
+2. Implement the method in the same class
+3. Add CSS in `assets/css/handschelle.css`
+4. Add a row to the **Shortcodes Overview** table in `README.md`
+5. Add a detailed section under `## Shortcodes` in `README.md`
+
+### Database / Schema Changes
+
+When adding a new column:
+
+1. Add it to `Handschelle_Database::create_table()` in `includes/database.php`
+2. Add it to `Handschelle_Database::maybe_upgrade_table()` so existing installs migrate automatically
+3. Update the **Fields / Database Schema** table in `README.md`
+
+### General Rules
+
+- **Never skip the version bump** — every push must increment the version.
+- **No destructive migrations** — `maybe_upgrade_table()` may only add columns, never drop or rename them.
+- All queries use `$wpdb` prepared statements — never concatenate user input into SQL.
+- All output uses `esc_html()` / `esc_url()` / `esc_attr()` — never echo raw data.
+- New admin pages must be added to the **Admin Menu Structure** table in `README.md`.
+- Keep German labels in UI, English in code (variable names, comments, README).
+
+---
+
 ## Release Notes
+
+### 6.1 *(2026-03-14)*
+- **Version policy**: Version is now bumped by `0.1` per commit (was `0.01`); old comment in `die-handschelle.php` corrected accordingly
+- **LLM Instructions**: Added `## Instructions for AI / LLM` section to README with version-bump rules, shortcode checklist, schema rules, and general coding standards
 
 ### 6.0 *(2026-03-14)*
 - **`[wordcloud-name]`**: Word cloud of all approved person names — font size proportional to entry count, shows Name (Partei), tooltip shows exact count; pure CSS/HTML, no external library
