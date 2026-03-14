@@ -314,8 +314,7 @@ class Handschelle_Shortcodes {
         ?>
         <div class="hs-search-box">
             <h3 class="hs-search-title">🔍 Volltext-Suche</h3>
-            <form method="get" class="hs-search-form">
-                <?php $this->preserve_page_param(); ?>
+            <form method="get" action="<?php echo esc_url( get_permalink() ); ?>" class="hs-search-form">
                 <?php if ( ! empty( $_GET['hs_partei'] ) ) : ?>
                     <input type="hidden" name="hs_partei" value="<?php echo esc_attr( sanitize_text_field( $_GET['hs_partei'] ) ); ?>">
                 <?php endif; ?>
@@ -472,8 +471,7 @@ class Handschelle_Shortcodes {
         ?>
         <div class="hs-frontend hs-full-width">
             <div class="hs-search-box">
-                <form method="get" class="hs-search-form">
-                    <?php $this->preserve_page_param(); ?>
+                <form method="get" action="<?php echo esc_url( get_permalink() ); ?>" class="hs-search-form">
                     <select name="hs_name_anzeige" class="hs-select" onchange="this.form.submit()">
                         <option value="">-- Person auswählen --</option>
                         <?php foreach ( $namen as $n ) : ?>
@@ -516,8 +514,7 @@ class Handschelle_Shortcodes {
         ?>
         <div class="hs-frontend hs-full-width">
             <div class="hs-search-box">
-                <form method="get" class="hs-search-form">
-                    <?php $this->preserve_page_param(); ?>
+                <form method="get" action="<?php echo esc_url( get_permalink() ); ?>" class="hs-search-form">
                     <select name="hs_name_partei" class="hs-select" onchange="this.form.submit()">
                         <option value="">-- Partei auswählen --</option>
                         <?php foreach ( $parteien as $p ) : ?>
@@ -708,8 +705,7 @@ class Handschelle_Shortcodes {
         ?>
         <div class="hs-search-box">
             <h3 class="hs-search-title">🏛 Nach Partei suchen</h3>
-            <form method="get" class="hs-search-form">
-                <?php $this->preserve_page_param(); ?>
+            <form method="get" action="<?php echo esc_url( get_permalink() ); ?>" class="hs-search-form">
                 <?php if ( ! empty( $_GET['hs_search'] ) ) : ?>
                     <input type="hidden" name="hs_search" value="<?php echo esc_attr( sanitize_text_field( $_GET['hs_search'] ) ); ?>">
                 <?php endif; ?>
@@ -748,8 +744,7 @@ class Handschelle_Shortcodes {
         ?>
         <div class="hs-search-box">
             <h3 class="hs-search-title">👤 Nach Person suchen</h3>
-            <form method="get" class="hs-search-form">
-                <?php $this->preserve_page_param(); ?>
+            <form method="get" action="<?php echo esc_url( get_permalink() ); ?>" class="hs-search-form">
                 <?php if ( ! empty( $_GET['hs_search'] ) ) : ?>
                     <input type="hidden" name="hs_search" value="<?php echo esc_attr( sanitize_text_field( $_GET['hs_search'] ) ); ?>">
                 <?php endif; ?>
