@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 3.07 |
+| **Version** | 3.08 |
 | **Autor** | Bernd K.R. Dorfmüller |
 | **E-Mail** | Info@die-handschelle.de |
 | **Website** | https://www.die-handschelle.de |
@@ -46,6 +46,7 @@ Bitte unterstützt das Projekt, indem ihr dabei helft, Straftäter in unseren Pa
 4. [Code Reference](#code-reference)
 5. [Plugin Structure](#plugin-structure)
 6. [Important Notes](#important-notes)
+7. [Release Notes](#release-notes)
 
 ---
 
@@ -82,6 +83,10 @@ wp plugin install https://github.com/VilDeMil/handschelle/archive/refs/heads/mas
   --activate --force
 ```
 
+### Updating
+
+When updating the plugin, missing database columns are added automatically on the next page load — no manual migration needed. Existing data is never changed or removed.
+
 ### Requirements
 
 | Requirement | Minimum Version |
@@ -108,8 +113,8 @@ All shortcodes output HTML and can be placed on any WordPress page or post.
 | Shortcode | Description |
 |---|---|
 | `[handschelle]` | Frontend submission form for new entries |
-| `[handschelle-anzeige]` | Display all approved entries as cards |
-| `[handschelle-suche]` | Search dropdowns: Party + Person name |
+| `[handschelle-anzeige]` | Display all approved entries as cards (no pagination by default) |
+| `[handschelle-suche]` | Full-text search field + Party and Person dropdowns |
 | `[handschelle-partei]` | Party search dropdown only |
 | `[handschelle-name]` | Person name search dropdown only |
 | `[handschelle-statistik]` | Statistics table with bar chart per party (party names are links) |
@@ -119,10 +124,10 @@ All shortcodes output HTML and can be placed on any WordPress page or post.
 | `[handschelle-statistik-ol]` | Ordered list: party – number of distinct names |
 | `[handschelle-name-anzeige]` | Name dropdown – shows cards for selected person |
 | `[handschelle-name-partei]` | Party dropdown – shows cards for selected party |
-| `[handschelle-bilder]` | Gallery of all approved entry images (max 300×300 px), clickable → name details |
+| `[handschelle-bilder]` | Image gallery – clickable photos, name + crime caption, hover tooltip |
 | `[handschelle-karte]` | Single entry card by ID: `[handschelle-karte id="5"]` |
-| `[handschelle-disclaimer]` | Copyright notice |
-| `[handschelle-asc]` | Horizontal inline list: Partei (Anzahl Einträge), alphabetical, no header |
+| `[handschelle-asc]` | Horizontal centered list: Partei (Anzahl), alphabetical, no header |
+| `[handschelle-disclaimer]` | Copyright / contact notice |
 
 ---
 
@@ -136,17 +141,14 @@ Renders a public submission form. New submissions are saved with `freigegeben = 
 
 **Form fields presented to visitors:**
 - Name (required)
-- Party
 - Profession
-- Position in party
+- Birth date & birth place
+- Party, position in party
 - Parliament type & name
+- Active status
 - Crime description (required, max 200 characters)
-- Crime status
-- Verdict
-- Source link
-- Case file number
+- Crime status, verdict, source link, case file number
 - Notes / remarks
-- Birth date and birth place
 - Social media links (Facebook, YouTube, Twitter/X, personal, homepage, Wikipedia, LinkedIn, Xing, Truth Social, other)
 - Photo upload
 
@@ -154,34 +156,26 @@ Renders a public submission form. New submissions are saved with `freigegeben = 
 
 ### `[handschelle-anzeige]`
 
-Displays approved entries (`freigegeben = 1`) as responsive cards with social media icons. Supports **pagination** and **text search** via URL parameters.
+Displays all approved entries (`freigegeben = 1`) as responsive cards. Supports optional **text search** via URL parameter. Pagination is disabled by default (`limit=0`).
 
 ```
 [handschelle-anzeige]
-[handschelle-anzeige limit="12"]
-```
-
-**Optional shortcode attributes:**
-
-```
 [handschelle-anzeige partei="CDU"]
-[handschelle-anzeige name="Max Mustermann"]
-[handschelle-anzeige partei="SPD" name="Jane Doe"]
-[handschelle-anzeige limit="10"]
+[handschelle-anzeige limit="12"]
 ```
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
-| `partei` | string | — | Filter cards by political party name |
-| `name` | string | — | Filter cards by person name |
-| `limit` | int | `0` | Cards per page (0 = all, no pagination) |
+| `partei` | string | — | Filter by political party name |
+| `name` | string | — | Filter by person name |
+| `limit` | int | `0` | Cards per page (0 = all, disables pagination) |
 
-**URL parameters (set automatically by search/pagination UI):**
+**URL parameters:**
 
 | Parameter | Description |
 |---|---|
-| `hs_paged` | Current page number (pagination) |
-| `hs_search` | Full-text search term (searches name, party, crime description) |
+| `hs_search` | Full-text search (searches name, party, and crime description) |
+| `hs_paged` | Page number when `limit > 0` |
 
 ---
 
@@ -198,20 +192,18 @@ Displays a single entry card by database ID. Only shows approved entries.
 | `id` | int | Database ID of the entry to display |
 
 **Card contents:**
-- Profile photo (resized to max 450px height) — **clickable**, links to name search (`?hs_name=`) on the same page
-- Person name with inline **Google** and **Abgeordnetenwatch** search links
-- Party badge
-- Profession & position
-- Parliament affiliation
+- Profile photo — **clickable**, links to `?hs_name=` on the same page
+- Name, profession, birth date + age, birth place
+- Party, position, parliament
 - Crime description & status badge
-- Verdict, case number, source link
-- Social media icon links
+- Verdict, case number
+- Footer: source link · Google · Qwant · DuckDuckGo · Bing · Abgeordnetenwatch · social media icons
 
 ---
 
 ### `[handschelle-suche]`
 
-Renders a **full-text search field** and two auto-submitting dropdowns (Party and Person name) that filter the entry display on the same page. Combine with `[handschelle-anzeige]`. The text search queries name, party, and crime description simultaneously.
+Renders a **full-text search field** and two auto-submitting dropdowns (Party and Person name). Combine with `[handschelle-anzeige]` on the same page.
 
 ```
 [handschelle-suche]
@@ -221,7 +213,7 @@ Renders a **full-text search field** and two auto-submitting dropdowns (Party an
 
 ### `[handschelle-partei]`
 
-Renders only the Party search dropdown.
+Renders only the Party search dropdown. After selection shows all cards for that party.
 
 ```
 [handschelle-partei]
@@ -231,7 +223,7 @@ Renders only the Party search dropdown.
 
 ### `[handschelle-name]`
 
-Renders only the Person name search dropdown.
+Renders only the Person name search dropdown. After selection shows all cards for that person plus **Google, Qwant, DuckDuckGo, Bing, Abgeordnetenwatch** search buttons.
 
 ```
 [handschelle-name]
@@ -241,19 +233,17 @@ Renders only the Person name search dropdown.
 
 ### `[handschelle-statistik]`
 
-Displays a statistics table titled **"Einträge je Partei"** listing the number of entries per political party along with relative bar charts (percentage of total). Each party name links to the party filter page via `?hs_partei=` parameter.
+Statistics table: entries per party with bar chart. Party names link to `?hs_partei=`.
 
 ```
 [handschelle-statistik]
 ```
 
-**Output columns:** Party name (linked) · Count · Relative bar chart
-
 ---
 
 ### `[handschelle-statistik-nolink]`
 
-Same as `[handschelle-statistik]` but the party names in the table are plain text — no hyperlinks. Useful for embedding the statistics on a page where the party-filter page is not available.
+Same as `[handschelle-statistik]` but party names are plain text (no links).
 
 ```
 [handschelle-statistik-nolink]
@@ -263,7 +253,7 @@ Same as `[handschelle-statistik]` but the party names in the table are plain tex
 
 ### `[handschelle-statistik-partei]`
 
-Displays a table titled **"Wie viele Straftäter je Partei gibt es?"** with columns: Party (linked to `?hs_name_partei=`) and entry count.
+Table: Party → entry count. Party names link to `?hs_name_partei=`.
 
 ```
 [handschelle-statistik-partei]
@@ -273,7 +263,7 @@ Displays a table titled **"Wie viele Straftäter je Partei gibt es?"** with colu
 
 ### `[handschelle-statistik-name]`
 
-Displays a table titled **"Wer hat bereits einen Eintrag?"** with columns: Name and entry count.
+Table: Person name → entry count.
 
 ```
 [handschelle-statistik-name]
@@ -283,13 +273,13 @@ Displays a table titled **"Wer hat bereits einen Eintrag?"** with columns: Name 
 
 ### `[handschelle-statistik-ol]`
 
-Displays a numbered ordered list titled **"Statistik: Partei – Anzahl Namen"**. Each line shows the party name and the count of distinct person names recorded for that party, sorted by count descending.
+Numbered list: party — count of distinct person names, sorted descending.
 
 ```
 [handschelle-statistik-ol]
 ```
 
-**Output example:**
+**Example:**
 1. CDU – 5 Namen
 2. SPD – 3 Namen
 3. AfD – 2 Namen
@@ -298,7 +288,7 @@ Displays a numbered ordered list titled **"Statistik: Partei – Anzahl Namen"**
 
 ### `[handschelle-name-anzeige]`
 
-Renders a person name dropdown. After selection, shows all approved entry cards for that person.
+Name dropdown + result cards for the selected person. Includes Google, Qwant, DuckDuckGo, Bing, Abgeordnetenwatch buttons.
 
 ```
 [handschelle-name-anzeige]
@@ -308,7 +298,7 @@ Renders a person name dropdown. After selection, shows all approved entry cards 
 
 ### `[handschelle-name-partei]`
 
-Renders a party dropdown. After selection, shows all approved entry cards for that party.
+Party dropdown + result cards for the selected party.
 
 ```
 [handschelle-name-partei]
@@ -318,9 +308,12 @@ Renders a party dropdown. After selection, shows all approved entry cards for th
 
 ### `[handschelle-bilder]`
 
-Displays a responsive gallery of all approved entries that have an image. Images are displayed with `max-width: 300px` and `max-height: 300px` while preserving the original aspect ratio. Each image is captioned with the person's name and crime description. Hovering the image shows a tooltip with all available person data.
+Responsive image gallery of all approved entries that have a photo.
 
-**Clicking an image** navigates to the name details page (passes `?hs_name=<name>`).
+- Images are displayed at max 300×300 px (aspect ratio preserved)
+- **Name** and **Straftat** shown as caption below each image
+- **Hover tooltip** shows all available person data (party, profession, parliament, crime, status, verdict, case number)
+- **Clicking an image** navigates to `?hs_name=<name>` — shows the person's detail cards
 
 ```
 [handschelle-bilder]
@@ -329,13 +322,13 @@ Displays a responsive gallery of all approved entries that have an image. Images
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
-| `link` | string | current page | Base URL of the page with `[handschelle-name]`. If empty, uses current page URL. |
+| `link` | string | current page | Base URL of the target page with `[handschelle-name]`. If empty, uses the current page. |
 
 ---
 
 ### `[handschelle-asc]`
 
-Displays a compact horizontal inline list of all parties with their entry count, sorted alphabetically. No header, small font. Useful in sidebars or footers.
+Compact horizontal centered list of all parties with entry count, sorted A→Z. No header, small font. Ideal for sidebars or page footers.
 
 ```
 [handschelle-asc]
@@ -347,7 +340,7 @@ Displays a compact horizontal inline list of all parties with their entry count,
 
 ### `[handschelle-disclaimer]`
 
-Outputs the copyright/disclaimer block:
+Copyright / contact block.
 
 ```
 [handschelle-disclaimer]
@@ -363,15 +356,22 @@ Outputs the copyright/disclaimer block:
 ### Typical Page Setup
 
 ```
-<!-- Search page -->
+<!-- Main display page -->
 [handschelle-suche]
 [handschelle-anzeige]
 
+<!-- Gallery page -->
+[handschelle-bilder link="/person/"]
+
 <!-- Statistics page -->
 [handschelle-statistik]
+[handschelle-asc]
 
 <!-- Submit page -->
 [handschelle]
+
+<!-- Person detail page (target for bilder links) -->
+[handschelle-name]
 ```
 
 ---
@@ -387,8 +387,8 @@ Outputs the copyright/disclaimer block:
 |---|---|---|---|
 | `id` | INT AUTO_INCREMENT | — | Primary key |
 | `datum_eintrag` | DATE | — | Entry date (default: today) |
-| `erstellt_am` | DATETIME | — | Created timestamp |
-| `geaendert_am` | DATETIME | — | Last modified timestamp |
+| `erstellt_am` | DATETIME | — | Created timestamp (auto) |
+| `geaendert_am` | DATETIME | — | Last modified timestamp (auto) |
 
 ### Person Fields
 
@@ -397,13 +397,13 @@ Outputs the copyright/disclaimer block:
 | `name` | VARCHAR | 50 | Yes | Person's full name |
 | `beruf` | VARCHAR | 50 | No | Profession / occupation |
 | `geburtsort` | VARCHAR | 100 | No | Place of birth |
-| `geburtsdatum` | DATE | — | No | Date of birth (auto-calculates age) |
+| `geburtsdatum` | DATE | — | No | Date of birth (age is calculated automatically) |
 | `bild` | TEXT | — | No | WordPress attachment ID or image URL |
 | `partei` | VARCHAR | 50 | No | Political party |
 | `aufgabe_partei` | VARCHAR | 100 | No | Position / role within the party |
 | `parlament` | VARCHAR | 100 | No | Parliament type (see options below) |
 | `parlament_name` | VARCHAR | 50 | No | Constituency / parliament seat name |
-| `status_aktiv` | TINYINT(1) | — | — | Active status: `1` = active, `0` = inactive (default: `1`) |
+| `status_aktiv` | TINYINT(1) | — | — | Active status: `1` = active, `0` = inactive (default `1`) |
 
 ### Crime / Legal Fields
 
@@ -420,22 +420,22 @@ Outputs the copyright/disclaimer block:
 
 | Field | Type | Description |
 |---|---|---|
-| `freigegeben` | TINYINT(1) | Published: `1` = approved, `0` = pending (default: `0`) |
+| `freigegeben` | TINYINT(1) | Published: `1` = approved, `0` = pending (default `0`) |
 
 ### Social Media Fields
 
 | Field | Type | Platform |
 |---|---|---|
-| `sm_facebook` | TEXT | Facebook profile URL |
-| `sm_youtube` | TEXT | YouTube channel URL |
-| `sm_personal` | TEXT | Personal profile URL |
-| `sm_twitter` | TEXT | Twitter / X profile URL |
-| `sm_homepage` | TEXT | Personal website / homepage URL |
-| `sm_wikipedia` | TEXT | Wikipedia article URL |
-| `sm_linkedin` | TEXT | LinkedIn profile URL |
-| `sm_xing` | TEXT | Xing profile URL |
-| `sm_truth_social` | TEXT | Truth Social profile URL |
-| `sm_sonstige` | TEXT | Other social media URL |
+| `sm_facebook` | TEXT | Facebook |
+| `sm_youtube` | TEXT | YouTube |
+| `sm_personal` | TEXT | Personal profile |
+| `sm_twitter` | TEXT | Twitter / X |
+| `sm_homepage` | TEXT | Personal website |
+| `sm_wikipedia` | TEXT | Wikipedia |
+| `sm_linkedin` | TEXT | LinkedIn |
+| `sm_xing` | TEXT | Xing |
+| `sm_truth_social` | TEXT | Truth Social |
+| `sm_sonstige` | TEXT | Other |
 
 ### Database Indexes
 
@@ -465,15 +465,21 @@ Outputs the copyright/disclaimer block:
 | Bundestag |
 | Bundesrat |
 | Landtag Baden-Württemberg |
-| Landtag Bayern |
+| Landtag Bayern (Bayerischer Landtag) |
 | Abgeordnetenhaus Berlin |
+| Brandenburgischer Landtag |
 | Bürgerschaft Bremen |
 | Bürgerschaft Hamburg |
-| Landtag Hessen |
-| Landtag Niedersachsen |
+| Hessischer Landtag |
+| Landtag Mecklenburg-Vorpommern |
+| Niedersächsischer Landtag |
 | Landtag Nordrhein-Westfalen |
 | Landtag Rheinland-Pfalz |
-| Landtag Sachsen |
+| Landtag des Saarlandes |
+| Sächsischer Landtag |
+| Landtag Sachsen-Anhalt |
+| Schleswig-Holsteinischer Landtag |
+| Thüringer Landtag |
 | Stadtrat / Gemeinderat |
 | Kreistag |
 | Bezirkstag |
@@ -490,10 +496,10 @@ Outputs the copyright/disclaimer block:
 Defined in `die-handschelle.php`:
 
 ```php
-HANDSCHELLE_VERSION     // '3.03'
+HANDSCHELLE_VERSION     // '3.08'
 HANDSCHELLE_PLUGIN_DIR  // Absolute path to plugin directory
 HANDSCHELLE_PLUGIN_URL  // URL to plugin directory
-HANDSCHELLE_DB_TABLE    // Full table name, e.g. 'wp_die_handschelle'
+HANDSCHELLE_DB_TABLE    // Table name suffix, e.g. 'die_handschelle'
 ```
 
 ---
@@ -502,34 +508,38 @@ HANDSCHELLE_DB_TABLE    // Full table name, e.g. 'wp_die_handschelle'
 
 File: `includes/database.php`
 
-All methods are static. Use `$wpdb` and prepared statements internally.
+All methods are static. All queries use `$wpdb` prepared statements.
 
 ```php
 // Create the database table (called on plugin activation)
 Handschelle_Database::create_table();
 
+// Check version and add missing columns (called on plugins_loaded)
+Handschelle_Database::maybe_upgrade_table();
+
 // Retrieve multiple entries
 $entries = Handschelle_Database::get_all([
-    'freigegeben' => 1,       // optional: filter approved entries
+    'freigegeben' => 1,       // 1 = approved only, 0 = pending only, 'all' = no filter
     'partei'      => 'CDU',   // optional: filter by party
     'name'        => 'Doe',   // optional: filter by person name
-    'search'      => 'fraud', // optional: full-text search
+    'search'      => 'fraud', // optional: full-text search (name, party, straftat)
     'orderby'     => 'name',  // optional: sort column
     'order'       => 'ASC',   // optional: ASC | DESC
-    'limit'       => 20,      // optional: max results
+    'limit'       => 20,      // optional: max results (0 = all)
     'offset'      => 0,       // optional: pagination offset
 ]);
 
 // Retrieve a single entry by ID
 $entry = Handschelle_Database::get_one( $id );
 
-// Insert a new entry (returns new ID or false)
+// Insert a new entry (always sets freigegeben = 0; returns new ID)
 $new_id = Handschelle_Database::insert([
-    'name'           => 'Max Mustermann',
-    'partei'         => 'ExamplePartei',
-    'straftat'       => 'Betrug',
-    'status_straftat'=> 'Ermittlungen laufen',
-    'freigegeben'    => 0,
+    'name'            => 'Max Mustermann',
+    'partei'          => 'ExamplePartei',
+    'straftat'        => 'Betrug',
+    'status_straftat' => 'Ermittlungen laufen',
+    'geburtsdatum'    => '1970-05-12',
+    'geburtsort'      => 'Berlin',
 ]);
 
 // Update an entry
@@ -541,7 +551,7 @@ Handschelle_Database::update( $id, [
 // Delete an entry
 Handschelle_Database::delete( $id );
 
-// Count entries
+// Count entries (supports same filters as get_all)
 $total = Handschelle_Database::count_all(['freigegeben' => 1]);
 
 // Get distinct party names (for dropdowns)
@@ -568,22 +578,16 @@ File: `includes/image-handler.php`
  *
  * @param  string $file_input_name  $_FILES key  (e.g. 'bild_upload')
  * @param  string $person_name      Person name – used to build filename slug
- * @param  string $partei           Unused – kept for backward compatibility
  * @return int    Attachment ID on success, 0 on failure / no file uploaded.
  */
 $attachment_id = Handschelle_Image_Handler::handle_upload_and_resize(
     'bild_upload',    // $_FILES key
-    'Max Mustermann', // person name → sanitize_title() → "max-mustermann"
-    // result filename: max-mustermann-HA.jpg
+    'Max Mustermann', // → sanitize_title() → "max-mustermann-HA.jpg"
 );
 
-// Rename logic:
-//   name given        → "{name}-HA.{ext}"  e.g. max-mustermann-HA.jpg
-//   no name provided  → original filename kept
-//
-// The image is automatically resized to a maximum height of 450 px.
 // Supported formats: JPEG, PNG, GIF, WebP
 // PNG and GIF transparency is preserved.
+// Images are resized to a maximum height of 450 px (aspect ratio preserved).
 ```
 
 ---
@@ -593,20 +597,22 @@ $attachment_id = Handschelle_Image_Handler::handle_upload_and_resize(
 File: `includes/helpers.php`
 
 ```php
-// Returns an array of all parliament options
+// Returns all parliament options as an array
 $parlaments = handschelle_parlaments();
-// Returns: ['Europäisches Parlament', 'Bundestag', ...]
 
-// Returns an array of crime status options
+// Returns crime status options
 $statuses = handschelle_status_straftat_options();
-// Returns: ['Ermittlungen laufen', 'Verurteilt', 'Eingestellt']
+// ['Ermittlungen laufen', 'Verurteilt', 'Eingestellt']
 
-// Resolve an image URL from attachment ID or direct URL string
+// Resolve a display URL from an attachment ID or direct URL string
 $url = handschelle_get_image_url( $bild_value );
 
-// Sanitize and validate all entry fields from raw POST/GET data.
-// Returns sanitized array or WP_Error on validation failure.
+// Sanitize and normalize all entry fields from raw POST data
 $data = handschelle_sanitize_entry( $_POST );
+
+// Calculate age from a date string (Y-m-d); returns int or null if unknown
+$age = handschelle_calc_age( $entry->geburtsdatum );
+// Example: handschelle_calc_age('1970-05-12') → 55
 ```
 
 ---
@@ -615,28 +621,27 @@ $data = handschelle_sanitize_entry( $_POST );
 
 File: `assets/js/handschelle.js`
 
-The script is enqueued on both frontend and admin. It uses the global object `handschelle_ajax` (localized by `wp_localize_script`).
+Enqueued on frontend and admin. Uses the global `handschelle_ajax` object (localized via `wp_localize_script`).
 
 ```javascript
-// Available global:
 handschelle_ajax.ajax_url  // WordPress AJAX URL
-handschelle_ajax.nonce     // Security nonce for requests
+handschelle_ajax.nonce     // Security nonce
 ```
 
-**Automatic behaviors (no setup required):**
+**Automatic behaviors:**
 
 | Behavior | Trigger |
 |---|---|
-| Character counter | Any `<textarea>` with a `maxlength` attribute inside `.hs-form` |
-| Image preview | `<input type="file" class="hs-file-input">` file change |
+| Character counter | `<textarea maxlength>` inside `.hs-form` |
+| Image preview | `<input type="file" class="hs-file-input">` |
 | Auto-submit dropdowns | `<select class="hs-select">` change |
-| Delete confirmation | Click on any `.hs-btn-delete` link |
+| Delete confirmation | Click on `.hs-btn-delete` |
 | Required field validation | Submit of `#hs-eingabe-form` |
-| Alert fade-in | `.hs-alert` elements on page load |
+| Alert fade-in | `.hs-alert` on page load |
 | Smooth scroll to anchor | URL hash on page load |
-| Scroll to edited entry | `?hs_edited=ID` URL parameter after save |
-| ESC closes edit panel | Keyboard ESC key (frontend inline edit) |
-| WP Media Library picker | Click on `.hs-media-btn` (admin image field) |
+| Scroll to edited entry | `?hs_edited=ID` after save |
+| ESC closes edit panel | Keyboard ESC (frontend inline edit) |
+| WP Media Library picker | Click on `.hs-media-btn` (admin) |
 
 ---
 
@@ -644,16 +649,14 @@ handschelle_ajax.nonce     // Security nonce for requests
 
 File: `assets/css/handschelle.css`
 
-Override these in your theme to customize the plugin appearance:
-
 ```css
 :root {
-    --hs-primary:  #1a1a2e;  /* Main dark background color */
-    --hs-accent:   #c0392b;  /* Red accent (crime alert) */
-    --hs-accent-h: #e74c3c;  /* Red accent hover state */
+    --hs-primary:  #1a1a2e;  /* Main dark background */
+    --hs-accent:   #c0392b;  /* Red accent */
+    --hs-accent-h: #e74c3c;  /* Red accent hover */
     --hs-gold:     #f39c12;  /* Gold highlights */
-    --hs-success:  #27ae60;  /* Green (approved / success) */
-    --hs-muted:    #7f8c8d;  /* Muted gray text */
+    --hs-success:  #27ae60;  /* Green */
+    --hs-muted:    #7f8c8d;  /* Muted gray */
     --hs-bg:       #f4f6f8;  /* Page background */
     --hs-card-bg:  #ffffff;  /* Card background */
 }
@@ -670,54 +673,42 @@ Override these in your theme to customize the plugin appearance:
 | `.hs-card` | Individual entry card |
 | `.hs-badge` | Status badge (party, crime status) |
 | `.hs-admin-table` | Admin overview table |
-| `.hs-statistik` | Statistics table |
+| `.hs-statistik` | Statistics table wrapper |
 | `.hs-alert` | Alert / notice messages |
 | `.hs-sm-link` | Social media icon link |
 | `.hs-pagination` | Pagination nav container |
-| `.hs-page-link` | Pagination page link |
-| `.hs-page-current` | Current page indicator (non-link) |
-| `.hs-page-dots` | Ellipsis `…` between page ranges |
-| `.hs-search-input` | Full-text search input field |
-| `.hs-search-info` | Banner showing active search term + result count |
-| `.hs-filter-tabs` | Admin filter tab row (Alle / Ausstehend / Freigegeben) |
-| `.hs-filter-tab` | Individual filter tab link |
-| `.hs-filter-count` | Count badge inside a filter tab |
+| `.hs-search-input` | Full-text search input |
+| `.hs-search-info` | Active search term banner |
+| `.hs-filter-tabs` | Admin filter tab row |
 | `.hs-bulk-bar` | Admin bulk-action toolbar |
-| `.hs-bulk-checkbox` | Individual row checkbox |
-| `.hs-bulk-select` | Bulk-action `<select>` dropdown |
-| `.hs-cards-single` | Full-width single-column card list (name results) |
+| `.hs-cards-single` | Full-width single-column card list |
 | `.hs-card-img-link` | Anchor wrapping the card profile image |
-| `.hs-name-search-links` | Container for inline Google / Abgeordnetenwatch links in card header |
-| `.hs-name-search-link` | Individual search link in card header (light style on dark bg) |
-| `.hs-search-buttons` | Container for Google / Abgeordnetenwatch buttons (form/result context) |
-| `.hs-search-btn` | Individual search button (neutral secondary style) |
+| `.hs-search-buttons` | Search engine button row |
+| `.hs-search-btn` | Individual search engine button |
 | `.hs-media-picker` | Admin image-field wrapper |
-| `.hs-media-picker-row` | Row containing ID input, picker button, and file upload |
-| `.hs-media-id` | Hidden-number input holding the WP attachment ID |
-| `.hs-media-btn` | Button that opens the WP Media Library modal |
-| `.hs-media-sep` | Separator text between media button and file input |
-| `.hs-media-preview` | Thumbnail preview area for the selected/uploaded image |
+| `.hs-media-btn` | Opens the WP Media Library modal |
+| `.hs-media-preview` | Thumbnail preview area |
+| `.hs-asc-list` | `[handschelle-asc]` horizontal party list |
+| `.hs-bild-item` | `[handschelle-bilder]` single image card |
+| `.hs-bild-img-wrap` | Image wrapper (hover target for tooltip) |
+| `.hs-bild-tooltip` | Hover tooltip with all person data |
+| `.hs-bild-caption` | Name caption below image |
+| `.hs-bild-straftat` | Crime caption below image |
 
 ---
 
 ### Admin Menu Structure
 
-Registered in `includes/admin.php`:
-
 | Menu Item | Slug | Description |
 |---|---|---|
-| Die Handschelle | `die-handschelle` | Main menu (Overview) |
-| Übersicht | `die-handschelle` | List all entries with filter tabs + bulk actions |
-| + Neuer Eintrag | `die-handschelle-add` | Add new entry form |
-| *(Bearbeiten)* | `die-handschelle-edit` | Edit entry (hidden from sidebar) |
-| Import / Export | `die-handschelle-importexport` | CSV import & export |
-| Bilder | `die-handschelle-bilder` | Image list, ZIP export & ZIP import |
+| Die Handschelle | `handschelle` | Main menu (Overview) |
+| Übersicht | `handschelle` | All entries — filter tabs (Alle / Ausstehend / Freigegeben), bulk actions, age column |
+| + Neuer Eintrag | `handschelle-add` | Add new entry form |
+| *(Bearbeiten)* | `handschelle-edit` | Edit entry (hidden from sidebar, accessible via ✏ button) |
+| Import / Export | `handschelle-import-export` | CSV import & export |
+| Bilder | `handschelle-bilder` | Image list, ZIP export & ZIP import |
 | Backup & Restore | `handschelle-backup` | Full backup (CSV + images ZIP) and restore |
-| Datenbank | `die-handschelle-db` | Database management |
-
-**v3.0 Admin features:**
-- **Filter tabs:** Switch between Alle / Ausstehend / Freigegeben with entry counts
-- **Bulk actions:** Select multiple entries via checkboxes → Freigeben / Sperren / Löschen
+| Datenbank | `handschelle-db` | Database management (truncate / recreate / drop) |
 
 ---
 
@@ -727,8 +718,8 @@ Registered in `includes/admin.php`:
 
 | Action | Description |
 |---|---|
-| **Backup herunterladen** | Creates a ZIP file containing `handschelle-data.csv` (all entries) and all media images in an `images/` sub-folder |
-| **Backup einspielen** | Upload a backup ZIP → truncates existing entries → re-imports entries from CSV → imports images into the media library |
+| **Backup herunterladen** | Creates a ZIP with `handschelle-data.csv` (all entries) + all media images in `images/` + `bild-map.json` for ID remapping |
+| **Backup einspielen** | Upload a backup ZIP → truncates existing data → re-imports entries and images; attachment IDs are remapped automatically |
 
 > **Warning:** Restore overwrites all existing entries. A confirmation checkbox is required.
 
@@ -738,12 +729,15 @@ Registered in `includes/admin.php`:
 
 The CSV export is UTF-8 with BOM, semicolon-delimited (Excel-compatible).
 
-**Column order in CSV:** All 32 fields in the order they are defined in the database schema above. The import is header-based and backward-compatible with old 26/27-column CSVs.
+**Column order (32 fields):**
+`id · datum_eintrag · name · beruf · geburtsort · geburtsdatum · bild · partei · aufgabe_partei · parlament · parlament_name · status_aktiv · straftat · urteil · link_quelle · aktenzeichen · bemerkung · status_straftat · sm_facebook · sm_youtube · sm_personal · sm_twitter · sm_homepage · sm_wikipedia · sm_sonstige · sm_linkedin · sm_xing · sm_truth_social · freigegeben · erstellt_am · geaendert_am`
 
-To export: **Admin → Import / Export → Export CSV**
+The import is **header-based** — it reads the first row to determine the column order. This makes it fully backward-compatible with older CSVs (26 or 27 columns). Missing columns are silently ignored and default to empty.
+
+> **Note:** `id`, `erstellt_am`, and `geaendert_am` are set automatically during import.
+
+To export: **Admin → Import / Export → CSV herunterladen**
 To import: **Admin → Import / Export → CSV-Datei hochladen → Importieren**
-
-> **Note:** The `id`, `erstellt_am`, and `geaendert_am` columns are set automatically during import and can be left empty in the CSV.
 
 ---
 
@@ -751,16 +745,20 @@ To import: **Admin → Import / Export → CSV-Datei hochladen → Importieren**
 
 ```
 die-handschelle/
-├── die-handschelle.php           ← Main plugin file, constants, hooks, asset enqueue
+├── die-handschelle.php           ← Main plugin file: constants, hooks, asset enqueue
 ├── includes/
-│   ├── helpers.php               ← Parliament list, status options, sanitizer, image URL helper
-│   ├── database.php              ← Handschelle_Database class (CRUD + table management)
-│   ├── image-handler.php         ← Handschelle_Image_Handler (upload + GD resize to 450px)
-│   ├── admin.php                 ← Handschelle_Admin class (admin menu, pages, actions)
-│   └── shortcodes.php            ← Handschelle_Shortcodes class (all shortcodes + PRG submit)
+│   ├── helpers.php               ← Parliament list, status options, sanitizer,
+│   │                                image URL helper, handschelle_calc_age()
+│   ├── database.php              ← Handschelle_Database class (CRUD, table management,
+│   │                                maybe_upgrade_table() for auto-migration)
+│   ├── image-handler.php         ← Handschelle_Image_Handler (upload + GD resize 450px)
+│   ├── admin.php                 ← Handschelle_Admin class (admin menus, forms,
+│   │                                CSV import/export, backup/restore)
+│   └── shortcodes.php            ← Handschelle_Shortcodes class (all 16 shortcodes,
+│                                    PRG submit handler, inline SVG icons)
 └── assets/
     ├── css/handschelle.css       ← Full stylesheet with CSS custom properties
-    └── js/handschelle.js         ← Frontend and admin JS (counters, preview, validation)
+    └── js/handschelle.js         ← Frontend and admin JS
 ```
 
 ---
@@ -768,103 +766,76 @@ die-handschelle/
 ## Important Notes
 
 - New public submissions are **not approved by default** (`freigegeben = 0`). An admin must approve them via **Übersicht → ✅ Freigeben**.
-- Profile images are automatically resized to a maximum height of **450px** using the GD library (required).
-- CSV export uses **UTF-8 with BOM** and **semicolons** as delimiters for Excel compatibility.
+- Profile images are automatically resized to a maximum height of **450 px** using the GD library (required).
+- CSV export uses **UTF-8 with BOM** and **semicolons** as delimiters for Excel compatibility. The import is header-based and backward-compatible.
 - The **Edit page** is hidden from the admin sidebar but accessible via the ✏ button in the Overview table.
-- **Logged-in users** also see an edit button directly on entry cards in the frontend (`[handschelle-anzeige]`) — no need to navigate to the admin backend. The inline edit panel includes **Google** and **Abgeordnetenwatch** search buttons next to the name field.
+- **Logged-in users** see an inline edit button on every entry card in the frontend — no need to use the admin backend.
+- The inline edit panel and admin form both include **Google, Qwant, DuckDuckGo, Bing, Abgeordnetenwatch** search buttons next to the name field.
 - All forms use **WordPress nonce verification** to prevent CSRF attacks.
 - All user input is sanitized with WordPress sanitization functions before writing to the database.
 - Social media icons are rendered as **inline SVG** with brand colors and hover effects — no external icon library required.
-- **Image uploads** (frontend and admin) are automatically renamed to `name-HA.ext` (e.g. `max-mustermann-HA.jpg`) using `sanitize_title()`. If no name is provided, the original filename is kept.
-- The **admin image field** supports two workflows: (1) pick an existing image from the WP Media Library via the `wp.media` modal with live thumbnail preview, or (2) upload a new file directly — both set the attachment ID on the entry.
-
----
+- **Image uploads** are automatically renamed to `name-HA.ext` (e.g. `max-mustermann-HA.jpg`) using `sanitize_title()`.
+- The **admin image field** supports two workflows: (1) pick from the WP Media Library via the `wp.media` modal, or (2) upload a new file directly.
+- **Database auto-migration:** After updating the plugin, `maybe_upgrade_table()` runs on `plugins_loaded` and adds any missing columns via `dbDelta()`. No data is ever lost.
 
 ---
 
 ## Release Notes
 
-### 3.04 *(2026-03-13)*
-- **Search buttons everywhere**: Google and Abgeordnetenwatch search links added in three locations:
-  1. **Admin edit form** – below the Name field (edit mode only)
-  2. **Frontend inline edit panel** – below the Name field
-  3. **Name display results** (`[handschelle-name]`, `[handschelle-name-anzeige]`) – shown above the entry cards after selecting a person
-- **Card image clickable**: Profile photo is now wrapped in a link (`?hs_name=<name>`) that navigates to the name details on the same page
-- **Inline search links on card name**: Every entry card now shows compact Google and Abgeordnetenwatch links directly below the person's name in the card header
-- **Full-width name results**: When viewing cards via a name selection, results now use `.hs-cards-single` (full-width single-column layout) instead of the default multi-column grid
+### 3.08 *(2026-03-14)*
+- **`[handschelle-asc]`**: Output is now horizontally centered (`justify-content: center`)
 
-### 3.07 *(2026-03-13)*
-- **`[handschelle-disclaimer]` aktualisiert**: E-Mail → `Info@die-handschelle.de`, Website → `www.die-handschelle.de`, Buy-Me-A-Coffee-Link → `buymeacoffee.com/dorfmuellersak47`
-- **Neuer Shortcode `[handschelle-asc]`**: Horizontale Liste aller Parteien mit Eintragsanzahl (alphabetisch, ohne Header, kleiner Font)
-- **Neue Felder**: `geburtsort` (VARCHAR 100), `geburtsdatum` (DATE), `sm_linkedin`, `sm_xing`, `sm_truth_social`
-- **Alter in Übersicht**: Admin-Übersicht zeigt Alter (aus `geburtsdatum` berechnet); Karte zeigt Geburtsdatum + Alter
-- **Neue Suchmaschinen-Buttons**: Qwant, DuckDuckGo und Bing überall, wo bisher nur Google war (Karte-Footer, Name-Dropdown, Name-Anzeige, Admin-Formular, Inline-Edit-Panel)
-- **`[handschelle-bilder]` klickbar**: Klick auf Bild öffnet Personendetails via `?hs_name=<Name>` — neues Shortcode-Attribut `link=""` für die Zielseite
-- **`[handschelle-anzeige]`**: Standard `limit` auf 0 gesetzt (keine Paginierung)
-- **DB-Migration**: `maybe_upgrade_table()` ergänzt alle fehlenden Spalten automatisch via `dbDelta()` beim Plugin-Update
-- **CSV Import/Export**: Neue Spalten im Export; Import ist headerbasiert (rückwärtskompatibel mit alten CSVs)
+### 3.07 *(2026-03-14)*
+- **`[handschelle-disclaimer]`**: E-Mail → `Info@die-handschelle.de`, Website → `www.die-handschelle.de`, Buy-Me-A-Coffee → `buymeacoffee.com/dorfmuellersak47`, tagline in quotation marks
+- **Neuer Shortcode `[handschelle-asc]`**: Horizontale zentrierte Liste aller Parteien mit Eintragsanzahl (A→Z, ohne Header, kleiner Font)
+- **Neue Felder**: `geburtsort` (VARCHAR 100), `geburtsdatum` (DATE), `sm_linkedin`, `sm_xing`, `sm_truth_social` — in allen Formularen, Karten, CSV
+- **Alter**: Admin-Übersicht zeigt berechnetes Alter; Karte zeigt Geburtsdatum + Alter
+- **Suchmaschinen**: Qwant, DuckDuckGo und Bing überall, wo bisher nur Google stand (Karten-Footer, Name-Dropdown, Name-Anzeige, Admin-Formular, Inline-Edit-Panel)
+- **`[handschelle-bilder]` klickbar**: Klick auf Bild öffnet Personendetails via `?hs_name=<Name>`; neues Attribut `link=""` für die Zielseite
+- **CSV Import**: Komplett auf header-basiertes Mapping umgestellt (rückwärtskompatibel mit alten CSVs); CSV-Export enthält alle 32 Spalten
 
-### 3.06 *(2026-03-13)*
+### 3.06 *(2026-03-14)*
 - **`[handschelle-bilder]`**: Name und Straftat als Beschriftung unter jedem Bild
 - **`[handschelle-bilder]`**: Reiner CSS-Tooltip beim Hover mit allen Personendaten
-- **`[handschelle-anzeige]`**: Standard `limit` auf 0 geändert (keine Paginierung)
-- **DB-Migration**: `maybe_upgrade_table()` – fehlende Spalten werden via `dbDelta()` ergänzt, ohne Datenverlust
-- **`plugins_loaded`-Hook**: `maybe_upgrade_table()` wird bei jedem WordPress-Load nach einem Plugin-Update ausgeführt
+- **`[handschelle-anzeige]`**: Standard `limit` auf 0 gesetzt (keine Paginierung)
+- **DB-Migration**: `maybe_upgrade_table()` — fehlende Spalten werden via `dbDelta()` beim Plugin-Update automatisch ergänzt, kein Datenverlust
 
 ### 3.05 *(2026-03-13)*
-- **Keine Hintergrundfarben**: Hintergrundfarben von Frontend-Containern (`.hs-form`, `.hs-search-box`, `.hs-card-straftat`, `.hs-card-bemerkung`, `.hs-card-footer`, `.hs-card-date`, `.hs-form-actions`, `.hs-stat-total`) entfernt – Plugin integriert sich neutral in das Theme
-- **Volle Breite**: Alle Shortcode-Wrapper verwenden durchgängig `hs-full-width` (100% Breite, kein max-width)
-- **Alle Links im Karten-Footer**: Google- und Abgeordnetenwatch-Links aus dem Karten-Header entfernt; Quelle-Link aus dem Karten-Body entfernt; alle Links (Quelle, Google, Abgeordnetenwatch, Social Media) befinden sich nun im `.hs-card-footer`
-- **Neuer Shortcode `[handschelle-statistik-nolink]`**: Identisch mit `[handschelle-statistik]`, aber Parteinamen sind einfacher Text ohne Verlinkung
-- **MediaID-Remapping beim Backup/Restore**: `backup_full()` schreibt jetzt eine `bild-map.json` in die ZIP-Datei (Attachment-ID → Dateiname); `restore_full()` nutzt diese Map, um die alten Attachment-IDs beim Import auf die neuen IDs der importierten Bilder umzuschreiben
-- **CSV-Import**: Beim Import wird geprüft, ob die gespeicherte numerische Attachment-ID auf dem Zielsystem existiert; ungültige IDs werden geleert statt übernommen
+- **Keine Hintergrundfarben**: Hintergrundfarben von Frontend-Containern entfernt — Plugin integriert sich neutral ins Theme
+- **Volle Breite**: Alle Shortcode-Wrapper verwenden `hs-full-width` (100 % Breite)
+- **Alle Links im Karten-Footer**: Google- und Abgeordnetenwatch-Links aus dem Karten-Header entfernt; alle Links jetzt im `.hs-card-footer`
+- **Neuer Shortcode `[handschelle-statistik-nolink]`**
+- **MediaID-Remapping beim Backup/Restore**: `bild-map.json` in ZIP; automatisches ID-Remapping beim Restore
+
+### 3.04 *(2026-03-13)*
+- **Such-Buttons überall**: Google und Abgeordnetenwatch in Admin-Formular, Frontend-Inline-Edit und Name-Anzeige
+- **Karten-Bild klickbar**: Profilfoto verlinkt auf `?hs_name=<name>` der gleichen Seite
+- **Vollbreite Name-Ergebnisse**: `.hs-cards-single` für Personenansicht
 
 ### 3.03 *(2026-03-13)*
-- **Image rename pattern changed** to `<Name>-HA.<ext>` (e.g. `max-mustermann-HA.jpg`); party name no longer part of filename
-- **New shortcode `[handschelle-statistik-ol]`**: Ordered list showing each party and the count of distinct person names, sorted by count descending
-- **New Admin page: Backup & Restore**: Full backup creates a single ZIP with all entries (CSV) + all media images; restore uploads that ZIP, truncates existing data, and re-imports entries and images
-- **Admin image picker improved**: Media library button promoted to primary action (`button-primary`); ID field hidden; "Bild entfernen" button added in edit mode
+- **Bild-Umbenennung**: Schema geändert auf `<Name>-HA.<ext>` (z. B. `max-mustermann-HA.jpg`)
+- **Neuer Shortcode `[handschelle-statistik-ol]`**
+- **Admin: Backup & Restore**: Vollständiges Backup als ZIP (CSV + Bilder); Restore importiert beides
 
 ### 3.02 *(2026-03-13)*
-- **WP Media Manager as primary image picker**: Manual attachment-ID input hidden; media library button now `button-primary`; "Bild entfernen" button added for edit mode
-- **Image upload rename**: Changed pattern from `{name}-{partei}.ext` to `{name}HA.ext`
+- **WP Media Manager** als primäre Bildauswahl; „Bild entfernen"-Button im Bearbeiten-Modus
 
 ### 3.00 *(2026-03-13)*
-- **Paginierung für `[handschelle-anzeige]`**: Neues `limit`-Attribut (Standard: 12 Einträge pro Seite), URL-Parameter `hs_paged` für Seitennavigation
-- **Volltext-Suche in `[handschelle-suche]`**: Neues Textsuchfeld durchsucht Name, Partei und Straftat gleichzeitig; URL-Parameter `hs_search`; alle Filter kombinierbar
-- **`[handschelle-karte id="X"]`**: Neuer Shortcode zur Anzeige einer einzelnen Eintragskarte per Datenbank-ID
-- **Admin-Übersicht: Filter-Tabs**: Schnellfilter Alle / Ausstehend / Freigegeben mit Anzahl-Badges
-- **Admin-Übersicht: Bulk-Aktionen**: Mehrere Einträge per Checkbox auswählen und gemeinsam freigeben, sperren oder löschen
-- **Admin Bild-Feld: WP-Medienbibliothek-Picker**: Im Admin-Formular (Hinzufügen/Bearbeiten) öffnet ein Button die WP-Medienbibliothek (`wp.media`-Modal); bereits gesetztes Bild wird vorausgewählt; Vorschau-Thumbnail wird sofort angezeigt; manuelle Attachment-ID-Eingabe und Datei-Upload bleiben weiterhin möglich
-- **Auto-Rename bei Bild-Uploads**: Alle hochgeladenen Bilder (Frontend und Admin) werden automatisch nach dem Schema `name-partei.ext` umbenannt (z. B. `max-mustermann-cdu.jpg`); erzeugt mit `sanitize_title()` für saubere, URL-sichere Dateinamen
-- **`Handschelle_Database::count_all()`** erweitert: unterstützt jetzt dieselben Filter wie `get_all()` (search, partei, name) – benötigt für genaue Paginierung
-- **`Handschelle_Database::recreate_table()`** als eigenständige Methode hinzugefügt
+- **Paginierung** für `[handschelle-anzeige]` (`limit`-Attribut, `hs_paged`-Parameter)
+- **Volltext-Suche** in `[handschelle-suche]` (`hs_search`-Parameter)
+- **`[handschelle-karte id="X"]`**: Einzelkarte per Datenbank-ID
+- **Admin-Filter-Tabs**: Alle / Ausstehend / Freigegeben mit Anzahl-Badges
+- **Admin-Bulk-Aktionen**: Mehrere Einträge gleichzeitig freigeben, sperren oder löschen
+- **WP-Medienbibliothek-Picker** im Admin-Formular
 
-### 2.09 *(2026-03-13)*
-- Added "Buy Me A Coffee" support link to README.md
-
-### 2.08 *(2026-03-13)*
-- Added Introduction / Einleitung section to README.md
-
-### 2.07 *(2026-03-13)*
-- Added shortcode `[handschelle-bilder]`: gallery of all approved entry images, max 300×300 px, aspect ratio preserved
-- Version bump rule documented: +0.01 per commit
-
-### 2.06 *(2026-03-13)*
-- Added admin page **Bilder**: list all entries with images, ZIP export & ZIP import of attachments
-- ZIP import: extracts images, resizes to max 450 px height via GD, registers as WP media attachments
-
-### 2.05 *(2026-03-13)*
-- Added shortcodes: `[handschelle-statistik-partei]`, `[handschelle-statistik-name]`, `[handschelle-name-anzeige]`, `[handschelle-name-partei]`
-- Party column in `[handschelle-statistik-partei]` links to `?hs_name_partei=` filter
-
-### 2.04 *(2026-03-13)*
-- Updated author email to `bernd@xn--dorfmller-u9a.com`
-- Updated project URL to `https://xn--dorfmller-u9a.com/die-handschelle`
-- Version numbering converted to numeric format (0.01 increments)
+### 2.07 – 2.09 *(2026-03-13)*
+- Shortcode `[handschelle-bilder]` (Bildergalerie)
+- Admin-Seite **Bilder**: ZIP-Export & ZIP-Import von Anhängen
+- Shortcodes `[handschelle-statistik-partei]`, `[handschelle-statistik-name]`, `[handschelle-name-anzeige]`, `[handschelle-name-partei]`
+- Buy-Me-A-Coffee-Link, Einleitung in README
 
 ### Alpha-2 / 2.0 A *(initial)*
-- Initial release: frontend submission form, entry cards, party/name dropdowns, statistics table, CSV import/export, database management, image upload & resize (GD, max 450 px height)
+- Initial release: Frontend-Formular, Eintrags-Karten, Partei-/Personen-Dropdowns, Statistiktabelle, CSV-Import/Export, Datenbankverwaltung, Bild-Upload & GD-Resize (max. 450 px)
 
 ---
 
