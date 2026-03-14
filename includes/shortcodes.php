@@ -229,14 +229,19 @@ class Handschelle_Shortcodes {
             'limit'  => 0,
         ), $atts );
 
-        $limit  = max( 0, intval( $atts['limit'] ) );
-        $paged  = max( 1, intval( $_GET['hs_paged'] ?? 1 ) );
-        $search = sanitize_text_field( wp_unslash( $_GET['hs_search'] ?? '' ) );
+        $limit         = max( 0, intval( $atts['limit'] ) );
+        $paged         = max( 1, intval( $_GET['hs_paged'] ?? 1 ) );
+        $search        = sanitize_text_field( wp_unslash( $_GET['hs_search']  ?? '' ) );
+        $filter_partei = sanitize_text_field( wp_unslash( $_GET['hs_partei']  ?? '' ) );
+        $filter_name   = sanitize_text_field( wp_unslash( $_GET['hs_name']    ?? '' ) );
 
         $args = array( 'freigegeben' => 1 );
         if ( ! empty( $atts['partei'] ) ) $args['partei'] = sanitize_text_field( $atts['partei'] );
         if ( ! empty( $atts['name'] ) )   $args['name']   = sanitize_text_field( $atts['name'] );
         if ( ! empty( $search ) )         $args['search'] = $search;
+        // Override with URL params from dropdowns (only if not locked via shortcode attribute)
+        if ( empty( $atts['partei'] ) && ! empty( $filter_partei ) ) $args['partei'] = $filter_partei;
+        if ( empty( $atts['name'] )   && ! empty( $filter_name )   ) $args['name']   = $filter_name;
 
         $total_pages = 1;
         if ( $limit > 0 ) {
@@ -256,6 +261,14 @@ class Handschelle_Shortcodes {
         if ( ! empty( $search ) ) {
             echo '<div class="hs-search-info">🔍 Suche nach: <strong>' . esc_html( $search ) . '</strong>'
                . ' &mdash; <a href="' . esc_url( remove_query_arg( array( 'hs_search', 'hs_paged' ) ) ) . '">✕ Zurücksetzen</a></div>';
+        }
+        if ( ! empty( $filter_partei ) && empty( $atts['partei'] ) ) {
+            echo '<div class="hs-search-info">🏛 Partei: <strong>' . esc_html( $filter_partei ) . '</strong>'
+               . ' &mdash; <a href="' . esc_url( remove_query_arg( array( 'hs_partei', 'hs_paged' ) ) ) . '">✕ Zurücksetzen</a></div>';
+        }
+        if ( ! empty( $filter_name ) && empty( $atts['name'] ) ) {
+            echo '<div class="hs-search-info">👤 Person: <strong>' . esc_html( $filter_name ) . '</strong>'
+               . ' &mdash; <a href="' . esc_url( remove_query_arg( array( 'hs_name', 'hs_paged' ) ) ) . '">✕ Zurücksetzen</a></div>';
         }
 
         if ( empty( $entries ) ) {
