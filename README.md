@@ -5,10 +5,10 @@
 
 | | |
 |---|---|
-| **Version** | 3.05 |
+| **Version** | 3.07 |
 | **Autor** | Bernd K.R. Dorfmüller |
-| **E-Mail** | bernd@xn--dorfmller-u9a.com |
-| **Website** | https://xn--dorfmller-u9a.com/die-handschelle |
+| **E-Mail** | Info@die-handschelle.de |
+| **Website** | https://www.die-handschelle.de |
 | **Lizenz** | GPL-2.0+ |
 | **Requires** | WordPress 5.5+, PHP 7.4+, GD Library |
 
@@ -119,9 +119,10 @@ All shortcodes output HTML and can be placed on any WordPress page or post.
 | `[handschelle-statistik-ol]` | Ordered list: party – number of distinct names |
 | `[handschelle-name-anzeige]` | Name dropdown – shows cards for selected person |
 | `[handschelle-name-partei]` | Party dropdown – shows cards for selected party |
-| `[handschelle-bilder]` | Gallery of all approved entry images (max 300×300 px) |
+| `[handschelle-bilder]` | Gallery of all approved entry images (max 300×300 px), clickable → name details |
 | `[handschelle-karte]` | Single entry card by ID: `[handschelle-karte id="5"]` |
 | `[handschelle-disclaimer]` | Copyright notice |
+| `[handschelle-asc]` | Horizontal inline list: Partei (Anzahl Einträge), alphabetical, no header |
 
 ---
 
@@ -145,7 +146,8 @@ Renders a public submission form. New submissions are saved with `freigegeben = 
 - Source link
 - Case file number
 - Notes / remarks
-- Social media links (Facebook, YouTube, Twitter/X, personal, homepage, Wikipedia, other)
+- Birth date and birth place
+- Social media links (Facebook, YouTube, Twitter/X, personal, homepage, Wikipedia, LinkedIn, Xing, Truth Social, other)
 - Photo upload
 
 ---
@@ -172,7 +174,7 @@ Displays approved entries (`freigegeben = 1`) as responsive cards with social me
 |---|---|---|---|
 | `partei` | string | — | Filter cards by political party name |
 | `name` | string | — | Filter cards by person name |
-| `limit` | int | `12` | Cards per page (0 = all, disables pagination) |
+| `limit` | int | `0` | Cards per page (0 = all, no pagination) |
 
 **URL parameters (set automatically by search/pagination UI):**
 
@@ -316,11 +318,30 @@ Renders a party dropdown. After selection, shows all approved entry cards for th
 
 ### `[handschelle-bilder]`
 
-Displays a responsive gallery of all approved entries that have an image. Images are displayed with `max-width: 300px` and `max-height: 300px` while preserving the original aspect ratio. Each image is captioned with the person's name.
+Displays a responsive gallery of all approved entries that have an image. Images are displayed with `max-width: 300px` and `max-height: 300px` while preserving the original aspect ratio. Each image is captioned with the person's name and crime description. Hovering the image shows a tooltip with all available person data.
+
+**Clicking an image** navigates to the name details page (passes `?hs_name=<name>`).
 
 ```
 [handschelle-bilder]
+[handschelle-bilder link="/personen/"]
 ```
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `link` | string | current page | Base URL of the page with `[handschelle-name]`. If empty, uses current page URL. |
+
+---
+
+### `[handschelle-asc]`
+
+Displays a compact horizontal inline list of all parties with their entry count, sorted alphabetically. No header, small font. Useful in sidebars or footers.
+
+```
+[handschelle-asc]
+```
+
+**Example output:** `AfD (12) · CDU (8) · FDP (3) · SPD (5)`
 
 ---
 
@@ -334,8 +355,8 @@ Outputs the copyright/disclaimer block:
 
 **Output:**
 > **Die-Handschelle © 2026**
-> Wer in unseren Parlamenten ist oder war kriminell? Eine Datenbank der Straftaten.
-> [bernd@xn--dorfmller-u9a.com](mailto:bernd@xn--dorfmller-u9a.com) · [xn--dorfmller-u9a.com/die-handschelle](https://xn--dorfmller-u9a.com/die-handschelle)
+> „Wer in unseren Parlamenten ist oder war kriminell?" Eine Datenbank der Straftaten.
+> [www.die-handschelle.de](https://www.die-handschelle.de) · [Info@die-handschelle.de](mailto:Info@die-handschelle.de) · ☕ Unterstützen
 
 ---
 
@@ -358,7 +379,7 @@ Outputs the copyright/disclaimer block:
 ## Fields / Database Schema
 
 **Table name:** `wp_{prefix}_die_handschelle`
-**Total fields:** 27
+**Total fields:** 32
 
 ### Core Fields
 
@@ -375,6 +396,8 @@ Outputs the copyright/disclaimer block:
 |---|---|---|---|---|
 | `name` | VARCHAR | 50 | Yes | Person's full name |
 | `beruf` | VARCHAR | 50 | No | Profession / occupation |
+| `geburtsort` | VARCHAR | 100 | No | Place of birth |
+| `geburtsdatum` | DATE | — | No | Date of birth (auto-calculates age) |
 | `bild` | TEXT | — | No | WordPress attachment ID or image URL |
 | `partei` | VARCHAR | 50 | No | Political party |
 | `aufgabe_partei` | VARCHAR | 100 | No | Position / role within the party |
@@ -409,6 +432,9 @@ Outputs the copyright/disclaimer block:
 | `sm_twitter` | TEXT | Twitter / X profile URL |
 | `sm_homepage` | TEXT | Personal website / homepage URL |
 | `sm_wikipedia` | TEXT | Wikipedia article URL |
+| `sm_linkedin` | TEXT | LinkedIn profile URL |
+| `sm_xing` | TEXT | Xing profile URL |
+| `sm_truth_social` | TEXT | Truth Social profile URL |
 | `sm_sonstige` | TEXT | Other social media URL |
 
 ### Database Indexes
@@ -712,7 +738,7 @@ Registered in `includes/admin.php`:
 
 The CSV export is UTF-8 with BOM, semicolon-delimited (Excel-compatible).
 
-**Column order in CSV:** All 27 fields in the order they are defined in the database schema above.
+**Column order in CSV:** All 32 fields in the order they are defined in the database schema above. The import is header-based and backward-compatible with old 26/27-column CSVs.
 
 To export: **Admin → Import / Export → Export CSV**
 To import: **Admin → Import / Export → CSV-Datei hochladen → Importieren**
@@ -766,6 +792,24 @@ die-handschelle/
 - **Card image clickable**: Profile photo is now wrapped in a link (`?hs_name=<name>`) that navigates to the name details on the same page
 - **Inline search links on card name**: Every entry card now shows compact Google and Abgeordnetenwatch links directly below the person's name in the card header
 - **Full-width name results**: When viewing cards via a name selection, results now use `.hs-cards-single` (full-width single-column layout) instead of the default multi-column grid
+
+### 3.07 *(2026-03-13)*
+- **`[handschelle-disclaimer]` aktualisiert**: E-Mail → `Info@die-handschelle.de`, Website → `www.die-handschelle.de`, Buy-Me-A-Coffee-Link → `buymeacoffee.com/dorfmuellersak47`
+- **Neuer Shortcode `[handschelle-asc]`**: Horizontale Liste aller Parteien mit Eintragsanzahl (alphabetisch, ohne Header, kleiner Font)
+- **Neue Felder**: `geburtsort` (VARCHAR 100), `geburtsdatum` (DATE), `sm_linkedin`, `sm_xing`, `sm_truth_social`
+- **Alter in Übersicht**: Admin-Übersicht zeigt Alter (aus `geburtsdatum` berechnet); Karte zeigt Geburtsdatum + Alter
+- **Neue Suchmaschinen-Buttons**: Qwant, DuckDuckGo und Bing überall, wo bisher nur Google war (Karte-Footer, Name-Dropdown, Name-Anzeige, Admin-Formular, Inline-Edit-Panel)
+- **`[handschelle-bilder]` klickbar**: Klick auf Bild öffnet Personendetails via `?hs_name=<Name>` — neues Shortcode-Attribut `link=""` für die Zielseite
+- **`[handschelle-anzeige]`**: Standard `limit` auf 0 gesetzt (keine Paginierung)
+- **DB-Migration**: `maybe_upgrade_table()` ergänzt alle fehlenden Spalten automatisch via `dbDelta()` beim Plugin-Update
+- **CSV Import/Export**: Neue Spalten im Export; Import ist headerbasiert (rückwärtskompatibel mit alten CSVs)
+
+### 3.06 *(2026-03-13)*
+- **`[handschelle-bilder]`**: Name und Straftat als Beschriftung unter jedem Bild
+- **`[handschelle-bilder]`**: Reiner CSS-Tooltip beim Hover mit allen Personendaten
+- **`[handschelle-anzeige]`**: Standard `limit` auf 0 geändert (keine Paginierung)
+- **DB-Migration**: `maybe_upgrade_table()` – fehlende Spalten werden via `dbDelta()` ergänzt, ohne Datenverlust
+- **`plugins_loaded`-Hook**: `maybe_upgrade_table()` wird bei jedem WordPress-Load nach einem Plugin-Update ausgeführt
 
 ### 3.05 *(2026-03-13)*
 - **Keine Hintergrundfarben**: Hintergrundfarben von Frontend-Containern (`.hs-form`, `.hs-search-box`, `.hs-card-straftat`, `.hs-card-bemerkung`, `.hs-card-footer`, `.hs-card-date`, `.hs-form-actions`, `.hs-stat-total`) entfernt – Plugin integriert sich neutral in das Theme

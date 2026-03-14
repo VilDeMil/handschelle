@@ -157,7 +157,7 @@ class Handschelle_Admin {
         header( 'Pragma: no-cache' );
         $out  = fopen( 'php://output', 'w' );
         fputs( $out, "\xEF\xBB\xBF" );
-        $cols = array( 'id','datum_eintrag','name','beruf','bild','partei','aufgabe_partei','parlament','parlament_name','status_aktiv','straftat','urteil','link_quelle','aktenzeichen','bemerkung','status_straftat','sm_facebook','sm_youtube','sm_personal','sm_twitter','sm_homepage','sm_wikipedia','sm_sonstige','freigegeben','erstellt_am','geaendert_am' );
+        $cols = array( 'id','datum_eintrag','name','beruf','geburtsort','geburtsdatum','bild','partei','aufgabe_partei','parlament','parlament_name','status_aktiv','straftat','urteil','link_quelle','aktenzeichen','bemerkung','status_straftat','sm_facebook','sm_youtube','sm_personal','sm_twitter','sm_homepage','sm_wikipedia','sm_sonstige','sm_linkedin','sm_xing','sm_truth_social','freigegeben','erstellt_am','geaendert_am' );
         fputcsv( $out, $cols, ';' );
         foreach ( $entries as $e ) {
             $row = array();
@@ -177,40 +177,51 @@ class Handschelle_Admin {
         if ( ! $fh ) return;
         $bom = fread( $fh, 3 );
         if ( $bom !== "\xEF\xBB\xBF" ) rewind( $fh );
-        fgetcsv( $fh, 0, ';' );
+        $headers = fgetcsv( $fh, 0, ';' );
+        if ( empty( $headers ) ) { fclose( $fh ); return; }
+        // Header-based column mapping: works with old (26 col) and new (31 col) CSVs
+        $col_map = array_flip( array_map( 'trim', $headers ) );
+        $g = function( $field ) use ( &$row, $col_map ) {
+            return ( isset( $col_map[$field] ) && isset( $row[$col_map[$field]] ) ) ? $row[$col_map[$field]] : '';
+        };
         $count = 0;
         while ( ( $row = fgetcsv( $fh, 0, ';' ) ) !== false ) {
-            if ( count( $row ) < 20 ) continue;
-            // Resolve bild: if numeric ID doesn't exist locally, try to find
-            // attachment by filename (allows import after image ZIP import).
-            $bild_raw = sanitize_text_field( $row[4] );
+            if ( count( $row ) < 10 ) continue;
+            // Resolve bild: if numeric ID doesn't exist locally, clear it
+            $bild_raw = sanitize_text_field( $g('bild') );
             if ( is_numeric( $bild_raw ) && intval( $bild_raw ) > 0 && ! get_attached_file( intval( $bild_raw ) ) ) {
-                // ID invalid on this site – clear it (images must be imported separately)
                 $bild_raw = '';
             }
+            $geburtsdatum_raw = sanitize_text_field( $g('geburtsdatum') );
+            $geburtsdatum = ( $geburtsdatum_raw && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $geburtsdatum_raw ) ) ? $geburtsdatum_raw : null;
             Handschelle_Database::insert( array(
-                'datum_eintrag'  => sanitize_text_field( $row[1] ),
-                'name'           => substr( sanitize_text_field( $row[2] ), 0, 50 ),
-                'beruf'          => substr( sanitize_text_field( $row[3] ), 0, 50 ),
-                'bild'           => $bild_raw,
-                'partei'         => substr( sanitize_text_field( $row[5] ), 0, 50 ),
-                'aufgabe_partei' => substr( sanitize_text_field( $row[6] ), 0, 100 ),
-                'parlament'      => sanitize_text_field( $row[7] ),
-                'parlament_name' => substr( sanitize_text_field( $row[8] ), 0, 50 ),
-                'status_aktiv'   => intval( $row[9] ),
-                'straftat'       => substr( sanitize_textarea_field( $row[10] ), 0, 200 ),
-                'urteil'         => substr( sanitize_text_field( $row[11] ), 0, 50 ),
-                'link_quelle'    => esc_url_raw( $row[12] ),
-                'aktenzeichen'   => substr( sanitize_text_field( $row[13] ), 0, 50 ),
-                'bemerkung'      => sanitize_textarea_field( $row[14] ),
-                'status_straftat'=> sanitize_text_field( $row[15] ),
-                'sm_facebook'    => esc_url_raw( $row[16] ),
-                'sm_youtube'     => esc_url_raw( $row[17] ),
-                'sm_personal'    => esc_url_raw( $row[18] ),
-                'sm_twitter'     => esc_url_raw( $row[19] ),
-                'sm_homepage'    => esc_url_raw( $row[20] ?? '' ),
-                'sm_wikipedia'   => esc_url_raw( $row[21] ?? '' ),
-                'sm_sonstige'    => esc_url_raw( $row[22] ?? '' ),
+                'datum_eintrag'   => sanitize_text_field( $g('datum_eintrag') ) ?: date('Y-m-d'),
+                'name'            => substr( sanitize_text_field( $g('name') ), 0, 50 ),
+                'beruf'           => substr( sanitize_text_field( $g('beruf') ), 0, 50 ),
+                'geburtsort'      => substr( sanitize_text_field( $g('geburtsort') ), 0, 100 ),
+                'geburtsdatum'    => $geburtsdatum,
+                'bild'            => $bild_raw,
+                'partei'          => substr( sanitize_text_field( $g('partei') ), 0, 50 ),
+                'aufgabe_partei'  => substr( sanitize_text_field( $g('aufgabe_partei') ), 0, 100 ),
+                'parlament'       => sanitize_text_field( $g('parlament') ),
+                'parlament_name'  => substr( sanitize_text_field( $g('parlament_name') ), 0, 50 ),
+                'status_aktiv'    => intval( $g('status_aktiv') ),
+                'straftat'        => substr( sanitize_textarea_field( $g('straftat') ), 0, 200 ),
+                'urteil'          => substr( sanitize_text_field( $g('urteil') ), 0, 50 ),
+                'link_quelle'     => esc_url_raw( $g('link_quelle') ),
+                'aktenzeichen'    => substr( sanitize_text_field( $g('aktenzeichen') ), 0, 50 ),
+                'bemerkung'       => sanitize_textarea_field( $g('bemerkung') ),
+                'status_straftat' => sanitize_text_field( $g('status_straftat') ) ?: 'Ermittlungen laufen',
+                'sm_facebook'     => esc_url_raw( $g('sm_facebook') ),
+                'sm_youtube'      => esc_url_raw( $g('sm_youtube') ),
+                'sm_personal'     => esc_url_raw( $g('sm_personal') ),
+                'sm_twitter'      => esc_url_raw( $g('sm_twitter') ),
+                'sm_homepage'     => esc_url_raw( $g('sm_homepage') ),
+                'sm_wikipedia'    => esc_url_raw( $g('sm_wikipedia') ),
+                'sm_sonstige'     => esc_url_raw( $g('sm_sonstige') ),
+                'sm_linkedin'     => esc_url_raw( $g('sm_linkedin') ),
+                'sm_xing'         => esc_url_raw( $g('sm_xing') ),
+                'sm_truth_social' => esc_url_raw( $g('sm_truth_social') ),
             ) );
             $count++;
         }
@@ -305,6 +316,7 @@ class Handschelle_Admin {
                             <th style="width:36px"><input type="checkbox" id="hs-bulk-all-top" class="hs-bulk-checkbox"></th>
                             <th style="width:70px">Bild</th>
                             <th>Name</th>
+                            <th style="width:50px">Alter</th>
                             <th>Partei</th>
                             <th>Straftat</th>
                             <th style="width:90px">Status</th>
@@ -329,6 +341,7 @@ class Handschelle_Admin {
                                 <?php endif; ?>
                             </td>
                             <td><strong><?php echo esc_html( $e->name ); ?></strong><br><small><?php echo esc_html( $e->beruf ); ?></small></td>
+                            <td><?php $age = handschelle_calc_age( $e->geburtsdatum ?? '' ); echo $age !== null ? $age : '—'; ?></td>
                             <td><?php echo esc_html( $e->partei ); ?><br><small><?php echo esc_html( $e->aufgabe_partei ); ?></small></td>
                             <td><?php echo esc_html( mb_substr( $e->straftat, 0, 80 ) ) . ( mb_strlen( $e->straftat ) > 80 ? '…' : '' ); ?></td>
                             <td><?php echo $e->status_aktiv ? '<span class="hs-badge hs-badge-aktiv">Aktiv</span>' : '<span class="hs-badge hs-badge-inaktiv">Inaktiv</span>'; ?></td>
@@ -385,13 +398,16 @@ class Handschelle_Admin {
         $parlaments = handschelle_parlaments();
         $st_opts    = handschelle_status_straftat_options();
         $sm_fields  = array(
-            'sm_facebook'  => '📘 Facebook',
-            'sm_youtube'   => '▶ YouTube',
-            'sm_personal'  => '👤 Persönliches Profil',
-            'sm_twitter'   => '🐦 Twitter / X',
-            'sm_homepage'  => '🌐 Persönliche Homepage',
-            'sm_wikipedia' => '📖 Wikipedia',
-            'sm_sonstige'  => '🔗 Sonstige',
+            'sm_facebook'     => '📘 Facebook',
+            'sm_youtube'      => '▶ YouTube',
+            'sm_personal'     => '👤 Persönliches Profil',
+            'sm_twitter'      => '🐦 Twitter / X',
+            'sm_homepage'     => '🌐 Persönliche Homepage',
+            'sm_wikipedia'    => '📖 Wikipedia',
+            'sm_linkedin'     => '💼 LinkedIn',
+            'sm_xing'         => '💼 Xing',
+            'sm_truth_social' => '🗣 Truth Social',
+            'sm_sonstige'     => '🔗 Sonstige',
         );
         $v = function( $field, $default = '' ) use ( $entry ) {
             if ( ! $entry ) return esc_attr( $default );
@@ -414,16 +430,17 @@ class Handschelle_Admin {
                         <input type="text" name="name" maxlength="50" value="<?php echo $v('name'); ?>" placeholder="Vor- und Nachname" required>
                         <?php if ( $is_edit && $v('name') ) : ?>
                         <div class="hs-search-buttons">
-                            <a href="<?php echo esc_url( 'https://www.google.com/search?q=' . urlencode( $entry->name ) ); ?>" target="_blank" rel="noopener" class="button button-secondary hs-search-btn">
-                                🔍 Suche mit GOOGLE
-                            </a>
-                            <a href="<?php echo esc_url( 'https://www.abgeordnetenwatch.de/profile?politician_search_keys=' . urlencode( $entry->name ) ); ?>" target="_blank" rel="noopener" class="button button-secondary hs-search-btn">
-                                🏛 Suche mit Abgeordnetenwatch
-                            </a>
+                            <a href="<?php echo esc_url( 'https://www.google.com/search?q=' . urlencode( $entry->name ) ); ?>" target="_blank" rel="noopener" class="button button-secondary hs-search-btn">🔍 Google</a>
+                            <a href="<?php echo esc_url( 'https://www.qwant.com/?l=de&q=' . urlencode( $entry->name ) ); ?>" target="_blank" rel="noopener" class="button button-secondary hs-search-btn">🔍 Qwant</a>
+                            <a href="<?php echo esc_url( 'https://duckduckgo.com/?q=' . urlencode( $entry->name ) ); ?>" target="_blank" rel="noopener" class="button button-secondary hs-search-btn">🔍 DuckDuckGo</a>
+                            <a href="<?php echo esc_url( 'https://www.bing.com/search?q=' . urlencode( $entry->name ) ); ?>" target="_blank" rel="noopener" class="button button-secondary hs-search-btn">🔍 Bing</a>
+                            <a href="<?php echo esc_url( 'https://www.abgeordnetenwatch.de/profile?politician_search_keys=' . urlencode( $entry->name ) ); ?>" target="_blank" rel="noopener" class="button button-secondary hs-search-btn">🏛 Abgeordnetenwatch</a>
                         </div>
                         <?php endif; ?>
                     </div>
                     <div class="hs-field"><label>Beruf <span>(max. 50 Zeichen)</span></label><input type="text" name="beruf" maxlength="50" value="<?php echo $v('beruf'); ?>" placeholder="z.B. Politiker"></div>
+                    <div class="hs-field"><label>Geburtsort <span>(max. 100 Zeichen)</span></label><input type="text" name="geburtsort" maxlength="100" value="<?php echo $v('geburtsort'); ?>" placeholder="z.B. Berlin"></div>
+                    <div class="hs-field"><label>Geburtsdatum</label><input type="date" name="geburtsdatum" value="<?php echo esc_attr( ( ! empty($entry->geburtsdatum) && $entry->geburtsdatum !== '0000-00-00' ) ? $entry->geburtsdatum : '' ); ?>"></div>
                     <div class="hs-field hs-field-full">
                         <label>Bild</label>
                         <div class="hs-media-picker">
@@ -805,7 +822,7 @@ class Handschelle_Admin {
         $entries = Handschelle_Database::get_all( array( 'freigegeben' => 'all' ) );
 
         // Build in-memory CSV
-        $cols = array( 'id','datum_eintrag','name','beruf','bild','partei','aufgabe_partei','parlament','parlament_name','status_aktiv','straftat','urteil','link_quelle','aktenzeichen','bemerkung','status_straftat','sm_facebook','sm_youtube','sm_personal','sm_twitter','sm_homepage','sm_wikipedia','sm_sonstige','freigegeben','erstellt_am','geaendert_am' );
+        $cols = array( 'id','datum_eintrag','name','beruf','geburtsort','geburtsdatum','bild','partei','aufgabe_partei','parlament','parlament_name','status_aktiv','straftat','urteil','link_quelle','aktenzeichen','bemerkung','status_straftat','sm_facebook','sm_youtube','sm_personal','sm_twitter','sm_homepage','sm_wikipedia','sm_sonstige','sm_linkedin','sm_xing','sm_truth_social','freigegeben','erstellt_am','geaendert_am' );
         $csv  = "\xEF\xBB\xBF"; // UTF-8 BOM
         $csv .= implode( ';', $cols ) . "\r\n";
         foreach ( $entries as $e ) {
