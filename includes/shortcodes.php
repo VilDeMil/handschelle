@@ -195,7 +195,7 @@ class Handschelle_Shortcodes {
     ================================================================ */
     public function early_frontend_edit() {
         if ( empty( $_POST['hs_edit_submit'] ) ) return;
-        if ( ! is_user_logged_in() ) return;
+        if ( ! current_user_can( 'publish_posts' ) ) return; // Author or higher
 
         if ( ! isset( $_POST['hs_edit_nonce'] ) ||
              ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['hs_edit_nonce'] ) ), 'hs_frontend_edit' ) ) {
@@ -856,7 +856,7 @@ class Handschelle_Shortcodes {
             'Ermittlungen laufen' => 'hs-status-ermittlung',
             'Eingestellt'         => 'hs-status-eingestellt',
         );
-        $is_logged_in = is_user_logged_in();
+        $is_logged_in = current_user_can( 'publish_posts' ); // Author or higher
         $is_admin     = current_user_can( 'manage_options' );
         $edited       = isset( $_GET['hs_edited'] ) && intval( $_GET['hs_edited'] ) === intval( $e->id );
         ob_start();
@@ -1088,7 +1088,8 @@ class Handschelle_Shortcodes {
                                 <a href="<?php echo esc_url( $name_url ); ?>" title="<?php echo esc_attr( $e->name ); ?> – Details anzeigen">
                                 <img src="<?php echo esc_url( $img_url ); ?>"
                                      alt="<?php echo esc_attr( $e->name ); ?>"
-                                     style="max-width:300px;max-height:300px;width:auto;height:auto;display:block;"></a>
+                                     class="hs-bild-img"
+                                     style="max-height:300px;width:auto;height:auto;display:block;transition:max-height .3s ease,width .3s ease;"></a>
                                 <div class="hs-bild-tooltip" role="tooltip">
                                     <strong><?php echo esc_html( $e->name ); ?></strong>
                                     <?php if ( ! empty( $e->partei ) ) : ?>

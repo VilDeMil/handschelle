@@ -769,7 +769,7 @@ die-handschelle/
 - Profile images are automatically resized to a maximum height of **450 px** using the GD library (required).
 - CSV export uses **UTF-8 with BOM** and **semicolons** as delimiters for Excel compatibility. The import is header-based and backward-compatible.
 - The **Edit page** is hidden from the admin sidebar but accessible via the ✏ button in the Overview table.
-- **Logged-in users** see an inline edit button on every entry card in the frontend — no need to use the admin backend.
+- **Authors and higher** (role `Author`, `Editor`, `Administrator`) see an inline edit button on every entry card in the frontend — Subscribers and Contributors do not.
 - The inline edit panel and admin form both include **Google, Qwant, DuckDuckGo, Bing, Abgeordnetenwatch** search buttons next to the name field.
 - All forms use **WordPress nonce verification** to prevent CSRF attacks. If nonce verification fails (e.g. after a long session or cached page), the user sees a visible error message (`⚠️ Fehler beim Speichern`) instead of a silent redirect.
 - All user input is sanitized with WordPress sanitization functions before writing to the database.
@@ -785,6 +785,8 @@ die-handschelle/
 ### 6.0 *(2026-03-14)*
 - **Dropdown styling**: Text color set to black (`#000`), background set to white (`#fff`), transparency removed — applies to all select elements (`.hs-select`, `.hs-field select`, `.hs-edit-form select`, `.hs-bulk-select`)
 - **Eintrag melden**: Every card now has a `⚠️ Eintrag melden!` mailto link in the footer — opens a pre-addressed e-mail to `info@die-handschelle.de` with subject `Meldung - <Name> - <Partei>`
+- **Bilder-Hover Zoom**: Gallery images (`[handschelle-bilder]`) expand to 600 px height (proportional width) on hover via CSS transition; base size remains 300 px
+- **Edit-Button Sichtbarkeit**: Inline-edit button and panel on frontend cards are now visible only to users with role **Author or higher** (`publish_posts` capability) — Subscribers and Contributors no longer see the edit controls
 
 ### 3.09 *(2026-03-14)*
 - **Hintergrundfarbe**: `--hs-bg` auf `#f0f0f0` (neutrales Hellgrau) geändert; alle Eingabefelder und Dropdowns nutzen `var(--hs-bg)` statt #fafafa
