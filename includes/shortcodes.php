@@ -770,9 +770,9 @@ class Handschelle_Shortcodes {
             <p class="hs-disclaimer-title">Die-Handschelle &copy; 2026</p>
             <p class="hs-disclaimer-tagline">&bdquo;Wer in unseren Parlamenten ist oder war kriminell?&ldquo;<br>Eine Datenbank der Straftaten.</p>
             <p class="hs-disclaimer-links">
-                <a href="https://www.die-handschelle.de" target="_blank" rel="noopener noreferrer" class="hs-disclaimer-link">www.die-handschelle.de</a>
+                <a href="https://www.die-handschelle.com" target="_blank" rel="noopener noreferrer" class="hs-disclaimer-link">www.die-handschelle.com</a>
                 &nbsp;&middot;&nbsp;
-                <a href="mailto:Info@die-handschelle.de" class="hs-disclaimer-link">Info@die-handschelle.de</a>
+                <a href="mailto:info@die-handschelle.com" class="hs-disclaimer-link">info@die-handschelle.com</a>
 
             </p>
         </div>
@@ -961,7 +961,7 @@ class Handschelle_Shortcodes {
             }
             // Eintrag melden
             $melden_subject = 'Meldung - ' . $e->name . ' - ' . $e->partei;
-            $melden_href = 'mailto:info@hanschelle.com?subject=' . rawurlencode( $melden_subject );
+            $melden_href = 'mailto:info@die-handschelle.com?subject=' . rawurlencode( $melden_subject );
             $footer_links[] = '<a href="' . esc_attr( $melden_href ) . '" class="hs-sm-link hs-melden-link" data-sm="melden" title="Eintrag melden">⚠️ Eintrag melden!</a>';
             ?>
             <div class="hs-card-footer"><?php echo implode( '', $footer_links ); ?></div>

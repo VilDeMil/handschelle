@@ -122,7 +122,7 @@ Body: crime description, status badge
   verdict, case number, source link, notes.
 Footer: Quelle · Google · Qwant · DuckDuckGo · Bing ·
   Abgeordnetenwatch · social media icons (inline SVG, brand colours)
-  · ⚠️ Eintrag melden! (mailto:info@hanschelle.com?subject=Meldung - NAME - PARTEI)
+  · ⚠️ Eintrag melden! (mailto:info@die-handschelle.com?subject=Meldung - NAME - PARTEI)
 Date: "Eingetragen am DD.MM.YYYY"
 Edit button: visible only to users with publish_posts capability
   (Author, Editor, Administrator). Opens inline collapsible edit panel.
