@@ -47,7 +47,13 @@ function handschelle_status_straftat_options() {
 function handschelle_get_image_url( $bild ) {
     if ( empty( $bild ) ) return '';
     if ( is_numeric( $bild ) && intval( $bild ) > 0 ) {
-        $url = wp_get_attachment_image_url( intval( $bild ), 'medium' );
+        $id  = intval( $bild );
+        $url = wp_get_attachment_image_url( $id, 'medium' );
+        if ( ! $url ) $url = wp_get_attachment_image_url( $id, 'full' );
+        if ( ! $url ) {
+            $file = get_attached_file( $id );
+            if ( $file ) $url = wp_get_attachment_url( $id );
+        }
         return $url ? $url : '';
     }
     return esc_url( $bild );

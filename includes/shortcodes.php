@@ -223,9 +223,15 @@ class Handschelle_Shortcodes {
             exit;
         }
 
-        $data      = handschelle_sanitize_entry( $_POST );
-        $attach_id = Handschelle_Image_Handler::handle_upload_and_resize( 'bild_upload', $data['name'] ?? '', $data['partei'] ?? '' );
-        if ( $attach_id ) $data['bild'] = $attach_id;
+        $entry_before = Handschelle_Database::get_one( $id );
+        $data         = handschelle_sanitize_entry( $_POST );
+        $attach_id    = Handschelle_Image_Handler::handle_upload_and_resize( 'bild_upload', $data['name'] ?? '', $data['partei'] ?? '' );
+        if ( $attach_id ) {
+            if ( $entry_before && ! empty( $entry_before->bild ) && is_numeric( $entry_before->bild ) && intval( $entry_before->bild ) !== $attach_id ) {
+                wp_delete_attachment( intval( $entry_before->bild ), true );
+            }
+            $data['bild'] = $attach_id;
+        }
 
         // Freigabe-Status nur für Admins änderbar
         if ( current_user_can( 'manage_options' ) ) {
