@@ -21,9 +21,12 @@ class Handschelle_Admin {
         add_action( 'admin_head',    array( $this, 'hide_edit_menu_item' ) );
     }
 
-    /* ── Bearbeitungsseite aus Menü ausblenden (bleibt aber erreichbar) ── */
+    /* ── Versteckte Unterseiten aus Menü ausblenden (bleiben aber erreichbar) ── */
     public function hide_edit_menu_item() {
-        echo '<style>#adminmenu a[href="admin.php?page=handschelle-edit"]{display:none!important}</style>';
+        echo '<style>
+            #adminmenu a[href="admin.php?page=handschelle-edit"]{display:none!important}
+            #adminmenu a[href="admin.php?page=handschelle-add-offence"]{display:none!important}
+        </style>';
     }
 
     /* ================================================================
@@ -31,13 +34,14 @@ class Handschelle_Admin {
     ================================================================ */
     public function register_menus() {
         add_menu_page( 'Die-Handschelle', 'Die-Handschelle', 'manage_options', 'handschelle', array( $this, 'page_overview' ), 'dashicons-lock', 25 );
-        add_submenu_page( 'handschelle', 'Übersicht',          'Übersicht',       'manage_options', 'handschelle',              array( $this, 'page_overview' ) );
-        add_submenu_page( 'handschelle', 'Neuer Eintrag',      '+ Neuer Eintrag', 'manage_options', 'handschelle-add',           array( $this, 'page_add' ) );
-        add_submenu_page( 'handschelle', 'Eintrag bearbeiten', 'Bearbeiten',      'manage_options', 'handschelle-edit',          array( $this, 'page_edit' ) );
-        add_submenu_page( 'handschelle', 'Import / Export',    'Import / Export', 'manage_options', 'handschelle-import-export', array( $this, 'page_import_export' ) );
-        add_submenu_page( 'handschelle', 'Bilder',             'Bilder',          'manage_options', 'handschelle-bilder',        array( $this, 'page_bilder' ) );
-        add_submenu_page( 'handschelle', 'Backup & Restore',  'Backup & Restore','manage_options', 'handschelle-backup',        array( $this, 'page_backup' ) );
-        add_submenu_page( 'handschelle', 'Datenbank',          'Datenbank',       'manage_options', 'handschelle-db',            array( $this, 'page_database' ) );
+        add_submenu_page( 'handschelle', 'Übersicht',                'Übersicht',          'manage_options', 'handschelle',                    array( $this, 'page_overview' ) );
+        add_submenu_page( 'handschelle', 'Neuer Eintrag',            '+ Neuer Eintrag',    'manage_options', 'handschelle-add',                 array( $this, 'page_add' ) );
+        add_submenu_page( 'handschelle', 'Neue Straftat für Person', 'Neue Straftat',      'manage_options', 'handschelle-add-offence',         array( $this, 'page_add_offence' ) );
+        add_submenu_page( 'handschelle', 'Eintrag bearbeiten',       'Bearbeiten',         'manage_options', 'handschelle-edit',                array( $this, 'page_edit' ) );
+        add_submenu_page( 'handschelle', 'Import / Export',          'Import / Export',    'manage_options', 'handschelle-import-export',       array( $this, 'page_import_export' ) );
+        add_submenu_page( 'handschelle', 'Bilder',                   'Bilder',             'manage_options', 'handschelle-bilder',              array( $this, 'page_bilder' ) );
+        add_submenu_page( 'handschelle', 'Backup & Restore',         'Backup & Restore',   'manage_options', 'handschelle-backup',              array( $this, 'page_backup' ) );
+        add_submenu_page( 'handschelle', 'Datenbank',                'Datenbank',          'manage_options', 'handschelle-db',                  array( $this, 'page_database' ) );
     }
 
     /* ================================================================
@@ -58,6 +62,23 @@ class Handschelle_Admin {
                 $this->redirect( admin_url( 'admin.php?page=handschelle' ), 'Eintrag gespeichert – bitte freigeben.' );
                 break;
 
+            case 'add_offence':
+                // Add a new offence to an existing person (person_id required)
+                $person_id = intval( $_POST['person_id'] ?? 0 );
+                if ( ! $person_id ) {
+                    $this->redirect( admin_url( 'admin.php?page=handschelle' ), 'Fehler: Keine Person ausgewählt.' );
+                    break;
+                }
+                $offence_data = handschelle_sanitize_offence( $_POST );
+                Handschelle_Database::insert_offence( $person_id, $offence_data );
+                // Also update person data if fields were submitted
+                $person_data = handschelle_sanitize_person( $_POST );
+                $attach_id   = Handschelle_Image_Handler::handle_upload_and_resize( 'bild_upload', $person_data['name'] ?? '', $person_data['partei'] ?? '' );
+                if ( $attach_id ) $person_data['bild'] = $attach_id;
+                Handschelle_Database::update_person( $person_id, $person_data );
+                $this->redirect( admin_url( 'admin.php?page=handschelle' ), 'Neue Straftat gespeichert – bitte freigeben.' );
+                break;
+
             case 'edit':
                 $id = intval( $_POST['id'] ?? 0 );
                 if ( ! $id ) break;
@@ -73,7 +94,11 @@ class Handschelle_Admin {
                 $id    = intval( $_REQUEST['id'] ?? 0 );
                 $entry = $id ? Handschelle_Database::get_one( $id ) : null;
                 if ( $entry ) {
-                    if ( ! empty( $entry->bild ) && is_numeric( $entry->bild ) ) wp_delete_attachment( intval( $entry->bild ), true );
+                    // Only delete image if this is the last offence for the person
+                    $remaining = count( Handschelle_Database::get_offences_by_person( $entry->person_id ) );
+                    if ( $remaining <= 1 && ! empty( $entry->bild ) && is_numeric( $entry->bild ) ) {
+                        wp_delete_attachment( intval( $entry->bild ), true );
+                    }
                     Handschelle_Database::delete( $id );
                 }
                 $this->redirect( admin_url( 'admin.php?page=handschelle' ), 'Eintrag gelöscht.' );
@@ -265,9 +290,9 @@ class Handschelle_Admin {
         $nonce       = wp_create_nonce( 'handschelle_admin_action' );
         ?>
         <div class="wrap hs-wrap">
-            <h1>🔒 Die-Handschelle <span class="hs-version">6.4</span></h1>
+            <h1>🔒 Die-Handschelle <span class="hs-version"><?php echo HANDSCHELLE_VERSION; ?></span></h1>
             <div class="hs-stats-bar">
-                <span>Gesamt: <strong><?php echo $total; ?></strong></span>
+                <span>Straftaten gesamt: <strong><?php echo $total; ?></strong></span>
                 <span>Ausstehend: <strong class="<?php echo $pending ? 'hs-warn' : ''; ?>"><?php echo $pending; ?></strong></span>
                 <a href="<?php echo esc_url( admin_url( 'admin.php?page=handschelle-add' ) ); ?>" class="button button-primary hs-btn">+ Neuer Eintrag</a>
             </div>
@@ -347,10 +372,11 @@ class Handschelle_Admin {
                             <td><?php echo $e->status_aktiv ? '<span class="hs-badge hs-badge-aktiv">Aktiv</span>' : '<span class="hs-badge hs-badge-inaktiv">Inaktiv</span>'; ?></td>
                             <td><?php echo $e->freigegeben ? '<span class="hs-badge hs-badge-aktiv">✅ Freigegeben</span>' : '<span class="hs-badge hs-badge-pending">⏳ Ausstehend</span>'; ?></td>
                             <td class="hs-actions">
-                                <a href="<?php echo esc_url( admin_url( "admin.php?page=handschelle-edit&id={$e->id}" ) ); ?>" class="button button-small">✏ Bearbeiten</a>
+                                        <a href="<?php echo esc_url( admin_url( "admin.php?page=handschelle-edit&id={$e->id}" ) ); ?>" class="button button-small">✏ Bearbeiten</a>
+                                <a href="<?php echo esc_url( admin_url( "admin.php?page=handschelle-add-offence&person_id={$e->person_id}" ) ); ?>" class="button button-small">➕ Straftat</a>
                                 <a href="<?php echo esc_url( admin_url( "admin.php?page=handschelle&hs_action=toggle_freigabe&id={$e->id}&_wpnonce={$nonce}" ) ); ?>" class="button button-small"><?php echo $e->freigegeben ? '🚫 Sperren' : '✅ Freigeben'; ?></a>
                                 <a href="<?php echo esc_url( admin_url( "admin.php?page=handschelle&hs_action=toggle_aktiv&id={$e->id}&_wpnonce={$nonce}" ) ); ?>" class="button button-small"><?php echo $e->status_aktiv ? '⏸ Deaktiv.' : '▶ Aktivieren'; ?></a>
-                                <a href="<?php echo esc_url( admin_url( "admin.php?page=handschelle&hs_action=delete&id={$e->id}&_wpnonce={$nonce}" ) ); ?>" class="button button-small hs-btn-delete" onclick="return confirm('Eintrag wirklich löschen?')">🗑 Löschen</a>
+                                <a href="<?php echo esc_url( admin_url( "admin.php?page=handschelle&hs_action=delete&id={$e->id}&_wpnonce={$nonce}" ) ); ?>" class="button button-small hs-btn-delete" onclick="return confirm('Straftat-Eintrag wirklich löschen?')">🗑 Löschen</a>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -388,6 +414,20 @@ class Handschelle_Admin {
             return;
         }
         echo '<div class="wrap hs-wrap"><h1>✏ Bearbeiten: ' . esc_html( $entry->name ) . '</h1>' . $this->render_form( $entry ) . $this->hs_footer() . '</div>';
+    }
+
+    public function page_add_offence() {
+        $person_id = intval( $_GET['person_id'] ?? 0 );
+        $person    = $person_id ? Handschelle_Database::get_person( $person_id ) : null;
+        if ( ! $person ) {
+            echo '<div class="wrap hs-wrap"><div class="notice notice-error"><p>Person nicht gefunden.</p></div></div>';
+            return;
+        }
+        $offences = Handschelle_Database::get_offences_by_person( $person_id );
+        echo '<div class="wrap hs-wrap"><h1>➕ Neue Straftat für: ' . esc_html( $person->name ) . '</h1>';
+        echo '<p>Bereits vorhanden: <strong>' . count( $offences ) . ' Straftat(en)</strong></p>';
+        echo $this->render_offence_form( $person );
+        echo $this->hs_footer() . '</div>';
     }
 
     /* ================================================================
@@ -525,6 +565,55 @@ class Handschelle_Admin {
 
             <div class="hs-form-actions">
                 <button type="submit" class="button button-primary hs-btn"><?php echo $is_edit ? '💾 Aktualisieren' : '➕ Eintrag speichern'; ?></button>
+                <a href="<?php echo esc_url( admin_url('admin.php?page=handschelle') ); ?>" class="button hs-btn-cancel">Abbrechen</a>
+            </div>
+        </form>
+        <?php
+        return ob_get_clean();
+    }
+
+    /* ================================================================
+       FORMULAR: Neue Straftat für existierende Person
+    ================================================================ */
+    public function render_offence_form( $person ) {
+        $st_opts = handschelle_status_straftat_options();
+        ob_start();
+        ?>
+        <form method="post" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>" enctype="multipart/form-data" class="hs-form">
+            <?php wp_nonce_field( 'handschelle_admin_action' ); ?>
+            <input type="hidden" name="hs_action"  value="add_offence">
+            <input type="hidden" name="page"       value="handschelle-add-offence">
+            <input type="hidden" name="person_id"  value="<?php echo intval( $person->id ); ?>">
+
+            <!-- Personen-Info (read-only) -->
+            <div class="hs-form-section">
+                <h2>👤 Person: <?php echo esc_html( $person->name ); ?></h2>
+                <p style="color:#666;">Partei: <strong><?php echo esc_html( $person->partei ); ?></strong>
+                   &nbsp;|&nbsp; Parlament: <strong><?php echo esc_html( $person->parlament ); ?></strong></p>
+            </div>
+
+            <div class="hs-form-section">
+                <h2>⚖ Neue Straftat</h2>
+                <div class="hs-form-grid">
+                    <div class="hs-field"><label>Datum Eintrag</label><input type="date" name="datum_eintrag" value="<?php echo esc_attr( date('Y-m-d') ); ?>" required></div>
+                    <div class="hs-field hs-field-full"><label>Straftat <span>(max. 200 Zeichen)</span></label><textarea name="straftat" maxlength="200" rows="3" required></textarea><small class="hs-char-counter" data-target="straftat">0 / 200 Zeichen</small></div>
+                    <div class="hs-field"><label>Urteil <span>(max. 50 Zeichen)</span></label><input type="text" name="urteil" maxlength="50" placeholder="z.B. 2 Jahre auf Bewährung"></div>
+                    <div class="hs-field"><label>Link zur Quelle</label><input type="url" name="link_quelle" placeholder="https://…"></div>
+                    <div class="hs-field"><label>Aktenzeichen <span>(max. 50 Zeichen)</span></label><input type="text" name="aktenzeichen" maxlength="50" placeholder="z.B. 1 StR 123/24"></div>
+                    <div class="hs-field hs-field-full"><label>Bemerkung</label><textarea name="bemerkung" rows="3"></textarea></div>
+                    <div class="hs-field">
+                        <label>Status Straftat</label>
+                        <select name="status_straftat">
+                            <?php foreach ( $st_opts as $s ) : ?>
+                                <option value="<?php echo esc_attr($s); ?>"><?php echo esc_html($s); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hs-form-actions">
+                <button type="submit" class="button button-primary hs-btn">➕ Straftat speichern</button>
                 <a href="<?php echo esc_url( admin_url('admin.php?page=handschelle') ); ?>" class="button hs-btn-cancel">Abbrechen</a>
             </div>
         </form>

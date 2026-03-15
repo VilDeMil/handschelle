@@ -229,7 +229,7 @@ class Handschelle_Shortcodes {
     }
 
     /* ================================================================
-       [handschelle-anzeige] – Alle freigegebenen Einträge (mit Paginierung)
+       [handschelle-anzeige] – Alle freigegebenen Einträge (gruppiert nach Person)
     ================================================================ */
     public function sc_anzeige( $atts ) {
         $atts = shortcode_atts( array(
@@ -248,13 +248,12 @@ class Handschelle_Shortcodes {
         if ( ! empty( $atts['partei'] ) ) $args['partei'] = sanitize_text_field( $atts['partei'] );
         if ( ! empty( $atts['name'] ) )   $args['name']   = sanitize_text_field( $atts['name'] );
         if ( ! empty( $search ) )         $args['search'] = $search;
-        // Override with URL params from dropdowns (only if not locked via shortcode attribute)
         if ( empty( $atts['partei'] ) && ! empty( $filter_partei ) ) $args['partei'] = $filter_partei;
         if ( empty( $atts['name'] )   && ! empty( $filter_name )   ) $args['name']   = $filter_name;
 
         $total_pages = 1;
         if ( $limit > 0 ) {
-            $total       = Handschelle_Database::count_all( $args );
+            $total       = Handschelle_Database::count_persons( $args );
             $total_pages = (int) ceil( $total / $limit );
             $total_pages = max( 1, $total_pages );
             $paged       = min( $paged, $total_pages );
@@ -262,7 +261,7 @@ class Handschelle_Shortcodes {
             $args['offset'] = ( $paged - 1 ) * $limit;
         }
 
-        $entries = Handschelle_Database::get_all( $args );
+        $grouped = Handschelle_Database::get_persons_with_offences( $args );
         ob_start();
         echo '<div class="hs-frontend hs-full-width">';
         echo '<h2 class="hs-section-title">📋 Einträge</h2>';
@@ -280,11 +279,11 @@ class Handschelle_Shortcodes {
                . ' &mdash; <a href="' . esc_url( remove_query_arg( array( 'hs_name', 'hs_paged' ) ) ) . '">✕ Zurücksetzen</a></div>';
         }
 
-        if ( empty( $entries ) ) {
+        if ( empty( $grouped ) ) {
             echo '<p class="hs-empty">Keine Einträge vorhanden.</p>';
         } else {
             echo '<div class="hs-cards-grid">';
-            foreach ( $entries as $e ) echo $this->render_card( $e );
+            foreach ( $grouped as $g ) echo $this->render_person_card( $g['person'], $g['offences'] );
             echo '</div>';
             if ( $limit > 0 && $total_pages > 1 ) {
                 echo $this->render_pagination( $paged, $total_pages );
@@ -386,11 +385,13 @@ class Handschelle_Shortcodes {
     ================================================================ */
     public function sc_statistik( $atts ) {
         global $wpdb;
-        $table = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
-        $rows  = $wpdb->get_results(
-            "SELECT partei, COUNT(*) AS anzahl FROM `{$table}`
-             WHERE freigegeben = 1 AND partei != ''
-             GROUP BY partei ORDER BY anzahl DESC, partei ASC"
+        $tp   = $wpdb->prefix . HANDSCHELLE_DB_TABLE_PERSONEN;
+        $ts   = $wpdb->prefix . HANDSCHELLE_DB_TABLE_STRAFTATEN;
+        $rows = $wpdb->get_results(
+            "SELECT p.partei, COUNT(s.id) AS anzahl
+             FROM `{$tp}` p JOIN `{$ts}` s ON s.person_id = p.id
+             WHERE s.freigegeben = 1 AND p.partei != ''
+             GROUP BY p.partei ORDER BY anzahl DESC, p.partei ASC"
         );
         $total = 0;
         foreach ( $rows as $r ) $total += intval( $r->anzahl );
@@ -437,11 +438,13 @@ class Handschelle_Shortcodes {
     ================================================================ */
     public function sc_statistik_nolink( $atts ) {
         global $wpdb;
-        $table = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
-        $rows  = $wpdb->get_results(
-            "SELECT partei, COUNT(*) AS anzahl FROM `{$table}`
-             WHERE freigegeben = 1 AND partei != ''
-             GROUP BY partei ORDER BY anzahl DESC, partei ASC"
+        $tp   = $wpdb->prefix . HANDSCHELLE_DB_TABLE_PERSONEN;
+        $ts   = $wpdb->prefix . HANDSCHELLE_DB_TABLE_STRAFTATEN;
+        $rows = $wpdb->get_results(
+            "SELECT p.partei, COUNT(s.id) AS anzahl
+             FROM `{$tp}` p JOIN `{$ts}` s ON s.person_id = p.id
+             WHERE s.freigegeben = 1 AND p.partei != ''
+             GROUP BY p.partei ORDER BY anzahl DESC, p.partei ASC"
         );
         $total = 0;
         foreach ( $rows as $r ) $total += intval( $r->anzahl );
@@ -503,7 +506,7 @@ class Handschelle_Shortcodes {
                     <noscript><button type="submit" class="hs-btn">Suchen</button></noscript>
                 </form>
                 <?php if ( ! empty( $selected ) ) :
-                    $entries = Handschelle_Database::get_all( array( 'freigegeben' => 1, 'name' => $selected ) );
+                    $grouped = Handschelle_Database::get_persons_with_offences( array( 'freigegeben' => 1, 'name' => $selected ) );
                 ?>
                     <div class="hs-search-results">
                         <div class="hs-search-buttons">
@@ -513,10 +516,10 @@ class Handschelle_Shortcodes {
                             <a href="<?php echo esc_url( 'https://www.bing.com/search?q=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 Bing</a>
                             <a href="<?php echo esc_url( 'https://www.abgeordnetenwatch.de/profile?politician_search_keys=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🏛 Abgeordnetenwatch</a>
                         </div>
-                        <?php if ( empty($entries) ) : ?>
+                        <?php if ( empty( $grouped ) ) : ?>
                             <p class="hs-empty">Keine Einträge für diese Person.</p>
                         <?php else : ?>
-                            <div class="hs-cards-single"><?php foreach ( $entries as $e ) echo $this->render_card($e); ?></div>
+                            <div class="hs-cards-single"><?php foreach ( $grouped as $g ) echo $this->render_person_card( $g['person'], $g['offences'] ); ?></div>
                         <?php endif; ?>
                     </div>
                 <?php endif; ?>
@@ -546,13 +549,13 @@ class Handschelle_Shortcodes {
                     <noscript><button type="submit" class="hs-btn">Suchen</button></noscript>
                 </form>
                 <?php if ( ! empty( $selected ) ) :
-                    $entries = Handschelle_Database::get_all( array( 'freigegeben' => 1, 'partei' => $selected ) );
+                    $grouped = Handschelle_Database::get_persons_with_offences( array( 'freigegeben' => 1, 'partei' => $selected ) );
                 ?>
                     <div class="hs-search-results">
-                        <?php if ( empty($entries) ) : ?>
+                        <?php if ( empty( $grouped ) ) : ?>
                             <p class="hs-empty">Keine Einträge für diese Partei.</p>
                         <?php else : ?>
-                            <div class="hs-cards-grid"><?php foreach ( $entries as $e ) echo $this->render_card($e); ?></div>
+                            <div class="hs-cards-grid"><?php foreach ( $grouped as $g ) echo $this->render_person_card( $g['person'], $g['offences'] ); ?></div>
                         <?php endif; ?>
                     </div>
                 <?php endif; ?>
@@ -567,11 +570,13 @@ class Handschelle_Shortcodes {
     ================================================================ */
     public function sc_statistik_partei( $atts ) {
         global $wpdb;
-        $table = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
-        $rows  = $wpdb->get_results(
-            "SELECT partei, COUNT(*) AS anzahl FROM `{$table}`
-             WHERE freigegeben = 1 AND partei != ''
-             GROUP BY partei ORDER BY anzahl DESC, partei ASC"
+        $tp   = $wpdb->prefix . HANDSCHELLE_DB_TABLE_PERSONEN;
+        $ts   = $wpdb->prefix . HANDSCHELLE_DB_TABLE_STRAFTATEN;
+        $rows = $wpdb->get_results(
+            "SELECT p.partei, COUNT(s.id) AS anzahl
+             FROM `{$tp}` p JOIN `{$ts}` s ON s.person_id = p.id
+             WHERE s.freigegeben = 1 AND p.partei != ''
+             GROUP BY p.partei ORDER BY anzahl DESC, p.partei ASC"
         );
         ob_start();
         ?>
@@ -602,15 +607,17 @@ class Handschelle_Shortcodes {
     }
 
     /* ================================================================
-       [handschelle-statistik-name] – Name / Anzahl Einträge
+       [handschelle-statistik-name] – Name / Anzahl Straftaten
     ================================================================ */
     public function sc_statistik_name( $atts ) {
         global $wpdb;
-        $table = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
-        $rows  = $wpdb->get_results(
-            "SELECT name, COUNT(*) AS anzahl FROM `{$table}`
-             WHERE freigegeben = 1 AND name != ''
-             GROUP BY name ORDER BY anzahl DESC, name ASC"
+        $tp   = $wpdb->prefix . HANDSCHELLE_DB_TABLE_PERSONEN;
+        $ts   = $wpdb->prefix . HANDSCHELLE_DB_TABLE_STRAFTATEN;
+        $rows = $wpdb->get_results(
+            "SELECT p.name, COUNT(s.id) AS anzahl
+             FROM `{$tp}` p JOIN `{$ts}` s ON s.person_id = p.id
+             WHERE s.freigegeben = 1 AND p.name != ''
+             GROUP BY p.id ORDER BY anzahl DESC, p.name ASC"
         );
         ob_start();
         ?>
@@ -645,11 +652,13 @@ class Handschelle_Shortcodes {
     ================================================================ */
     public function sc_statistik_ol( $atts ) {
         global $wpdb;
-        $table = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
-        $rows  = $wpdb->get_results(
-            "SELECT partei, COUNT(DISTINCT name) AS anzahl_namen FROM `{$table}`
-             WHERE freigegeben = 1 AND partei != '' AND name != ''
-             GROUP BY partei ORDER BY anzahl_namen DESC, partei ASC"
+        $tp   = $wpdb->prefix . HANDSCHELLE_DB_TABLE_PERSONEN;
+        $ts   = $wpdb->prefix . HANDSCHELLE_DB_TABLE_STRAFTATEN;
+        $rows = $wpdb->get_results(
+            "SELECT p.partei, COUNT(DISTINCT p.id) AS anzahl_namen
+             FROM `{$tp}` p JOIN `{$ts}` s ON s.person_id = p.id
+             WHERE s.freigegeben = 1 AND p.partei != '' AND p.name != ''
+             GROUP BY p.partei ORDER BY anzahl_namen DESC, p.partei ASC"
         );
         ob_start();
         ?>
@@ -680,11 +689,13 @@ class Handschelle_Shortcodes {
     ================================================================ */
     public function sc_asc( $atts ) {
         global $wpdb;
-        $table = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
-        $rows  = $wpdb->get_results(
-            "SELECT partei, COUNT(*) AS anzahl FROM `{$table}`
-             WHERE freigegeben = 1 AND partei != ''
-             GROUP BY partei ORDER BY partei ASC"
+        $tp   = $wpdb->prefix . HANDSCHELLE_DB_TABLE_PERSONEN;
+        $ts   = $wpdb->prefix . HANDSCHELLE_DB_TABLE_STRAFTATEN;
+        $rows = $wpdb->get_results(
+            "SELECT p.partei, COUNT(s.id) AS anzahl
+             FROM `{$tp}` p JOIN `{$ts}` s ON s.person_id = p.id
+             WHERE s.freigegeben = 1 AND p.partei != ''
+             GROUP BY p.partei ORDER BY p.partei ASC"
         );
         if ( empty( $rows ) ) return '';
         ob_start();
@@ -701,21 +712,24 @@ class Handschelle_Shortcodes {
     ================================================================ */
     public function sc_asc_link( $atts ) {
         global $wpdb;
-        $table = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
+        $tp = $wpdb->prefix . HANDSCHELLE_DB_TABLE_PERSONEN;
+        $ts = $wpdb->prefix . HANDSCHELLE_DB_TABLE_STRAFTATEN;
 
         // Get parties with counts
         $rows = $wpdb->get_results(
-            "SELECT partei, COUNT(*) AS anzahl FROM `{$table}`
-             WHERE freigegeben = 1 AND partei != ''
-             GROUP BY partei ORDER BY partei ASC"
+            "SELECT p.partei, COUNT(s.id) AS anzahl
+             FROM `{$tp}` p JOIN `{$ts}` s ON s.person_id = p.id
+             WHERE s.freigegeben = 1 AND p.partei != ''
+             GROUP BY p.partei ORDER BY p.partei ASC"
         );
         if ( empty( $rows ) ) return '';
 
-        // Get names grouped by party
+        // Get distinct names grouped by party
         $namen_rows = $wpdb->get_results(
-            "SELECT partei, name FROM `{$table}`
-             WHERE freigegeben = 1 AND partei != '' AND name != ''
-             ORDER BY partei ASC, name ASC"
+            "SELECT DISTINCT p.partei, p.name FROM `{$tp}` p
+             JOIN `{$ts}` s ON s.person_id = p.id
+             WHERE s.freigegeben = 1 AND p.partei != '' AND p.name != ''
+             ORDER BY p.partei ASC, p.name ASC"
         );
         $namen_by_partei = array();
         foreach ( $namen_rows as $nr ) {
@@ -785,14 +799,14 @@ class Handschelle_Shortcodes {
                 <noscript><button type="submit" class="hs-btn">Suchen</button></noscript>
             </form>
             <?php if ( ! empty( $selected ) ) :
-                $entries = Handschelle_Database::get_all( array( 'partei' => $selected ) );
+                $grouped = Handschelle_Database::get_persons_with_offences( array( 'partei' => $selected ) );
             ?>
                 <div class="hs-search-results">
-                    <h4>Einträge für Partei: <em><?php echo esc_html($selected); ?></em> <span class="hs-count">(<?php echo count($entries); ?>)</span></h4>
-                    <?php if ( empty($entries) ) : ?>
+                    <h4>Einträge für Partei: <em><?php echo esc_html($selected); ?></em> <span class="hs-count">(<?php echo count($grouped); ?>)</span></h4>
+                    <?php if ( empty($grouped) ) : ?>
                         <p class="hs-empty">Keine Einträge für diese Partei.</p>
                     <?php else : ?>
-                        <div class="hs-cards-grid"><?php foreach ( $entries as $e ) echo $this->render_card($e); ?></div>
+                        <div class="hs-cards-grid"><?php foreach ( $grouped as $g ) echo $this->render_person_card( $g['person'], $g['offences'] ); ?></div>
                     <?php endif; ?>
                 </div>
             <?php endif; ?>
@@ -824,10 +838,10 @@ class Handschelle_Shortcodes {
                 <noscript><button type="submit" class="hs-btn">Suchen</button></noscript>
             </form>
             <?php if ( ! empty( $selected ) ) :
-                $entries = Handschelle_Database::get_all( array( 'name' => $selected ) );
+                $grouped = Handschelle_Database::get_persons_with_offences( array( 'name' => $selected ) );
             ?>
                 <div class="hs-search-results">
-                    <h4>Einträge für: <em><?php echo esc_html($selected); ?></em> <span class="hs-count">(<?php echo count($entries); ?>)</span></h4>
+                    <h4>Einträge für: <em><?php echo esc_html($selected); ?></em></h4>
                     <div class="hs-search-buttons">
                         <a href="<?php echo esc_url( 'https://www.google.com/search?q=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 GOOGLE</a>
                         <a href="<?php echo esc_url( 'https://www.qwant.com/?l=de&q=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 Qwant</a>
@@ -835,10 +849,10 @@ class Handschelle_Shortcodes {
                         <a href="<?php echo esc_url( 'https://www.bing.com/search?q=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 Bing</a>
                         <a href="<?php echo esc_url( 'https://www.abgeordnetenwatch.de/profile?politician_search_keys=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🏛 Abgeordnetenwatch</a>
                     </div>
-                    <?php if ( empty($entries) ) : ?>
+                    <?php if ( empty( $grouped ) ) : ?>
                         <p class="hs-empty">Keine Einträge für diese Person.</p>
                     <?php else : ?>
-                        <div class="hs-cards-single"><?php foreach ( $entries as $e ) echo $this->render_card($e); ?></div>
+                        <div class="hs-cards-single"><?php foreach ( $grouped as $g ) echo $this->render_person_card( $g['person'], $g['offences'] ); ?></div>
                     <?php endif; ?>
                 </div>
             <?php endif; ?>
@@ -848,7 +862,156 @@ class Handschelle_Shortcodes {
     }
 
     /* ================================================================
-       KARTE – einzelner Eintrag
+       PERSON-KARTE – eine Person mit allen Straftaten
+    ================================================================ */
+    public function render_person_card( $person, $offences ) {
+        // Build a flat object from person + first offence for backward-compat fields
+        $first         = ! empty( $offences ) ? $offences[0] : new stdClass();
+        $img_url       = handschelle_get_image_url( $person->bild );
+        $is_logged_in  = current_user_can( 'publish_posts' );
+        $is_admin      = current_user_can( 'manage_options' );
+        $status_class  = array(
+            'Verurteilt'          => 'hs-status-verurteilt',
+            'Ermittlungen laufen' => 'hs-status-ermittlung',
+            'Eingestellt'         => 'hs-status-eingestellt',
+        );
+        // Check if any offence was recently edited
+        $edited_id = isset( $_GET['hs_edited'] ) ? intval( $_GET['hs_edited'] ) : 0;
+        $was_edited = false;
+        foreach ( $offences as $o ) {
+            if ( intval( $o->id ) === $edited_id ) { $was_edited = true; break; }
+        }
+
+        ob_start();
+        ?>
+        <div class="hs-card" id="hs-card-person-<?php echo intval( $person->id ); ?>">
+            <?php if ( $was_edited ) : ?>
+                <div class="hs-alert hs-alert-success">✅ Eintrag erfolgreich aktualisiert!</div>
+            <?php endif; ?>
+            <div class="hs-card-header">
+                <div class="hs-card-img-wrap <?php echo $img_url ? '' : 'hs-card-img-placeholder'; ?>">
+                    <?php if ( $img_url ) : ?>
+                    <a href="<?php echo esc_url( add_query_arg( 'hs_name', $person->name, get_permalink() ) ); ?>" title="<?php echo esc_attr( $person->name ); ?> – Details anzeigen" class="hs-card-img-link">
+                        <img src="<?php echo esc_url( $img_url ); ?>" alt="<?php echo esc_attr( $person->name ); ?>" class="hs-card-img">
+                    </a>
+                    <?php else : ?>👤<?php endif; ?>
+                </div>
+                <div class="hs-card-meta">
+                    <h3 class="hs-card-name"><?php echo esc_html( $person->name ); ?></h3>
+                    <?php if ( $person->beruf ) : ?><p class="hs-card-beruf"><?php echo esc_html( $person->beruf ); ?></p><?php endif; ?>
+                    <?php if ( $person->partei ) : ?><p class="hs-card-partei">🏛 <?php echo esc_html( $person->partei ); ?><?php if ( $person->aufgabe_partei ) echo ' &ndash; ' . esc_html( $person->aufgabe_partei ); ?></p><?php endif; ?>
+                    <?php if ( $person->parlament ) : ?><p class="hs-card-parlament">📜 <?php echo esc_html( $person->parlament ); ?><?php if ( $person->parlament_name ) echo ' (' . esc_html( $person->parlament_name ) . ')'; ?></p><?php endif; ?>
+                </div>
+            </div>
+            <div class="hs-card-body">
+                <?php
+                $age = handschelle_calc_age( $person->geburtsdatum ?? '' );
+                if ( ! empty( $person->geburtsort ) || ! empty( $person->geburtsdatum ) ) : ?>
+                    <div class="hs-card-row">
+                        <span class="hs-label">🎂 Geburt:</span>
+                        <?php
+                        if ( ! empty( $person->geburtsdatum ) && $person->geburtsdatum !== '0000-00-00' ) {
+                            echo esc_html( date_i18n( 'd.m.Y', strtotime( $person->geburtsdatum ) ) );
+                            if ( $age !== null ) echo ' (Alter: ' . $age . ')';
+                        }
+                        if ( ! empty( $person->geburtsort ) ) echo ' &mdash; ' . esc_html( $person->geburtsort );
+                        ?>
+                    </div>
+                <?php endif; ?>
+
+                <?php if ( count( $offences ) > 1 ) : ?>
+                    <div class="hs-offences-count"><strong><?php echo count( $offences ); ?> Straftat(en)</strong></div>
+                <?php endif; ?>
+
+                <!-- Straftaten-Liste -->
+                <?php foreach ( $offences as $idx => $offence ) :
+                    $offence_num = count( $offences ) > 1 ? '#' . ( $idx + 1 ) . ' ' : '';
+                ?>
+                <div class="hs-offence-block" id="hs-card-<?php echo intval( $offence->id ); ?>">
+                    <?php if ( count( $offences ) > 1 ) : ?>
+                        <div class="hs-offence-header"><?php echo esc_html( $offence_num ); ?>Straftat &mdash; <?php echo esc_html( date_i18n( 'd.m.Y', strtotime( $offence->datum_eintrag ) ) ); ?></div>
+                    <?php endif; ?>
+                    <div class="hs-card-straftat"><span class="hs-label">⚖ Straftat:</span><p><?php echo nl2br( esc_html( $offence->straftat ) ); ?></p></div>
+                    <?php if ( $offence->urteil ) : ?><div class="hs-card-row"><span class="hs-label">📋 Urteil:</span> <?php echo esc_html( $offence->urteil ); ?></div><?php endif; ?>
+                    <?php if ( $offence->aktenzeichen ) : ?><div class="hs-card-row"><span class="hs-label">📁 Aktenzeichen:</span> <?php echo esc_html( $offence->aktenzeichen ); ?></div><?php endif; ?>
+                    <div class="hs-card-row">
+                        <span class="hs-badge <?php echo esc_attr( $status_class[ $offence->status_straftat ] ?? 'hs-status-ermittlung' ); ?>"><?php echo esc_html( $offence->status_straftat ); ?></span>
+                        <?php echo $person->status_aktiv ? '<span class="hs-badge hs-badge-aktiv">Aktiv</span>' : '<span class="hs-badge hs-badge-inaktiv">Inaktiv</span>'; ?>
+                    </div>
+                    <?php if ( $offence->bemerkung ) : ?><div class="hs-card-bemerkung"><span class="hs-label">💬 Bemerkung:</span><p><?php echo nl2br( esc_html( $offence->bemerkung ) ); ?></p></div><?php endif; ?>
+                    <?php if ( $offence->link_quelle ) : ?>
+                        <div class="hs-card-row"><a href="<?php echo esc_url( $offence->link_quelle ); ?>" target="_blank" rel="noopener noreferrer" class="hs-sm-link"><?php echo $this->svg_link(); ?> Quelle</a></div>
+                    <?php endif; ?>
+                    <div class="hs-card-date">Eingetragen am <?php echo esc_html( date_i18n( 'd.m.Y', strtotime( $offence->datum_eintrag ) ) ); ?></div>
+                    <?php if ( $is_logged_in ) : ?>
+                    <div class="hs-offence-actions">
+                        <button type="button" class="hs-card-edit-btn" onclick="hsToggleEdit(<?php echo intval( $offence->id ); ?>)" title="Straftat bearbeiten">✏ Bearbeiten</button>
+                    </div>
+                    <!-- Inline-Bearbeitungsformular -->
+                    <div class="hs-card-edit-panel" id="hs-edit-panel-<?php echo intval( $offence->id ); ?>" style="display:none;">
+                        <div class="hs-card-edit-header">✏ Straftat bearbeiten
+                            <button type="button" class="hs-edit-close" onclick="hsToggleEdit(<?php echo intval( $offence->id ); ?>)" title="Schließen">✕</button>
+                        </div>
+                        <form method="post" enctype="multipart/form-data" class="hs-edit-form">
+                            <?php wp_nonce_field( 'hs_frontend_edit', 'hs_edit_nonce' ); ?>
+                            <input type="hidden" name="hs_edit_submit" value="1">
+                            <input type="hidden" name="hs_edit_id"     value="<?php echo intval( $offence->id ); ?>">
+                            <input type="hidden" name="hs_return_url"  value="<?php echo esc_url( get_permalink() ); ?>">
+                            <div class="hs-edit-grid">
+                                <div class="hs-edit-section-title">📋 Person</div>
+                                <div class="hs-field"><label>Name <span>(max. 50)</span></label><input type="text" name="name" maxlength="50" value="<?php echo esc_attr( $person->name ); ?>" required></div>
+                                <div class="hs-field"><label>Beruf</label><input type="text" name="beruf" maxlength="50" value="<?php echo esc_attr( $person->beruf ); ?>"></div>
+                                <div class="hs-field"><label>Partei</label><input type="text" name="partei" maxlength="50" value="<?php echo esc_attr( $person->partei ); ?>"></div>
+                                <div class="hs-field"><label>Aufgabe in der Partei</label><input type="text" name="aufgabe_partei" maxlength="100" value="<?php echo esc_attr( $person->aufgabe_partei ); ?>"></div>
+                                <div class="hs-field"><label>Status</label><select name="status_aktiv"><option value="1" <?php selected( intval( $person->status_aktiv ), 1 ); ?>>Aktiv</option><option value="0" <?php selected( intval( $person->status_aktiv ), 0 ); ?>>Inaktiv</option></select></div>
+                                <div class="hs-edit-section-title">⚖ Straftat</div>
+                                <div class="hs-field hs-field-full"><label>Straftat <span>(max. 200)</span></label><textarea name="straftat" maxlength="200" rows="3" required><?php echo esc_textarea( $offence->straftat ); ?></textarea></div>
+                                <div class="hs-field"><label>Urteil</label><input type="text" name="urteil" maxlength="50" value="<?php echo esc_attr( $offence->urteil ); ?>"></div>
+                                <div class="hs-field"><label>Link zur Quelle</label><input type="url" name="link_quelle" value="<?php echo esc_attr( $offence->link_quelle ); ?>"></div>
+                                <div class="hs-field"><label>Aktenzeichen</label><input type="text" name="aktenzeichen" maxlength="50" value="<?php echo esc_attr( $offence->aktenzeichen ); ?>"></div>
+                                <div class="hs-field hs-field-full"><label>Bemerkung</label><textarea name="bemerkung" rows="3"><?php echo esc_textarea( $offence->bemerkung ); ?></textarea></div>
+                                <div class="hs-field"><label>Status Straftat</label><select name="status_straftat"><?php foreach ( handschelle_status_straftat_options() as $st ) : ?><option value="<?php echo esc_attr( $st ); ?>" <?php selected( $offence->status_straftat, $st ); ?>><?php echo esc_html( $st ); ?></option><?php endforeach; ?></select></div>
+                                <?php if ( $is_admin ) : ?>
+                                <div class="hs-edit-section-title">⚙ Freigabe</div>
+                                <div class="hs-field hs-field-full"><label class="hs-checkbox-label"><input type="checkbox" name="freigegeben" value="1" <?php checked( intval( $offence->freigegeben ), 1 ); ?>> Eintrag freigeben</label></div>
+                                <?php endif; ?>
+                            </div>
+                            <div class="hs-edit-actions">
+                                <button type="submit" class="hs-btn hs-btn-primary">💾 Speichern</button>
+                                <button type="button" class="hs-btn hs-btn-cancel" onclick="hsToggleEdit(<?php echo intval( $offence->id ); ?>)">Abbrechen</button>
+                            </div>
+                        </form>
+                    </div>
+                    <?php endif; ?>
+                </div><!-- .hs-offence-block -->
+                <?php endforeach; ?>
+            </div><!-- .hs-card-body -->
+
+            <?php
+            $footer_links = array();
+            $footer_links[] = '<a href="' . esc_url( 'https://www.google.com/search?q=' . urlencode( $person->name ) ) . '" target="_blank" rel="noopener" class="hs-sm-link" data-sm="google" title="Google-Suche">🔍 Google</a>';
+            $footer_links[] = '<a href="' . esc_url( 'https://www.qwant.com/?l=de&q=' . urlencode( $person->name ) ) . '" target="_blank" rel="noopener" class="hs-sm-link" data-sm="qwant" title="Qwant-Suche">🔍 Qwant</a>';
+            $footer_links[] = '<a href="' . esc_url( 'https://duckduckgo.com/?q=' . urlencode( $person->name ) ) . '" target="_blank" rel="noopener" class="hs-sm-link" data-sm="duckduckgo" title="DuckDuckGo-Suche">🔍 DuckDuckGo</a>';
+            $footer_links[] = '<a href="' . esc_url( 'https://www.bing.com/search?q=' . urlencode( $person->name ) ) . '" target="_blank" rel="noopener" class="hs-sm-link" data-sm="bing" title="Bing-Suche">🔍 Bing</a>';
+            $footer_links[] = '<a href="' . esc_url( 'https://www.abgeordnetenwatch.de/profile?politician_search_keys=' . urlencode( $person->name ) ) . '" target="_blank" rel="noopener" class="hs-sm-link" data-sm="abgeordnetenwatch" title="Abgeordnetenwatch">🏛 Abgeordnetenwatch</a>';
+            foreach ( $this->sm_fields() as $field => list( $icon, $label ) ) {
+                if ( ! empty( $person->$field ) ) {
+                    $key            = str_replace( 'sm_', '', $field );
+                    $footer_links[] = '<a href="' . esc_url( $person->$field ) . '" target="_blank" rel="noopener noreferrer" class="hs-sm-link" data-sm="' . esc_attr( $key ) . '" title="' . esc_attr( $label ) . '">' . $icon . ' ' . esc_html( $label ) . '</a>';
+                }
+            }
+            $melden_subject = 'Meldung - ' . $person->name . ' - ' . $person->partei;
+            $melden_href    = 'mailto:info@hanschelle.com?subject=' . rawurlencode( $melden_subject );
+            $footer_links[] = '<a href="' . esc_attr( $melden_href ) . '" class="hs-sm-link hs-melden-link" data-sm="melden" title="Eintrag melden">⚠️ Eintrag melden!</a>';
+            ?>
+            <div class="hs-card-footer"><?php echo implode( '', $footer_links ); ?></div>
+        </div><!-- .hs-card -->
+        <?php
+        return ob_get_clean();
+    }
+
+    /* ================================================================
+       KARTE – einzelner Eintrag (backward-compat; flat JOIN row)
     ================================================================ */
     public function render_card( $e ) {
         $img_url = handschelle_get_image_url( $e->bild );
@@ -1065,11 +1228,12 @@ class Handschelle_Shortcodes {
        [handschelle-bilder] – Bildergalerie aller freigegebenen Einträge
     ================================================================ */
     public function sc_bilder( $atts ) {
-        $atts = shortcode_atts( array( 'link' => '' ), $atts );
+        $atts      = shortcode_atts( array( 'link' => '' ), $atts );
         $link_base = ! empty( $atts['link'] ) ? trailingslashit( $atts['link'] ) : get_permalink();
-        $entries = Handschelle_Database::get_all( array( 'freigegeben' => 1 ) );
-        $mit_bild = array_filter( $entries, function( $e ) {
-            return ! empty( $e->bild );
+        // Use get_persons_with_offences to avoid duplicate images per person
+        $grouped  = Handschelle_Database::get_persons_with_offences( array( 'freigegeben' => 1 ) );
+        $mit_bild = array_filter( $grouped, function( $g ) {
+            return ! empty( $g['person']->bild );
         } );
         ob_start();
         ?>
@@ -1079,20 +1243,22 @@ class Handschelle_Shortcodes {
                     <p class="hs-empty">Keine Bilder vorhanden.</p>
                 <?php else : ?>
                     <div class="hs-bilder-grid">
-                        <?php foreach ( $mit_bild as $e ) :
-                            $img_url  = handschelle_get_image_url( $e->bild );
+                        <?php foreach ( $mit_bild as $g ) :
+                            $person  = $g['person'];
+                            $img_url = handschelle_get_image_url( $person->bild );
                             if ( ! $img_url ) continue;
+                            $first_offence = ! empty( $g['offences'] ) ? $g['offences'][0] : null;
                         ?>
                         <div class="hs-bild-item">
                             <div class="hs-bild-img-wrap">
                                 <img src="<?php echo esc_url( $img_url ); ?>"
-                                     alt="<?php echo esc_attr( $e->name ); ?>"
+                                     alt="<?php echo esc_attr( $person->name ); ?>"
                                      class="hs-bild-img"
                                      style="max-height:300px;width:auto;height:auto;display:block;">
                             </div>
-                            <p class="hs-bild-caption"><?php echo esc_html( $e->name ); ?></p>
-                            <?php if ( ! empty( $e->straftat ) ) : ?>
-                                <p class="hs-bild-straftat"><?php echo esc_html( $e->straftat ); ?></p>
+                            <p class="hs-bild-caption"><?php echo esc_html( $person->name ); ?></p>
+                            <?php if ( $first_offence && ! empty( $first_offence->straftat ) ) : ?>
+                                <p class="hs-bild-straftat"><?php echo esc_html( $first_offence->straftat ); ?></p>
                             <?php endif; ?>
                         </div>
                         <?php endforeach; ?>
@@ -1105,15 +1271,29 @@ class Handschelle_Shortcodes {
     }
 
     /* ================================================================
-       [handschelle-karte id="X"] – Einzelne Eintragskarte
+       [handschelle-karte id="X"] – Eintragskarte (id = Straftat-ID oder person_id)
     ================================================================ */
     public function sc_karte( $atts ) {
-        $atts = shortcode_atts( array( 'id' => 0 ), $atts );
-        $id   = intval( $atts['id'] );
+        $atts      = shortcode_atts( array( 'id' => 0, 'person_id' => 0 ), $atts );
+        $person_id = intval( $atts['person_id'] );
+        $id        = intval( $atts['id'] );
+
+        if ( $person_id ) {
+            $person = Handschelle_Database::get_person( $person_id );
+            if ( ! $person ) return '';
+            $offences = Handschelle_Database::get_offences_by_person( $person_id, true );
+            if ( empty( $offences ) ) return '';
+            return '<div class="hs-frontend hs-full-width">' . $this->render_person_card( $person, $offences ) . '</div>';
+        }
+
         if ( ! $id ) return '';
         $e = Handschelle_Database::get_one( $id );
         if ( ! $e || ! $e->freigegeben ) return '';
-        return '<div class="hs-frontend hs-full-width">' . $this->render_card( $e ) . '</div>';
+        // Show full person card with all approved offences
+        $person   = Handschelle_Database::get_person( $e->person_id );
+        $offences = Handschelle_Database::get_offences_by_person( $e->person_id, true );
+        if ( ! $person || empty( $offences ) ) return '';
+        return '<div class="hs-frontend hs-full-width">' . $this->render_person_card( $person, $offences ) . '</div>';
     }
 
     /* ================================================================
@@ -1176,12 +1356,13 @@ class Handschelle_Shortcodes {
     ================================================================ */
     public function sc_wordcloud_name( $atts ) {
         global $wpdb;
-        $table = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
-        $rows  = $wpdb->get_results(
-            "SELECT name, partei, COUNT(*) AS cnt
-             FROM `{$table}`
-             WHERE freigegeben = 1
-             GROUP BY name
+        $tp   = $wpdb->prefix . HANDSCHELLE_DB_TABLE_PERSONEN;
+        $ts   = $wpdb->prefix . HANDSCHELLE_DB_TABLE_STRAFTATEN;
+        $rows = $wpdb->get_results(
+            "SELECT p.name, p.partei, COUNT(s.id) AS cnt
+             FROM `{$tp}` p JOIN `{$ts}` s ON s.person_id = p.id
+             WHERE s.freigegeben = 1
+             GROUP BY p.id
              ORDER BY cnt DESC"
         );
         if ( empty( $rows ) ) return '<p class="hs-wordcloud-empty">Keine Daten vorhanden.</p>';
@@ -1221,10 +1402,10 @@ class Handschelle_Shortcodes {
     ================================================================ */
     public function sc_wordcloud_urteil( $atts ) {
         global $wpdb;
-        $table = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
-        $rows  = $wpdb->get_results(
+        $ts   = $wpdb->prefix . HANDSCHELLE_DB_TABLE_STRAFTATEN;
+        $rows = $wpdb->get_results(
             "SELECT urteil, COUNT(*) AS cnt
-             FROM `{$table}`
+             FROM `{$ts}`
              WHERE freigegeben = 1 AND urteil != ''
              GROUP BY urteil
              ORDER BY cnt DESC"

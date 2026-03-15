@@ -53,11 +53,10 @@ function handschelle_get_image_url( $bild ) {
     return esc_url( $bild );
 }
 
-function handschelle_sanitize_entry( $post ) {
+function handschelle_sanitize_person( $post ) {
     $geburtsdatum_raw = sanitize_text_field( $post['geburtsdatum'] ?? '' );
     $geburtsdatum     = ( $geburtsdatum_raw && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $geburtsdatum_raw ) ) ? $geburtsdatum_raw : null;
     return array(
-        'datum_eintrag'   => sanitize_text_field( $post['datum_eintrag']   ?: date( 'Y-m-d' ) ),
         'name'            => substr( sanitize_text_field( $post['name']           ?? '' ), 0, 50 ),
         'beruf'           => substr( sanitize_text_field( $post['beruf']          ?? '' ), 0, 50 ),
         'geburtsort'      => substr( sanitize_text_field( $post['geburtsort']     ?? '' ), 0, 100 ),
@@ -67,13 +66,7 @@ function handschelle_sanitize_entry( $post ) {
         'aufgabe_partei'  => substr( sanitize_text_field( $post['aufgabe_partei'] ?? '' ), 0, 100 ),
         'parlament'       => sanitize_text_field( $post['parlament']       ?? '' ),
         'parlament_name'  => substr( sanitize_text_field( $post['parlament_name'] ?? '' ), 0, 50 ),
-        'status_aktiv'    => ! empty( $post['status_aktiv'] ) ? intval( $post['status_aktiv'] ) : 0,
-        'straftat'        => substr( sanitize_textarea_field( $post['straftat']   ?? '' ), 0, 200 ),
-        'urteil'          => substr( sanitize_text_field( $post['urteil']         ?? '' ), 0, 50 ),
-        'link_quelle'     => esc_url_raw( $post['link_quelle']     ?? '' ),
-        'aktenzeichen'    => substr( sanitize_text_field( $post['aktenzeichen']   ?? '' ), 0, 50 ),
-        'bemerkung'       => sanitize_textarea_field( $post['bemerkung']   ?? '' ),
-        'status_straftat' => sanitize_text_field( $post['status_straftat'] ?? 'Ermittlungen laufen' ),
+        'status_aktiv'    => isset( $post['status_aktiv'] ) ? intval( $post['status_aktiv'] ) : 1,
         'sm_facebook'     => esc_url_raw( $post['sm_facebook']     ?? '' ),
         'sm_youtube'      => esc_url_raw( $post['sm_youtube']      ?? '' ),
         'sm_personal'     => esc_url_raw( $post['sm_personal']     ?? '' ),
@@ -84,6 +77,26 @@ function handschelle_sanitize_entry( $post ) {
         'sm_linkedin'     => esc_url_raw( $post['sm_linkedin']     ?? '' ),
         'sm_xing'         => esc_url_raw( $post['sm_xing']         ?? '' ),
         'sm_truth_social' => esc_url_raw( $post['sm_truth_social'] ?? '' ),
+    );
+}
+
+function handschelle_sanitize_offence( $post ) {
+    return array(
+        'datum_eintrag'   => sanitize_text_field( $post['datum_eintrag'] ?? date( 'Y-m-d' ) ) ?: date( 'Y-m-d' ),
+        'straftat'        => substr( sanitize_textarea_field( $post['straftat']   ?? '' ), 0, 200 ),
+        'urteil'          => substr( sanitize_text_field( $post['urteil']         ?? '' ), 0, 50 ),
+        'link_quelle'     => esc_url_raw( $post['link_quelle']     ?? '' ),
+        'aktenzeichen'    => substr( sanitize_text_field( $post['aktenzeichen']   ?? '' ), 0, 50 ),
+        'bemerkung'       => sanitize_textarea_field( $post['bemerkung']   ?? '' ),
+        'status_straftat' => sanitize_text_field( $post['status_straftat'] ?? 'Ermittlungen laufen' ),
+    );
+}
+
+/** Backward-compat: kombinierte Person + Straftat-Daten */
+function handschelle_sanitize_entry( $post ) {
+    return array_merge(
+        handschelle_sanitize_person( $post ),
+        handschelle_sanitize_offence( $post )
     );
 }
 

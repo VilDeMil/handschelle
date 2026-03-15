@@ -495,6 +495,15 @@
 .hs-bulk-select { padding:.42rem .65rem; border:1.5px solid var(--hs-border); border-radius:var(--hs-radius); font-size:.88rem; font-family:var(--hs-font); background:#fff; color:#000; }
 
 /* ================================================================
+   Multi-Offence Blocks (v7.0)
+================================================================ */
+.hs-offences-count { font-size:.82rem; font-weight:700; color:var(--hs-accent); margin:.4rem 0 .6rem; letter-spacing:.02em; }
+.hs-offence-block { padding:.75rem 0; border-top:1px solid var(--hs-border); }
+.hs-offence-block:first-child { border-top:none; padding-top:0; }
+.hs-offence-header { font-size:.8rem; font-weight:700; color:var(--hs-muted); text-transform:uppercase; letter-spacing:.05em; margin-bottom:.5rem; padding:.3rem .6rem; background:rgba(0,0,0,.04); border-radius:4px; }
+.hs-offence-actions { margin-top:.5rem; }
+
+/* ================================================================
    Wordcloud
 ================================================================ */
 .hs-wordcloud { display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:.6rem 1.1rem; padding:1.5rem; background:var(--hs-card-bg); border-radius:var(--hs-radius); border:1px solid var(--hs-border); box-shadow:var(--hs-shadow); }
