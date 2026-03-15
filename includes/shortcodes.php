@@ -122,7 +122,7 @@ class Handschelle_Shortcodes {
                                 <textarea name="straftat" maxlength="200" rows="3" placeholder="Kurze Beschreibung der Straftat …" required></textarea>
                                 <small class="hs-char-counter" data-target="straftat">0 / 200 Zeichen</small>
                             </div>
-                            <div class="hs-field"><label>Urteil <span>(max. 50 Zeichen)</span></label><input type="text" name="urteil" maxlength="50" placeholder="z.B. 2 Jahre auf Bewährung"></div>
+                            <div class="hs-field"><label>Urteil <span>(max. 200 Zeichen)</span></label><input type="text" name="urteil" maxlength="200" placeholder="z.B. 2 Jahre auf Bewährung"></div>
                             <div class="hs-field"><label>Link zur Quelle</label><input type="url" name="link_quelle" placeholder="https://…"></div>
                             <div class="hs-field"><label>Aktenzeichen <span>(max. 50 Zeichen)</span></label><input type="text" name="aktenzeichen" maxlength="50" placeholder="z.B. 1 StR 123/24"></div>
                             <div class="hs-field hs-field-full"><label>Bemerkung</label><textarea name="bemerkung" rows="4" placeholder="Weitere Anmerkungen …"></textarea></div>
@@ -1007,7 +1007,7 @@ class Handschelle_Shortcodes {
                             <textarea name="straftat" maxlength="200" rows="3" required><?php echo esc_textarea($e->straftat); ?></textarea>
                             <small class="hs-char-counter" data-target="straftat">0 / 200 Zeichen</small>
                         </div>
-                        <div class="hs-field"><label>Urteil <span>(max. 50)</span></label><input type="text" name="urteil" maxlength="50" value="<?php echo esc_attr($e->urteil); ?>"></div>
+                        <div class="hs-field"><label>Urteil <span>(max. 200)</span></label><input type="text" name="urteil" maxlength="200" value="<?php echo esc_attr($e->urteil); ?>"></div>
                         <div class="hs-field"><label>Link zur Quelle</label><input type="url" name="link_quelle" value="<?php echo esc_attr($e->link_quelle); ?>"></div>
                         <div class="hs-field"><label>Aktenzeichen</label><input type="text" name="aktenzeichen" maxlength="50" value="<?php echo esc_attr($e->aktenzeichen); ?>"></div>
                         <div class="hs-field hs-field-full"><label>Bemerkung</label><textarea name="bemerkung" rows="3"><?php echo esc_textarea($e->bemerkung); ?></textarea></div>

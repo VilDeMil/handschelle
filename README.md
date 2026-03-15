@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 6.9 |
+| **Version** | 7.0 |
 | **Autor** | Bernd K.R. Dorfmüller |
 | **E-Mail** | Info@die-handschelle.de |
 | **Website** | https://www.die-handschelle.de |
@@ -1213,6 +1213,9 @@ IMPORTANT BEHAVIOURS
 ---
 
 ## Release Notes
+
+### 7.0 *(2026-03-15)*
+- **Fix Urteil maxlength in shortcodes**: Frontend submission form and frontend edit form both had `maxlength="50"` for `urteil`; corrected to `maxlength="200"` to match DB schema and admin form.
 
 ### 6.9 *(2026-03-15)*
 - **DoD / Verstorben**: Added `verstorben` checkbox and `dod` (date of death) date field to Eintragsdetails; DoD field is shown/hidden via JS when checkbox is toggled.
