@@ -26,6 +26,7 @@ class Handschelle_Admin {
         echo '<style>
             #adminmenu a[href="admin.php?page=handschelle-edit"]{display:none!important}
             #adminmenu a[href="admin.php?page=handschelle-add-offence"]{display:none!important}
+            #adminmenu a[href="admin.php?page=handschelle-edit-person"]{display:none!important}
         </style>';
     }
 
@@ -38,6 +39,7 @@ class Handschelle_Admin {
         add_submenu_page( 'handschelle', 'Neuer Eintrag',            '+ Neuer Eintrag',    'manage_options', 'handschelle-add',                 array( $this, 'page_add' ) );
         add_submenu_page( 'handschelle', 'Neue Straftat für Person', 'Neue Straftat',      'manage_options', 'handschelle-add-offence',         array( $this, 'page_add_offence' ) );
         add_submenu_page( 'handschelle', 'Eintrag bearbeiten',       'Bearbeiten',         'manage_options', 'handschelle-edit',                array( $this, 'page_edit' ) );
+        add_submenu_page( 'handschelle', 'Person bearbeiten',        'Person bearbeiten',  'manage_options', 'handschelle-edit-person',         array( $this, 'page_edit_person' ) );
         add_submenu_page( 'handschelle', 'Import / Export',          'Import / Export',    'manage_options', 'handschelle-import-export',       array( $this, 'page_import_export' ) );
         add_submenu_page( 'handschelle', 'Bilder',                   'Bilder',             'manage_options', 'handschelle-bilder',              array( $this, 'page_bilder' ) );
         add_submenu_page( 'handschelle', 'Backup & Restore',         'Backup & Restore',   'manage_options', 'handschelle-backup',              array( $this, 'page_backup' ) );
@@ -80,6 +82,22 @@ class Handschelle_Admin {
                 } else {
                     $this->redirect( admin_url( 'admin.php?page=handschelle' ), '⚠ Fehler beim Speichern der Straftat.' );
                 }
+                break;
+
+            case 'edit_person':
+                $person_id = intval( $_POST['person_id'] ?? 0 );
+                if ( ! $person_id ) break;
+                $person_data = handschelle_sanitize_person( $_POST );
+                // Only keep non-empty fields, but always keep name
+                $name = $person_data['name'] ?? '';
+                if ( empty( $name ) ) {
+                    $this->redirect( admin_url( 'admin.php?page=handschelle' ), '⚠ Name darf nicht leer sein.' );
+                    break;
+                }
+                $attach_id = Handschelle_Image_Handler::handle_upload_and_resize( 'bild_upload', $name, $person_data['partei'] ?? '' );
+                if ( $attach_id ) $person_data['bild'] = $attach_id;
+                Handschelle_Database::update_person( $person_id, $person_data );
+                $this->redirect( admin_url( 'admin.php?page=handschelle' ), 'Person aktualisiert.' );
                 break;
 
             case 'edit':
@@ -375,7 +393,8 @@ class Handschelle_Admin {
                             <td><?php echo $e->status_aktiv ? '<span class="hs-badge hs-badge-aktiv">Aktiv</span>' : '<span class="hs-badge hs-badge-inaktiv">Inaktiv</span>'; ?></td>
                             <td><?php echo $e->freigegeben ? '<span class="hs-badge hs-badge-aktiv">✅ Freigegeben</span>' : '<span class="hs-badge hs-badge-pending">⏳ Ausstehend</span>'; ?></td>
                             <td class="hs-actions">
-                                        <a href="<?php echo esc_url( admin_url( "admin.php?page=handschelle-edit&id={$e->id}" ) ); ?>" class="button button-small">✏ Bearbeiten</a>
+                                        <a href="<?php echo esc_url( admin_url( "admin.php?page=handschelle-edit-person&person_id={$e->person_id}" ) ); ?>" class="button button-small">👤 Person</a>
+                                <a href="<?php echo esc_url( admin_url( "admin.php?page=handschelle-edit&id={$e->id}" ) ); ?>" class="button button-small">✏ Straftat</a>
                                 <a href="<?php echo esc_url( admin_url( "admin.php?page=handschelle-add-offence&person_id={$e->person_id}" ) ); ?>" class="button button-small">➕ Straftat</a>
                                 <a href="<?php echo esc_url( admin_url( "admin.php?page=handschelle&hs_action=toggle_freigabe&id={$e->id}&_wpnonce={$nonce}" ) ); ?>" class="button button-small"><?php echo $e->freigegeben ? '🚫 Sperren' : '✅ Freigeben'; ?></a>
                                 <a href="<?php echo esc_url( admin_url( "admin.php?page=handschelle&hs_action=toggle_aktiv&id={$e->id}&_wpnonce={$nonce}" ) ); ?>" class="button button-small"><?php echo $e->status_aktiv ? '⏸ Deaktiv.' : '▶ Aktivieren'; ?></a>
@@ -1124,6 +1143,130 @@ class Handschelle_Admin {
             admin_url( 'admin.php?page=handschelle-backup' ),
             "Wiederherstellung abgeschlossen: {$entry_count} Einträge importiert, {$img_count} Bilder importiert."
         );
+    }
+
+    /* ================================================================
+       SEITE: PERSON BEARBEITEN
+    ================================================================ */
+    public function page_edit_person() {
+        $person_id = intval( $_GET['person_id'] ?? 0 );
+        $person    = $person_id ? Handschelle_Database::get_person( $person_id ) : null;
+        if ( ! $person ) {
+            echo '<div class="wrap hs-wrap"><div class="notice notice-error"><p>Person nicht gefunden.</p></div></div>';
+            return;
+        }
+        echo '<div class="wrap hs-wrap"><h1>👤 Person bearbeiten: ' . esc_html( $person->name ) . '</h1>' . $this->render_person_form( $person ) . $this->hs_footer() . '</div>';
+    }
+
+    /* ================================================================
+       FORMULAR: Person bearbeiten
+    ================================================================ */
+    public function render_person_form( $person ) {
+        $parlaments = handschelle_parlaments();
+        $sm_fields  = array(
+            'sm_facebook'     => '📘 Facebook',
+            'sm_youtube'      => '▶ YouTube',
+            'sm_personal'     => '👤 Persönliches Profil',
+            'sm_twitter'      => '🐦 Twitter / X',
+            'sm_homepage'     => '🌐 Persönliche Homepage',
+            'sm_wikipedia'    => '📖 Wikipedia',
+            'sm_linkedin'     => '💼 LinkedIn',
+            'sm_xing'         => '💼 Xing',
+            'sm_truth_social' => '🗣 Truth Social',
+            'sm_sonstige'     => '🔗 Sonstige',
+        );
+        $v = function( $field, $default = '' ) use ( $person ) {
+            return esc_attr( $person->$field ?? $default );
+        };
+        ob_start();
+        ?>
+        <form method="post" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>" enctype="multipart/form-data" class="hs-form">
+            <?php wp_nonce_field( 'handschelle_admin_action' ); ?>
+            <input type="hidden" name="hs_action"  value="edit_person">
+            <input type="hidden" name="page"       value="handschelle-edit-person">
+            <input type="hidden" name="person_id"  value="<?php echo intval( $person->id ); ?>">
+
+            <div class="hs-form-section">
+                <h2>📋 Personendaten</h2>
+                <div class="hs-form-grid">
+                    <div class="hs-field">
+                        <label>Name <span>(max. 50 Zeichen)</span></label>
+                        <input type="text" name="name" maxlength="50" value="<?php echo $v('name'); ?>" placeholder="Vor- und Nachname" required>
+                        <div class="hs-search-buttons">
+                            <a href="<?php echo esc_url( 'https://www.google.com/search?q=' . urlencode( $person->name ) ); ?>" target="_blank" rel="noopener" class="button button-secondary hs-search-btn">🔍 Google</a>
+                            <a href="<?php echo esc_url( 'https://duckduckgo.com/?q=' . urlencode( $person->name ) ); ?>" target="_blank" rel="noopener" class="button button-secondary hs-search-btn">🔍 DuckDuckGo</a>
+                            <a href="<?php echo esc_url( 'https://www.abgeordnetenwatch.de/profile?politician_search_keys=' . urlencode( $person->name ) ); ?>" target="_blank" rel="noopener" class="button button-secondary hs-search-btn">🏛 Abgeordnetenwatch</a>
+                        </div>
+                    </div>
+                    <div class="hs-field"><label>Beruf <span>(max. 50 Zeichen)</span></label><input type="text" name="beruf" maxlength="50" value="<?php echo $v('beruf'); ?>" placeholder="z.B. Politiker"></div>
+                    <div class="hs-field"><label>Geburtsort <span>(max. 100 Zeichen)</span></label><input type="text" name="geburtsort" maxlength="100" value="<?php echo $v('geburtsort'); ?>" placeholder="z.B. Berlin"></div>
+                    <div class="hs-field"><label>Geburtsdatum</label><input type="date" name="geburtsdatum" value="<?php echo esc_attr( ( ! empty($person->geburtsdatum) && $person->geburtsdatum !== '0000-00-00' ) ? $person->geburtsdatum : '' ); ?>"></div>
+                    <div class="hs-field hs-field-full">
+                        <label>Bild</label>
+                        <div class="hs-media-picker">
+                            <?php $cur_img = handschelle_get_image_url( $person->bild ); ?>
+                            <div class="hs-media-preview" id="hs-media-preview-bild">
+                                <?php if ( $cur_img ) : ?>
+                                    <img src="<?php echo esc_url( $cur_img ); ?>" style="max-height:100px;border-radius:4px;display:block;margin-bottom:.4rem;">
+                                    <small>ID: <?php echo esc_html( $person->bild ); ?></small>
+                                <?php endif; ?>
+                            </div>
+                            <div class="hs-media-picker-row">
+                                <input type="hidden" name="bild" id="hs-media-id-bild" class="hs-media-id" value="<?php echo $v('bild'); ?>">
+                                <button type="button" class="button button-primary hs-media-btn"
+                                        data-target-id="hs-media-id-bild"
+                                        data-preview-id="hs-media-preview-bild">
+                                    🖼 Medienbibliothek öffnen
+                                </button>
+                                <?php if ( $v('bild') ) : ?>
+                                <button type="button" class="button hs-media-remove-btn"
+                                        data-target-id="hs-media-id-bild"
+                                        data-preview-id="hs-media-preview-bild">
+                                    ✕ Bild entfernen
+                                </button>
+                                <?php endif; ?>
+                                <span class="hs-media-sep">oder neu hochladen:</span>
+                                <input type="file" name="bild_upload" accept="image/*" class="hs-file-input">
+                            </div>
+                            <small>Upload: Datei wird als <em>&lt;Name&gt;HA.&lt;Endung&gt;</em> gespeichert und auf max. 450&nbsp;px Höhe skaliert.</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hs-form-section">
+                <h2>🏛 Politisch</h2>
+                <div class="hs-form-grid">
+                    <div class="hs-field"><label>Partei <span>(max. 50 Zeichen)</span></label><input type="text" name="partei" maxlength="50" value="<?php echo $v('partei'); ?>" placeholder="z.B. CDU, SPD …"></div>
+                    <div class="hs-field"><label>Aufgabe in der Partei</label><input type="text" name="aufgabe_partei" maxlength="100" value="<?php echo $v('aufgabe_partei'); ?>" placeholder="z.B. Vorsitzender, MdB …"></div>
+                    <div class="hs-field">
+                        <label>Parlament</label>
+                        <select name="parlament">
+                            <option value="">-- Bitte wählen --</option>
+                            <?php foreach ( $parlaments as $p ) : ?><option value="<?php echo esc_attr($p); ?>" <?php selected($v('parlament'),esc_attr($p)); ?>><?php echo esc_html($p); ?></option><?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="hs-field"><label>Parlament Name <span>(max. 50 Zeichen)</span></label><input type="text" name="parlament_name" maxlength="50" value="<?php echo $v('parlament_name'); ?>"></div>
+                    <div class="hs-field"><label>Status</label><select name="status_aktiv"><option value="1" <?php selected($v('status_aktiv','1'),'1'); ?>>Aktiv</option><option value="0" <?php selected($v('status_aktiv','1'),'0'); ?>>Inaktiv</option></select></div>
+                </div>
+            </div>
+
+            <div class="hs-form-section">
+                <h2>📱 Social-Media Links</h2>
+                <div class="hs-form-grid">
+                    <?php foreach ( $sm_fields as $field => $label ) : ?>
+                        <div class="hs-field"><label><?php echo $label; ?></label><input type="url" name="<?php echo esc_attr($field); ?>" value="<?php echo $v($field); ?>" placeholder="https://…"></div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+
+            <div class="hs-form-actions">
+                <button type="submit" class="button button-primary hs-btn">💾 Person aktualisieren</button>
+                <a href="<?php echo esc_url( admin_url('admin.php?page=handschelle') ); ?>" class="button hs-btn-cancel">Abbrechen</a>
+            </div>
+        </form>
+        <?php
+        return ob_get_clean();
     }
 
     /* ================================================================
