@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 6.2 |
+| **Version** | 6.3 |
 | **Autor** | Bernd K.R. Dorfmüller |
 | **E-Mail** | Info@die-handschelle.de |
 | **Website** | https://www.die-handschelle.de |
@@ -41,14 +41,15 @@ Bitte unterstützt das Projekt, indem ihr dabei helft, Straftäter in unseren Pa
 ## Table of Contents
 
 1. [Installation from GitHub](#installation-from-github)
-2. [Shortcodes](#shortcodes)
-3. [Fields / Database Schema](#fields--database-schema)
-4. [Code Reference](#code-reference)
-5. [Plugin Structure](#plugin-structure)
-6. [Important Notes](#important-notes)
-7. [Instructions for AI / LLM](#instructions-for-ai--llm)
-8. [Recreate from Scratch](#recreate-from-scratch)
-9. [Release Notes](#release-notes)
+2. [Build / Package](#build--package)
+3. [Shortcodes](#shortcodes)
+4. [Fields / Database Schema](#fields--database-schema)
+5. [Code Reference](#code-reference)
+6. [Plugin Structure](#plugin-structure)
+7. [Important Notes](#important-notes)
+8. [Instructions for AI / LLM](#instructions-for-ai--llm)
+9. [Recreate from Scratch](#recreate-from-scratch)
+10. [Release Notes](#release-notes)
 
 ---
 
@@ -102,6 +103,38 @@ To verify GD is available on your server:
 ```php
 <?php
 var_dump(extension_loaded('gd')); // should print: bool(true)
+```
+
+---
+
+## Build / Package
+
+This plugin has **no build toolchain** — PHP, CSS, and JS are plain files with no compilation step. "Building" means packaging the plugin folder into a ZIP for distribution or manual installation.
+
+### Create a release ZIP
+
+Run from the **parent directory** of `die-handschelle/`:
+
+```bash
+zip -r die-handschelle.zip die-handschelle/ \
+  --exclude "die-handschelle/.git/*" \
+  --exclude "die-handschelle/.gitignore" \
+  --exclude "die-handschelle/prompt.txt"
+```
+
+The resulting `die-handschelle.zip` can be installed via **WordPress Admin → Plugins → Add New → Upload Plugin**.
+
+### Quick one-liner (from inside the repo)
+
+```bash
+cd .. && zip -r die-handschelle.zip die-handschelle/ --exclude "die-handschelle/.git/*" && cd die-handschelle
+```
+
+### Verify GD is available on the target server
+
+```bash
+php -r "var_dump(extension_loaded('gd'));"
+# expected: bool(true)
 ```
 
 ---
@@ -1112,6 +1145,9 @@ IMPORTANT BEHAVIOURS
 ---
 
 ## Release Notes
+
+### 6.3 *(2026-03-14)*
+- **Build / Package**: Added `## Build / Package` section with `zip` commands to create a distributable ZIP, a quick one-liner variant, and a GD verification command
 
 ### 6.2 *(2026-03-14)*
 - **Recreate from Scratch**: Added `## Recreate from Scratch` section to README — a complete, self-contained prompt for rebuilding the entire plugin with an AI assistant from a blank slate
