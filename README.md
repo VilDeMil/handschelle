@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 6.5 |
+| **Version** | 6.6 |
 | **Autor** | Bernd K.R. Dorfmüller |
 | **E-Mail** | Info@die-handschelle.de |
 | **Website** | https://www.die-handschelle.de |
@@ -46,13 +46,32 @@ Die detaillierte Dokumentation ist in separate Dateien aufgeteilt:
 - [fields-database-schema.txt](fields-database-schema.txt) — Datenbankfelder und Schema
 - [code-reference.txt](code-reference.txt) — PHP-Klassen, Funktionen, JS-API, CSS
 - [plugin-structure.txt](plugin-structure.txt) — Dateistruktur des Plugins
-- [important-notes.txt](important-notes.txt) — Wichtige Hinweise zur Nutzung
 - [instructions-for-ai-llm.txt](instructions-for-ai-llm.txt) — Regeln für KI-Assistenten
 - [recreate-from-scratch.txt](recreate-from-scratch.txt) — Prompt zum Nachbauen des Plugins
 
 ---
 
+## Important Notes
+
+- New public submissions are **not approved by default** (`freigegeben = 0`). An admin must approve them via **Übersicht → ✅ Freigeben**.
+- Profile images are automatically resized to a maximum height of **450 px** using the GD library (required).
+- CSV export uses **UTF-8 with BOM** and **semicolons** as delimiters for Excel compatibility. The import is header-based and backward-compatible.
+- The **Edit page** is hidden from the admin sidebar but accessible via the ✏ button in the Overview table.
+- **Authors and higher** (role `Author`, `Editor`, `Administrator`) see an inline edit button on every entry card in the frontend — Subscribers and Contributors do not.
+- The inline edit panel and admin form both include **Google, Qwant, DuckDuckGo, Bing, Abgeordnetenwatch** search buttons next to the name field.
+- All forms use **WordPress nonce verification** to prevent CSRF attacks. If nonce verification fails (e.g. after a long session or cached page), the user sees a visible error message (`⚠️ Fehler beim Speichern`) instead of a silent redirect.
+- All user input is sanitized with WordPress sanitization functions before writing to the database.
+- Social media icons are rendered as **inline SVG** with brand colors and hover effects — no external icon library required.
+- **Image uploads** are automatically renamed to `name-HA.ext` (e.g. `max-mustermann-HA.jpg`) using `sanitize_title()`.
+- The **admin image field** supports two workflows: (1) pick from the WP Media Library via the `wp.media` modal, or (2) upload a new file directly.
+- **Database auto-migration:** After updating the plugin, `maybe_upgrade_table()` runs on `plugins_loaded` and adds any missing columns via `dbDelta()`. No data is ever lost.
+
+---
+
 ## Release Notes
+
+### 6.6 *(2026-03-15)*
+- **Important Notes in README**: Moved "Important Notes" section back into README.md (was extracted to important-notes.txt in 6.5)
 
 ### 6.5 *(2026-03-15)*
 - **Dokumentation aufgeteilt**: Alle Themen-Abschnitte aus README.md in separate `.txt`-Dateien ausgelagert; README.md enthält nur noch Projektinfo, Einleitung und Release Notes
