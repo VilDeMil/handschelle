@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 6.8 |
+| **Version** | 7.2 |
 | **Autor** | Bernd K.R. Dorfmüller |
 | **E-Mail** | Info@die-handschelle.de |
 | **Website** | https://www.die-handschelle.de |
@@ -1213,6 +1213,24 @@ IMPORTANT BEHAVIOURS
 ---
 
 ## Release Notes
+
+### 7.2 *(2026-03-15)*
+- **Fix Backup/Restore image mapping**: Converted `restore_full()` from fixed numeric column indices to header-based mapping (same approach as CSV import); old backups created before the `verstorben`/`dod` columns were added now restore correctly instead of assigning `bild` to the wrong column.
+- **Fix Backup/Restore bild validation**: After attempting ID remapping, if the attachment ID is not found in the remap table and does not exist on the current site, `bild` is cleared instead of storing a stale/wrong ID.
+- **Fix image display after restore/import**: `handschelle_get_image_url()` now falls back from `medium` → `full` → `wp_get_attachment_url()` so images are always visible even when WP thumbnail sizes weren't regenerated.
+- **Fix image replacement on edit**: Editing an entry and uploading a new image now deletes the old attachment from the media library (admin edit and frontend inline edit), preventing orphaned files and wrong image references.
+
+### 7.1 *(2026-03-15)*
+- **Cards & Forms**: Added `verstorben`/`dod` and `bemerkung_person` to frontend cards (display), frontend submission form, and inline edit form; JS toggle converted to delegated class-based handler (`hs-verstorben-cb` / `hs-dod-row`) so it works across all form instances on the same page.
+- **CSS**: Added `.hs-badge-verstorben` (grey badge) and `.hs-card-bemerkung-person` styles.
+
+### 7.0 *(2026-03-15)*
+- **Fix Urteil maxlength in shortcodes**: Frontend submission form and frontend edit form both had `maxlength="50"` for `urteil`; corrected to `maxlength="200"` to match DB schema and admin form.
+
+### 6.9 *(2026-03-15)*
+- **DoD / Verstorben**: Added `verstorben` checkbox and `dod` (date of death) date field to Eintragsdetails; DoD field is shown/hidden via JS when checkbox is toggled.
+- **Bemerkung zur Person**: New `bemerkung_person` text field (max. 500 chars) added to Eintragsdetails section for person-level remarks.
+- **Urteil erweitert**: `urteil` field expanded from 50 to 200 characters in DB schema, form, sanitizer, and CSV import/export.
 
 ### 6.8 *(2026-03-15)*
 - **Table of Contents**: Added TOC after the header metadata block with links to all `##` and `###` sections

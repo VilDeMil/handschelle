@@ -61,9 +61,16 @@ class Handschelle_Admin {
             case 'edit':
                 $id = intval( $_POST['id'] ?? 0 );
                 if ( ! $id ) break;
-                $data      = handschelle_sanitize_entry( $_POST );
-                $attach_id = Handschelle_Image_Handler::handle_upload_and_resize( 'bild_upload', $data['name'] ?? '', $data['partei'] ?? '' );
-                if ( $attach_id ) $data['bild'] = $attach_id;
+                $entry_before = Handschelle_Database::get_one( $id );
+                $data         = handschelle_sanitize_entry( $_POST );
+                $attach_id    = Handschelle_Image_Handler::handle_upload_and_resize( 'bild_upload', $data['name'] ?? '', $data['partei'] ?? '' );
+                if ( $attach_id ) {
+                    // New file uploaded: delete the old attachment to avoid orphans
+                    if ( $entry_before && ! empty( $entry_before->bild ) && is_numeric( $entry_before->bild ) && intval( $entry_before->bild ) !== $attach_id ) {
+                        wp_delete_attachment( intval( $entry_before->bild ), true );
+                    }
+                    $data['bild'] = $attach_id;
+                }
                 $data['freigegeben'] = isset( $_POST['freigegeben'] ) ? 1 : 0;
                 Handschelle_Database::update( $id, $data );
                 $this->redirect( admin_url( 'admin.php?page=handschelle' ), 'Eintrag aktualisiert.' );
@@ -157,7 +164,7 @@ class Handschelle_Admin {
         header( 'Pragma: no-cache' );
         $out  = fopen( 'php://output', 'w' );
         fputs( $out, "\xEF\xBB\xBF" );
-        $cols = array( 'id','datum_eintrag','name','beruf','geburtsort','geburtsdatum','bild','partei','aufgabe_partei','parlament','parlament_name','status_aktiv','straftat','urteil','link_quelle','aktenzeichen','bemerkung','status_straftat','sm_facebook','sm_youtube','sm_personal','sm_twitter','sm_homepage','sm_wikipedia','sm_sonstige','sm_linkedin','sm_xing','sm_truth_social','freigegeben','erstellt_am','geaendert_am' );
+        $cols = array( 'id','datum_eintrag','name','beruf','geburtsort','geburtsdatum','verstorben','dod','bild','partei','aufgabe_partei','parlament','parlament_name','status_aktiv','straftat','urteil','link_quelle','aktenzeichen','bemerkung_person','bemerkung','status_straftat','sm_facebook','sm_youtube','sm_personal','sm_twitter','sm_homepage','sm_wikipedia','sm_sonstige','sm_linkedin','sm_xing','sm_truth_social','freigegeben','erstellt_am','geaendert_am' );
         fputcsv( $out, $cols, ';' );
         foreach ( $entries as $e ) {
             $row = array();
@@ -194,12 +201,16 @@ class Handschelle_Admin {
             }
             $geburtsdatum_raw = sanitize_text_field( $g('geburtsdatum') );
             $geburtsdatum = ( $geburtsdatum_raw && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $geburtsdatum_raw ) ) ? $geburtsdatum_raw : null;
+            $dod_raw_csv  = sanitize_text_field( $g('dod') );
+            $dod_val_csv  = ( $dod_raw_csv && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $dod_raw_csv ) ) ? $dod_raw_csv : null;
             Handschelle_Database::insert( array(
                 'datum_eintrag'   => sanitize_text_field( $g('datum_eintrag') ) ?: date('Y-m-d'),
                 'name'            => substr( sanitize_text_field( $g('name') ), 0, 50 ),
                 'beruf'           => substr( sanitize_text_field( $g('beruf') ), 0, 50 ),
                 'geburtsort'      => substr( sanitize_text_field( $g('geburtsort') ), 0, 100 ),
                 'geburtsdatum'    => $geburtsdatum,
+                'verstorben'      => intval( $g('verstorben') ),
+                'dod'             => $dod_val_csv,
                 'bild'            => $bild_raw,
                 'partei'          => substr( sanitize_text_field( $g('partei') ), 0, 50 ),
                 'aufgabe_partei'  => substr( sanitize_text_field( $g('aufgabe_partei') ), 0, 100 ),
@@ -207,9 +218,10 @@ class Handschelle_Admin {
                 'parlament_name'  => substr( sanitize_text_field( $g('parlament_name') ), 0, 50 ),
                 'status_aktiv'    => intval( $g('status_aktiv') ),
                 'straftat'        => substr( sanitize_textarea_field( $g('straftat') ), 0, 200 ),
-                'urteil'          => substr( sanitize_text_field( $g('urteil') ), 0, 50 ),
+                'urteil'          => substr( sanitize_text_field( $g('urteil') ), 0, 200 ),
                 'link_quelle'     => esc_url_raw( $g('link_quelle') ),
                 'aktenzeichen'    => substr( sanitize_text_field( $g('aktenzeichen') ), 0, 50 ),
+                'bemerkung_person' => substr( sanitize_textarea_field( $g('bemerkung_person') ), 0, 500 ),
                 'bemerkung'       => sanitize_textarea_field( $g('bemerkung') ),
                 'status_straftat' => sanitize_text_field( $g('status_straftat') ) ?: 'Ermittlungen laufen',
                 'sm_facebook'     => esc_url_raw( $g('sm_facebook') ),
@@ -265,7 +277,7 @@ class Handschelle_Admin {
         $nonce       = wp_create_nonce( 'handschelle_admin_action' );
         ?>
         <div class="wrap hs-wrap">
-            <h1>🔒 Die-Handschelle <span class="hs-version">6.8</span></h1>
+            <h1>🔒 Die-Handschelle <span class="hs-version">7.2</span></h1>
             <div class="hs-stats-bar">
                 <span>Gesamt: <strong><?php echo $total; ?></strong></span>
                 <span>Ausstehend: <strong class="<?php echo $pending ? 'hs-warn' : ''; ?>"><?php echo $pending; ?></strong></span>
@@ -441,6 +453,18 @@ class Handschelle_Admin {
                     <div class="hs-field"><label>Beruf <span>(max. 50 Zeichen)</span></label><input type="text" name="beruf" maxlength="50" value="<?php echo $v('beruf'); ?>" placeholder="z.B. Politiker"></div>
                     <div class="hs-field"><label>Geburtsort <span>(max. 100 Zeichen)</span></label><input type="text" name="geburtsort" maxlength="100" value="<?php echo $v('geburtsort'); ?>" placeholder="z.B. Berlin"></div>
                     <div class="hs-field"><label>Geburtsdatum</label><input type="date" name="geburtsdatum" value="<?php echo esc_attr( ( ! empty($entry->geburtsdatum) && $entry->geburtsdatum !== '0000-00-00' ) ? $entry->geburtsdatum : '' ); ?>"></div>
+                    <div class="hs-field">
+                        <label class="hs-checkbox-label"><input type="checkbox" name="verstorben" id="hs-verstorben" class="hs-verstorben-cb" value="1" <?php checked( intval($entry->verstorben ?? 0), 1 ); ?>> Verstorben</label>
+                    </div>
+                    <div class="hs-field hs-dod-row" id="hs-dod-row" style="<?php echo empty($entry->verstorben) ? 'display:none;' : ''; ?>">
+                        <label>Sterbedatum (DoD)</label>
+                        <input type="date" name="dod" value="<?php echo esc_attr( ( ! empty($entry->dod) && $entry->dod !== '0000-00-00' ) ? $entry->dod : '' ); ?>">
+                    </div>
+                    <div class="hs-field hs-field-full">
+                        <label>Bemerkung zur Person <span>(max. 500 Zeichen)</span></label>
+                        <textarea name="bemerkung_person" maxlength="500" rows="4"><?php echo esc_textarea($entry->bemerkung_person ?? ''); ?></textarea>
+                        <small class="hs-char-counter" data-target="bemerkung_person">0 / 500 Zeichen</small>
+                    </div>
                     <div class="hs-field hs-field-full">
                         <label>Bild</label>
                         <div class="hs-media-picker">
@@ -497,7 +521,7 @@ class Handschelle_Admin {
                 <h2>⚖ Details zur Straftat</h2>
                 <div class="hs-form-grid">
                     <div class="hs-field hs-field-full"><label>Straftat <span>(max. 200 Zeichen)</span></label><textarea name="straftat" maxlength="200" rows="3" required><?php echo esc_textarea($entry->straftat ?? ''); ?></textarea><small class="hs-char-counter" data-target="straftat">0 / 200 Zeichen</small></div>
-                    <div class="hs-field"><label>Urteil <span>(max. 50 Zeichen)</span></label><input type="text" name="urteil" maxlength="50" value="<?php echo $v('urteil'); ?>" placeholder="z.B. 2 Jahre auf Bewährung"></div>
+                    <div class="hs-field"><label>Urteil <span>(max. 200 Zeichen)</span></label><input type="text" name="urteil" maxlength="200" value="<?php echo $v('urteil'); ?>" placeholder="z.B. 2 Jahre auf Bewährung"></div>
                     <div class="hs-field"><label>Link zur Quelle</label><input type="url" name="link_quelle" value="<?php echo $v('link_quelle'); ?>" placeholder="https://…"></div>
                     <div class="hs-field"><label>Aktenzeichen <span>(max. 50 Zeichen)</span></label><input type="text" name="aktenzeichen" maxlength="50" value="<?php echo $v('aktenzeichen'); ?>" placeholder="z.B. 1 StR 123/24"></div>
                     <div class="hs-field hs-field-full"><label>Bemerkung</label><textarea name="bemerkung" rows="4"><?php echo esc_textarea($entry->bemerkung ?? ''); ?></textarea></div>
@@ -822,7 +846,7 @@ class Handschelle_Admin {
         $entries = Handschelle_Database::get_all( array( 'freigegeben' => 'all' ) );
 
         // Build in-memory CSV
-        $cols = array( 'id','datum_eintrag','name','beruf','geburtsort','geburtsdatum','bild','partei','aufgabe_partei','parlament','parlament_name','status_aktiv','straftat','urteil','link_quelle','aktenzeichen','bemerkung','status_straftat','sm_facebook','sm_youtube','sm_personal','sm_twitter','sm_homepage','sm_wikipedia','sm_sonstige','sm_linkedin','sm_xing','sm_truth_social','freigegeben','erstellt_am','geaendert_am' );
+        $cols = array( 'id','datum_eintrag','name','beruf','geburtsort','geburtsdatum','verstorben','dod','bild','partei','aufgabe_partei','parlament','parlament_name','status_aktiv','straftat','urteil','link_quelle','aktenzeichen','bemerkung_person','bemerkung','status_straftat','sm_facebook','sm_youtube','sm_personal','sm_twitter','sm_homepage','sm_wikipedia','sm_sonstige','sm_linkedin','sm_xing','sm_truth_social','freigegeben','erstellt_am','geaendert_am' );
         $csv  = "\xEF\xBB\xBF"; // UTF-8 BOM
         $csv .= implode( ';', $cols ) . "\r\n";
         foreach ( $entries as $e ) {
@@ -966,59 +990,74 @@ class Handschelle_Admin {
             $fh = fopen( $csv_file, 'r' );
             $bom = fread( $fh, 3 );
             if ( $bom !== "\xEF\xBB\xBF" ) rewind( $fh );
-            fgetcsv( $fh, 0, ';' ); // header row
-            // CSV column order (matches backup_full $cols):
-            // 0:id 1:datum_eintrag 2:name 3:beruf 4:geburtsort 5:geburtsdatum
-            // 6:bild 7:partei 8:aufgabe_partei 9:parlament 10:parlament_name
-            // 11:status_aktiv 12:straftat 13:urteil 14:link_quelle 15:aktenzeichen
-            // 16:bemerkung 17:status_straftat 18:sm_facebook 19:sm_youtube
-            // 20:sm_personal 21:sm_twitter 22:sm_homepage 23:sm_wikipedia
-            // 24:sm_sonstige 25:sm_linkedin 26:sm_xing 27:sm_truth_social
-            // 28:freigegeben 29:erstellt_am 30:geaendert_am
+            // Header-based mapping: works with old and new backup formats
+            $restore_headers = fgetcsv( $fh, 0, ';' );
+            if ( empty( $restore_headers ) ) { fclose( $fh ); } else {
+            $restore_col_map = array_flip( array_map( 'trim', $restore_headers ) );
+            $g = function( $field ) use ( &$row, $restore_col_map ) {
+                return ( isset( $restore_col_map[ $field ] ) && isset( $row[ $restore_col_map[ $field ] ] ) )
+                    ? $row[ $restore_col_map[ $field ] ] : '';
+            };
             while ( ( $row = fgetcsv( $fh, 0, ';' ) ) !== false ) {
-                if ( count( $row ) < 29 ) continue;
-                // Remap bild attachment ID: old ID → new ID via bild-map.json
-                $bild_raw = sanitize_text_field( $row[6] );
-                if ( is_numeric( $bild_raw ) && isset( $old_id_to_new_id[ intval( $bild_raw ) ] ) ) {
-                    $bild_val = $old_id_to_new_id[ intval( $bild_raw ) ];
+                if ( count( $row ) < 10 ) continue;
+                // Remap bild attachment ID via bild-map.json; validate result exists locally
+                $bild_raw = sanitize_text_field( $g( 'bild' ) );
+                if ( is_numeric( $bild_raw ) && intval( $bild_raw ) > 0 ) {
+                    $old_bild_id = intval( $bild_raw );
+                    if ( isset( $old_id_to_new_id[ $old_bild_id ] ) ) {
+                        // Successfully remapped to new attachment ID
+                        $bild_val = $old_id_to_new_id[ $old_bild_id ];
+                    } elseif ( get_attached_file( $old_bild_id ) ) {
+                        // Same site restore: attachment still valid at original ID
+                        $bild_val = $old_bild_id;
+                    } else {
+                        // ID not remapped and not found locally — clear to avoid wrong assignment
+                        $bild_val = '';
+                    }
                 } else {
-                    $bild_val = $bild_raw;
+                    $bild_val = $bild_raw; // URL or empty
                 }
-                $geburtsdatum_raw = sanitize_text_field( $row[5] );
+                $geburtsdatum_raw = sanitize_text_field( $g( 'geburtsdatum' ) );
                 $geburtsdatum_val = ( $geburtsdatum_raw && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $geburtsdatum_raw ) ) ? $geburtsdatum_raw : null;
+                $dod_raw          = sanitize_text_field( $g( 'dod' ) );
+                $dod_val          = ( $dod_raw && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $dod_raw ) ) ? $dod_raw : null;
                 Handschelle_Database::insert( array(
-                    'datum_eintrag'   => sanitize_text_field( $row[1] ) ?: date( 'Y-m-d' ),
-                    'name'            => substr( sanitize_text_field( $row[2] ), 0, 50 ),
-                    'beruf'           => substr( sanitize_text_field( $row[3] ), 0, 50 ),
-                    'geburtsort'      => substr( sanitize_text_field( $row[4] ), 0, 100 ),
+                    'datum_eintrag'   => sanitize_text_field( $g( 'datum_eintrag' ) ) ?: date( 'Y-m-d' ),
+                    'name'            => substr( sanitize_text_field( $g( 'name' ) ), 0, 50 ),
+                    'beruf'           => substr( sanitize_text_field( $g( 'beruf' ) ), 0, 50 ),
+                    'geburtsort'      => substr( sanitize_text_field( $g( 'geburtsort' ) ), 0, 100 ),
                     'geburtsdatum'    => $geburtsdatum_val,
+                    'verstorben'      => intval( $g( 'verstorben' ) ),
+                    'dod'             => $dod_val,
                     'bild'            => $bild_val,
-                    'partei'          => substr( sanitize_text_field( $row[7] ), 0, 50 ),
-                    'aufgabe_partei'  => substr( sanitize_text_field( $row[8] ), 0, 100 ),
-                    'parlament'       => sanitize_text_field( $row[9] ),
-                    'parlament_name'  => substr( sanitize_text_field( $row[10] ), 0, 50 ),
-                    'status_aktiv'    => intval( $row[11] ),
-                    'straftat'        => substr( sanitize_textarea_field( $row[12] ), 0, 200 ),
-                    'urteil'          => substr( sanitize_text_field( $row[13] ), 0, 50 ),
-                    'link_quelle'     => esc_url_raw( $row[14] ),
-                    'aktenzeichen'    => substr( sanitize_text_field( $row[15] ), 0, 50 ),
-                    'bemerkung'       => sanitize_textarea_field( $row[16] ),
-                    'status_straftat' => sanitize_text_field( $row[17] ),
-                    'sm_facebook'     => esc_url_raw( $row[18] ),
-                    'sm_youtube'      => esc_url_raw( $row[19] ),
-                    'sm_personal'     => esc_url_raw( $row[20] ),
-                    'sm_twitter'      => esc_url_raw( $row[21] ),
-                    'sm_homepage'     => esc_url_raw( $row[22] ),
-                    'sm_wikipedia'    => esc_url_raw( $row[23] ),
-                    'sm_sonstige'     => esc_url_raw( $row[24] ),
-                    'sm_linkedin'     => esc_url_raw( $row[25] ),
-                    'sm_xing'         => esc_url_raw( $row[26] ),
-                    'sm_truth_social' => esc_url_raw( $row[27] ),
-                    'freigegeben'     => intval( $row[28] ),
+                    'partei'          => substr( sanitize_text_field( $g( 'partei' ) ), 0, 50 ),
+                    'aufgabe_partei'  => substr( sanitize_text_field( $g( 'aufgabe_partei' ) ), 0, 100 ),
+                    'parlament'       => sanitize_text_field( $g( 'parlament' ) ),
+                    'parlament_name'  => substr( sanitize_text_field( $g( 'parlament_name' ) ), 0, 50 ),
+                    'status_aktiv'    => intval( $g( 'status_aktiv' ) ),
+                    'straftat'        => substr( sanitize_textarea_field( $g( 'straftat' ) ), 0, 200 ),
+                    'urteil'          => substr( sanitize_text_field( $g( 'urteil' ) ), 0, 200 ),
+                    'link_quelle'     => esc_url_raw( $g( 'link_quelle' ) ),
+                    'aktenzeichen'    => substr( sanitize_text_field( $g( 'aktenzeichen' ) ), 0, 50 ),
+                    'bemerkung_person' => substr( sanitize_textarea_field( $g( 'bemerkung_person' ) ), 0, 500 ),
+                    'bemerkung'       => sanitize_textarea_field( $g( 'bemerkung' ) ),
+                    'status_straftat' => sanitize_text_field( $g( 'status_straftat' ) ) ?: 'Ermittlungen laufen',
+                    'sm_facebook'     => esc_url_raw( $g( 'sm_facebook' ) ),
+                    'sm_youtube'      => esc_url_raw( $g( 'sm_youtube' ) ),
+                    'sm_personal'     => esc_url_raw( $g( 'sm_personal' ) ),
+                    'sm_twitter'      => esc_url_raw( $g( 'sm_twitter' ) ),
+                    'sm_homepage'     => esc_url_raw( $g( 'sm_homepage' ) ),
+                    'sm_wikipedia'    => esc_url_raw( $g( 'sm_wikipedia' ) ),
+                    'sm_sonstige'     => esc_url_raw( $g( 'sm_sonstige' ) ),
+                    'sm_linkedin'     => esc_url_raw( $g( 'sm_linkedin' ) ),
+                    'sm_xing'         => esc_url_raw( $g( 'sm_xing' ) ),
+                    'sm_truth_social' => esc_url_raw( $g( 'sm_truth_social' ) ),
+                    'freigegeben'     => intval( $g( 'freigegeben' ) ),
                 ) );
                 $entry_count++;
             }
             fclose( $fh );
+            } // end header check
         }
 
         // ── 3. Temp cleanup ──────────────────────────────────────

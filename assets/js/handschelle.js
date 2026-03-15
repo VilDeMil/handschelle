@@ -133,7 +133,19 @@
             }
         });
 
-        // ── 10. WP Media Library Picker (Admin) ─────────────────
+        // ── 10. Verstorben-Checkbox: DoD-Feld ein-/ausblenden ───
+        // Delegated handler works for admin form, frontend form, and all inline edit forms
+        $(document).on('change', '.hs-verstorben-cb', function () {
+            var $row = $(this).closest('.hs-form-grid, .hs-edit-grid').find('.hs-dod-row');
+            if (this.checked) {
+                $row.slideDown(200);
+            } else {
+                $row.slideUp(200);
+                $row.find('input[type="date"]').val('');
+            }
+        });
+
+        // ── 11. WP Media Library Picker (Admin) ─────────────────
         if ( typeof wp !== 'undefined' && wp.media ) {
             $(document).on('click', '.hs-media-btn', function (e) {
                 e.preventDefault();
@@ -175,7 +187,7 @@
                 frame.open();
             });
 
-            // ── 11. Bild aus Medienbibliothek entfernen ──────────
+            // ── 12. Bild aus Medienbibliothek entfernen ──────────
             $(document).on('click', '.hs-media-remove-btn', function (e) {
                 e.preventDefault();
                 var $btn      = $(this);

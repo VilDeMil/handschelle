@@ -84,6 +84,18 @@ class Handschelle_Shortcodes {
                             <div class="hs-field"><label>Beruf <span>(max. 50 Zeichen)</span></label><input type="text" name="beruf" maxlength="50" placeholder="z.B. Politiker, Unternehmer"></div>
                             <div class="hs-field"><label>Geburtsort <span>(max. 100 Zeichen)</span></label><input type="text" name="geburtsort" maxlength="100" placeholder="z.B. Berlin"></div>
                             <div class="hs-field"><label>Geburtsdatum</label><input type="date" name="geburtsdatum"></div>
+                            <div class="hs-field">
+                                <label class="hs-checkbox-label"><input type="checkbox" name="verstorben" class="hs-verstorben-cb" value="1"> Verstorben</label>
+                            </div>
+                            <div class="hs-field hs-dod-row" style="display:none;">
+                                <label>Sterbedatum (DoD)</label>
+                                <input type="date" name="dod">
+                            </div>
+                            <div class="hs-field hs-field-full">
+                                <label>Bemerkung zur Person <span>(max. 500 Zeichen)</span></label>
+                                <textarea name="bemerkung_person" maxlength="500" rows="4" placeholder="Weitere Informationen zur Person …"></textarea>
+                                <small class="hs-char-counter" data-target="bemerkung_person">0 / 500 Zeichen</small>
+                            </div>
                             <div class="hs-field hs-field-full">
                                 <label>Bild hochladen</label>
                                 <input type="file" name="bild_upload" accept="image/*" class="hs-file-input">
@@ -122,7 +134,7 @@ class Handschelle_Shortcodes {
                                 <textarea name="straftat" maxlength="200" rows="3" placeholder="Kurze Beschreibung der Straftat …" required></textarea>
                                 <small class="hs-char-counter" data-target="straftat">0 / 200 Zeichen</small>
                             </div>
-                            <div class="hs-field"><label>Urteil <span>(max. 50 Zeichen)</span></label><input type="text" name="urteil" maxlength="50" placeholder="z.B. 2 Jahre auf Bewährung"></div>
+                            <div class="hs-field"><label>Urteil <span>(max. 200 Zeichen)</span></label><input type="text" name="urteil" maxlength="200" placeholder="z.B. 2 Jahre auf Bewährung"></div>
                             <div class="hs-field"><label>Link zur Quelle</label><input type="url" name="link_quelle" placeholder="https://…"></div>
                             <div class="hs-field"><label>Aktenzeichen <span>(max. 50 Zeichen)</span></label><input type="text" name="aktenzeichen" maxlength="50" placeholder="z.B. 1 StR 123/24"></div>
                             <div class="hs-field hs-field-full"><label>Bemerkung</label><textarea name="bemerkung" rows="4" placeholder="Weitere Anmerkungen …"></textarea></div>
@@ -211,9 +223,15 @@ class Handschelle_Shortcodes {
             exit;
         }
 
-        $data      = handschelle_sanitize_entry( $_POST );
-        $attach_id = Handschelle_Image_Handler::handle_upload_and_resize( 'bild_upload', $data['name'] ?? '', $data['partei'] ?? '' );
-        if ( $attach_id ) $data['bild'] = $attach_id;
+        $entry_before = Handschelle_Database::get_one( $id );
+        $data         = handschelle_sanitize_entry( $_POST );
+        $attach_id    = Handschelle_Image_Handler::handle_upload_and_resize( 'bild_upload', $data['name'] ?? '', $data['partei'] ?? '' );
+        if ( $attach_id ) {
+            if ( $entry_before && ! empty( $entry_before->bild ) && is_numeric( $entry_before->bild ) && intval( $entry_before->bild ) !== $attach_id ) {
+                wp_delete_attachment( intval( $entry_before->bild ), true );
+            }
+            $data['bild'] = $attach_id;
+        }
 
         // Freigabe-Status nur für Admins änderbar
         if ( current_user_can( 'manage_options' ) ) {
@@ -905,6 +923,15 @@ class Handschelle_Shortcodes {
                         ?>
                     </div>
                 <?php endif; ?>
+                <?php if ( ! empty( $e->verstorben ) ) : ?>
+                    <div class="hs-card-row">
+                        <span class="hs-badge hs-badge-verstorben">✝ Verstorben</span>
+                        <?php if ( ! empty( $e->dod ) && $e->dod !== '0000-00-00' ) : ?>
+                            <span class="hs-label"> <?php echo esc_html( date_i18n( 'd.m.Y', strtotime( $e->dod ) ) ); ?></span>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+                <?php if ( ! empty( $e->bemerkung_person ) ) : ?><div class="hs-card-bemerkung-person"><span class="hs-label">👤 Bemerkung zur Person:</span><p><?php echo nl2br(esc_html($e->bemerkung_person)); ?></p></div><?php endif; ?>
                 <?php if ( $e->urteil ) : ?><div class="hs-card-row"><span class="hs-label">📋 Urteil:</span> <?php echo esc_html($e->urteil); ?></div><?php endif; ?>
                 <?php if ( $e->aktenzeichen ) : ?><div class="hs-card-row"><span class="hs-label">📁 Aktenzeichen:</span> <?php echo esc_html($e->aktenzeichen); ?></div><?php endif; ?>
                 <div class="hs-card-row">
@@ -971,6 +998,18 @@ class Handschelle_Shortcodes {
                         <div class="hs-field"><label>Beruf <span>(max. 50)</span></label><input type="text" name="beruf" maxlength="50" value="<?php echo esc_attr($e->beruf); ?>"></div>
                         <div class="hs-field"><label>Geburtsort <span>(max. 100)</span></label><input type="text" name="geburtsort" maxlength="100" value="<?php echo esc_attr($e->geburtsort ?? ''); ?>"></div>
                         <div class="hs-field"><label>Geburtsdatum</label><input type="date" name="geburtsdatum" value="<?php echo esc_attr( ( ! empty($e->geburtsdatum) && $e->geburtsdatum !== '0000-00-00' ) ? $e->geburtsdatum : '' ); ?>"></div>
+                        <div class="hs-field">
+                            <label class="hs-checkbox-label"><input type="checkbox" name="verstorben" class="hs-verstorben-cb" value="1" <?php checked( intval($e->verstorben ?? 0), 1 ); ?>> Verstorben</label>
+                        </div>
+                        <div class="hs-field hs-dod-row" style="<?php echo empty($e->verstorben) ? 'display:none;' : ''; ?>">
+                            <label>Sterbedatum (DoD)</label>
+                            <input type="date" name="dod" value="<?php echo esc_attr( ( ! empty($e->dod) && $e->dod !== '0000-00-00' ) ? $e->dod : '' ); ?>">
+                        </div>
+                        <div class="hs-field hs-field-full">
+                            <label>Bemerkung zur Person <span>(max. 500)</span></label>
+                            <textarea name="bemerkung_person" maxlength="500" rows="3"><?php echo esc_textarea($e->bemerkung_person ?? ''); ?></textarea>
+                            <small class="hs-char-counter" data-target="bemerkung_person">0 / 500 Zeichen</small>
+                        </div>
                         <div class="hs-field hs-field-full">
                             <label>Bild ersetzen <span>(optional)</span></label>
                             <input type="file" name="bild_upload" accept="image/*" class="hs-file-input">
@@ -1007,7 +1046,7 @@ class Handschelle_Shortcodes {
                             <textarea name="straftat" maxlength="200" rows="3" required><?php echo esc_textarea($e->straftat); ?></textarea>
                             <small class="hs-char-counter" data-target="straftat">0 / 200 Zeichen</small>
                         </div>
-                        <div class="hs-field"><label>Urteil <span>(max. 50)</span></label><input type="text" name="urteil" maxlength="50" value="<?php echo esc_attr($e->urteil); ?>"></div>
+                        <div class="hs-field"><label>Urteil <span>(max. 200)</span></label><input type="text" name="urteil" maxlength="200" value="<?php echo esc_attr($e->urteil); ?>"></div>
                         <div class="hs-field"><label>Link zur Quelle</label><input type="url" name="link_quelle" value="<?php echo esc_attr($e->link_quelle); ?>"></div>
                         <div class="hs-field"><label>Aktenzeichen</label><input type="text" name="aktenzeichen" maxlength="50" value="<?php echo esc_attr($e->aktenzeichen); ?>"></div>
                         <div class="hs-field hs-field-full"><label>Bemerkung</label><textarea name="bemerkung" rows="3"><?php echo esc_textarea($e->bemerkung); ?></textarea></div>

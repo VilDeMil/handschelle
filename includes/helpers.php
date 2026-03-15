@@ -47,7 +47,13 @@ function handschelle_status_straftat_options() {
 function handschelle_get_image_url( $bild ) {
     if ( empty( $bild ) ) return '';
     if ( is_numeric( $bild ) && intval( $bild ) > 0 ) {
-        $url = wp_get_attachment_image_url( intval( $bild ), 'medium' );
+        $id  = intval( $bild );
+        $url = wp_get_attachment_image_url( $id, 'medium' );
+        if ( ! $url ) $url = wp_get_attachment_image_url( $id, 'full' );
+        if ( ! $url ) {
+            $file = get_attached_file( $id );
+            if ( $file ) $url = wp_get_attachment_url( $id );
+        }
         return $url ? $url : '';
     }
     return esc_url( $bild );
@@ -56,12 +62,16 @@ function handschelle_get_image_url( $bild ) {
 function handschelle_sanitize_entry( $post ) {
     $geburtsdatum_raw = sanitize_text_field( $post['geburtsdatum'] ?? '' );
     $geburtsdatum     = ( $geburtsdatum_raw && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $geburtsdatum_raw ) ) ? $geburtsdatum_raw : null;
+    $dod_raw          = sanitize_text_field( $post['dod'] ?? '' );
+    $dod              = ( $dod_raw && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $dod_raw ) ) ? $dod_raw : null;
     return array(
         'datum_eintrag'   => sanitize_text_field( $post['datum_eintrag']   ?: date( 'Y-m-d' ) ),
         'name'            => substr( sanitize_text_field( $post['name']           ?? '' ), 0, 50 ),
         'beruf'           => substr( sanitize_text_field( $post['beruf']          ?? '' ), 0, 50 ),
         'geburtsort'      => substr( sanitize_text_field( $post['geburtsort']     ?? '' ), 0, 100 ),
         'geburtsdatum'    => $geburtsdatum,
+        'verstorben'      => isset( $post['verstorben'] ) ? 1 : 0,
+        'dod'             => $dod,
         'bild'            => sanitize_text_field( $post['bild']            ?? '' ),
         'partei'          => substr( sanitize_text_field( $post['partei']         ?? '' ), 0, 50 ),
         'aufgabe_partei'  => substr( sanitize_text_field( $post['aufgabe_partei'] ?? '' ), 0, 100 ),
@@ -69,9 +79,10 @@ function handschelle_sanitize_entry( $post ) {
         'parlament_name'  => substr( sanitize_text_field( $post['parlament_name'] ?? '' ), 0, 50 ),
         'status_aktiv'    => ! empty( $post['status_aktiv'] ) ? intval( $post['status_aktiv'] ) : 0,
         'straftat'        => substr( sanitize_textarea_field( $post['straftat']   ?? '' ), 0, 200 ),
-        'urteil'          => substr( sanitize_text_field( $post['urteil']         ?? '' ), 0, 50 ),
+        'urteil'          => substr( sanitize_text_field( $post['urteil']         ?? '' ), 0, 200 ),
         'link_quelle'     => esc_url_raw( $post['link_quelle']     ?? '' ),
         'aktenzeichen'    => substr( sanitize_text_field( $post['aktenzeichen']   ?? '' ), 0, 50 ),
+        'bemerkung_person' => substr( sanitize_textarea_field( $post['bemerkung_person'] ?? '' ), 0, 500 ),
         'bemerkung'       => sanitize_textarea_field( $post['bemerkung']   ?? '' ),
         'status_straftat' => sanitize_text_field( $post['status_straftat'] ?? 'Ermittlungen laufen' ),
         'sm_facebook'     => esc_url_raw( $post['sm_facebook']     ?? '' ),

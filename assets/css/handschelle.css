@@ -70,8 +70,9 @@
 
 /* ── Badges ─────────────────────────────────────────────────── */
 .hs-badge { display:inline-block; padding:.2rem .65rem; border-radius:20px; font-size:.73rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; white-space:nowrap; }
-.hs-badge-aktiv     { background:#d4edda; color:#155724; }
-.hs-badge-inaktiv   { background:#f8d7da; color:#721c24; }
+.hs-badge-aktiv       { background:#d4edda; color:#155724; }
+.hs-badge-inaktiv     { background:#f8d7da; color:#721c24; }
+.hs-badge-verstorben  { background:#6c757d; color:#fff; }
 .hs-badge-pending   { background:#fff3cd; color:#856404; }
 .hs-status-verurteilt  { background:#f8d7da; color:#721c24; }
 .hs-status-ermittlung  { background:#fff3cd; color:#856404; }
@@ -97,6 +98,8 @@
 .hs-card-row { font-size:.85rem; color:#444; display:flex; align-items:center; flex-wrap:wrap; gap:.4rem; }
 .hs-card-bemerkung { padding:.6rem .8rem; border-radius:var(--hs-radius); font-size:.85rem; }
 .hs-card-bemerkung p { margin:.2rem 0 0; color:#555; line-height:1.5; }
+.hs-card-bemerkung-person { padding:.6rem .8rem; border-radius:var(--hs-radius); font-size:.85rem; background:#f0f4ff; }
+.hs-card-bemerkung-person p { margin:.2rem 0 0; color:#444; line-height:1.5; }
 .hs-link { color:var(--hs-accent); font-size:.85rem; font-weight:600; text-decoration:none; transition:color .2s; }
 .hs-link:hover { color:var(--hs-accent-h); text-decoration:underline; }
 .hs-card-footer { padding:.75rem 1rem; border-top:1px solid var(--hs-border); display:flex; flex-wrap:wrap; gap:.45rem; }
