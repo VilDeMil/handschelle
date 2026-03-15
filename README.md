@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 6.8 |
+| **Version** | 6.9 |
 | **Autor** | Bernd K.R. Dorfmüller |
 | **E-Mail** | Info@die-handschelle.de |
 | **Website** | https://www.die-handschelle.de |
@@ -1213,6 +1213,11 @@ IMPORTANT BEHAVIOURS
 ---
 
 ## Release Notes
+
+### 6.9 *(2026-03-15)*
+- **DoD / Verstorben**: Added `verstorben` checkbox and `dod` (date of death) date field to Eintragsdetails; DoD field is shown/hidden via JS when checkbox is toggled.
+- **Bemerkung zur Person**: New `bemerkung_person` text field (max. 500 chars) added to Eintragsdetails section for person-level remarks.
+- **Urteil erweitert**: `urteil` field expanded from 50 to 200 characters in DB schema, form, sanitizer, and CSV import/export.
 
 ### 6.8 *(2026-03-15)*
 - **Table of Contents**: Added TOC after the header metadata block with links to all `##` and `###` sections

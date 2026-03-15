@@ -133,7 +133,21 @@
             }
         });
 
-        // ── 10. WP Media Library Picker (Admin) ─────────────────
+        // ── 10. Verstorben-Checkbox: DoD-Feld ein-/ausblenden ───
+        var $verstorben = $('#hs-verstorben');
+        var $dodRow     = $('#hs-dod-row');
+        if ($verstorben.length && $dodRow.length) {
+            $verstorben.on('change', function () {
+                if (this.checked) {
+                    $dodRow.slideDown(200);
+                } else {
+                    $dodRow.slideUp(200);
+                    $dodRow.find('input[type="date"]').val('');
+                }
+            });
+        }
+
+        // ── 11. WP Media Library Picker (Admin) ─────────────────
         if ( typeof wp !== 'undefined' && wp.media ) {
             $(document).on('click', '.hs-media-btn', function (e) {
                 e.preventDefault();
@@ -175,7 +189,7 @@
                 frame.open();
             });
 
-            // ── 11. Bild aus Medienbibliothek entfernen ──────────
+            // ── 12. Bild aus Medienbibliothek entfernen ──────────
             $(document).on('click', '.hs-media-remove-btn', function (e) {
                 e.preventDefault();
                 var $btn      = $(this);
