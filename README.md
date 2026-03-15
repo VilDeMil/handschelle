@@ -5,10 +5,10 @@
 
 | | |
 |---|---|
-| **Version** | 7.2 |
+| **Version** | 7.3 |
 | **Autor** | Bernd K.R. Dorfmüller |
-| **E-Mail** | Info@die-handschelle.de |
-| **Website** | https://www.die-handschelle.de |
+| **E-Mail** | info@die-handschelle.com |
+| **Website** | https://www.die-handschelle.com |
 | **Lizenz** | GPL-2.0+ |
 | **Requires** | WordPress 5.5+, PHP 7.4+, GD Library |
 
@@ -450,7 +450,7 @@ Copyright / contact block.
 **Output:**
 > **Die-Handschelle © 2026**
 > „Wer in unseren Parlamenten ist oder war kriminell?" Eine Datenbank der Straftaten.
-> [www.die-handschelle.de](https://www.die-handschelle.de) · [Info@die-handschelle.de](mailto:Info@die-handschelle.de) · ☕ Unterstützen
+> [www.die-handschelle.com](https://www.die-handschelle.com) · [info@die-handschelle.com](mailto:info@die-handschelle.com) · ☕ Unterstützen
 
 ---
 
@@ -1060,7 +1060,7 @@ Body: crime description, status badge
   verdict, case number, source link, notes.
 Footer: Quelle · Google · Qwant · DuckDuckGo · Bing ·
   Abgeordnetenwatch · social media icons (inline SVG, brand colours)
-  · ⚠️ Eintrag melden! (mailto:info@hanschelle.com?subject=Meldung - NAME - PARTEI)
+  · ⚠️ Eintrag melden! (mailto:info@die-handschelle.com?subject=Meldung - NAME - PARTEI)
 Date: "Eingetragen am DD.MM.YYYY"
 Edit button: visible only to users with publish_posts capability
   (Author, Editor, Administrator). Opens inline collapsible edit panel.
@@ -1214,6 +1214,9 @@ IMPORTANT BEHAVIOURS
 
 ## Release Notes
 
+### 7.3 *(2026-03-15)*
+- **Domain & E-Mail update**: Changed all references from `www.die-handschelle.de` → `www.die-handschelle.com` and `Info@die-handschelle.de` → `info@die-handschelle.com` across shortcodes, README, and all doc files; also fixed typo `info@hanschelle.com` → `info@die-handschelle.com` in the "Eintrag melden" mailto link.
+
 ### 7.2 *(2026-03-15)*
 - **Fix Backup/Restore image mapping**: Converted `restore_full()` from fixed numeric column indices to header-based mapping (same approach as CSV import); old backups created before the `verstorben`/`dod` columns were added now restore correctly instead of assigning `bild` to the wrong column.
 - **Fix Backup/Restore bild validation**: After attempting ID remapping, if the attachment ID is not found in the remap table and does not exist on the current site, `bild` is cleared instead of storing a stale/wrong ID.
@@ -1262,7 +1265,7 @@ IMPORTANT BEHAVIOURS
 - **`[wordcloud-name]`**: Word cloud of all approved person names — font size proportional to entry count, shows Name (Partei), tooltip shows exact count; pure CSS/HTML, no external library
 - **`[wordcloud-urteil]`**: Word cloud of all distinct verdicts (`urteil`) — font size proportional to frequency; only entries with a non-empty verdict are included
 - **Dropdown styling**: Text color set to black (`#000`), background set to white (`#fff`), transparency removed — applies to all select elements (`.hs-select`, `.hs-field select`, `.hs-edit-form select`, `.hs-bulk-select`)
-- **Eintrag melden**: Every card now has a `⚠️ Eintrag melden!` mailto link in the footer — opens a pre-addressed e-mail to `info@hanschelle.com` with subject `Meldung - <Name> - <Partei>`
+- **Eintrag melden**: Every card now has a `⚠️ Eintrag melden!` mailto link in the footer — opens a pre-addressed e-mail to `info@die-handschelle.com` with subject `Meldung - <Name> - <Partei>`
 - **Bilder-Galerie**: Hover tooltip and click-link removed from gallery images — images display as plain `<img>` tags with name/crime captions only
 - **Edit-Button Sichtbarkeit**: Inline-edit button and panel on frontend cards are now visible only to users with role **Author or higher** (`publish_posts` capability) — Subscribers and Contributors no longer see the edit controls
 
@@ -1275,7 +1278,7 @@ IMPORTANT BEHAVIOURS
 - **`[handschelle-asc]`**: Output is now horizontally centered (`justify-content: center`)
 
 ### 3.07 *(2026-03-14)*
-- **`[handschelle-disclaimer]`**: E-Mail → `Info@die-handschelle.de`, Website → `www.die-handschelle.de`, Buy-Me-A-Coffee → `buymeacoffee.com/dorfmuellersak47`, tagline in quotation marks
+- **`[handschelle-disclaimer]`**: E-Mail → `info@die-handschelle.com`, Website → `www.die-handschelle.com`, Buy-Me-A-Coffee → `buymeacoffee.com/dorfmuellersak47`, tagline in quotation marks
 - **Neuer Shortcode `[handschelle-asc]`**: Horizontale zentrierte Liste aller Parteien mit Eintragsanzahl (A→Z, ohne Header, kleiner Font)
 - **Neue Felder**: `geburtsort` (VARCHAR 100), `geburtsdatum` (DATE), `sm_linkedin`, `sm_xing`, `sm_truth_social` — in allen Formularen, Karten, CSV
 - **Alter**: Admin-Übersicht zeigt berechnetes Alter; Karte zeigt Geburtsdatum + Alter
