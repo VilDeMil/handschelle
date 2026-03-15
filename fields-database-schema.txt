@@ -1,0 +1,112 @@
+## Fields / Database Schema
+
+**Table name:** `wp_{prefix}_die_handschelle`
+**Total fields:** 31
+
+### Core Fields
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `id` | INT AUTO_INCREMENT | — | Primary key |
+| `datum_eintrag` | DATE | — | Entry date (default: today) |
+| `erstellt_am` | DATETIME | — | Created timestamp (auto) |
+| `geaendert_am` | DATETIME | — | Last modified timestamp (auto) |
+
+### Person Fields
+
+| Field | Type | Max Length | Required | Description |
+|---|---|---|---|---|
+| `name` | VARCHAR | 50 | Yes | Person's full name |
+| `beruf` | VARCHAR | 50 | No | Profession / occupation |
+| `geburtsort` | VARCHAR | 100 | No | Place of birth |
+| `geburtsdatum` | DATE | — | No | Date of birth (age is calculated automatically) |
+| `bild` | TEXT | — | No | WordPress attachment ID or image URL |
+| `partei` | VARCHAR | 50 | No | Political party |
+| `aufgabe_partei` | VARCHAR | 100 | No | Position / role within the party |
+| `parlament` | VARCHAR | 100 | No | Parliament type (see options below) |
+| `parlament_name` | VARCHAR | 50 | No | Constituency / parliament seat name |
+| `status_aktiv` | TINYINT(1) | — | — | Active status: `1` = active, `0` = inactive (default `1`) |
+
+### Crime / Legal Fields
+
+| Field | Type | Max Length | Required | Description |
+|---|---|---|---|---|
+| `straftat` | VARCHAR | 200 | Yes | Description of the crime / offence |
+| `status_straftat` | VARCHAR | 50 | No | Status of the criminal case (see options below) |
+| `urteil` | VARCHAR | 50 | No | Verdict / sentence |
+| `aktenzeichen` | VARCHAR | 50 | No | Case file / docket number |
+| `link_quelle` | TEXT | — | No | Source link (URL to article / document) |
+| `bemerkung` | TEXT | — | No | Admin notes / remarks |
+
+### Publication Fields
+
+| Field | Type | Description |
+|---|---|---|
+| `freigegeben` | TINYINT(1) | Published: `1` = approved, `0` = pending (default `0`) |
+
+### Social Media Fields
+
+| Field | Type | Platform |
+|---|---|---|
+| `sm_facebook` | TEXT | Facebook |
+| `sm_youtube` | TEXT | YouTube |
+| `sm_personal` | TEXT | Personal profile |
+| `sm_twitter` | TEXT | Twitter / X |
+| `sm_homepage` | TEXT | Personal website |
+| `sm_wikipedia` | TEXT | Wikipedia |
+| `sm_linkedin` | TEXT | LinkedIn |
+| `sm_xing` | TEXT | Xing |
+| `sm_truth_social` | TEXT | Truth Social |
+| `sm_sonstige` | TEXT | Other |
+
+### Database Indexes
+
+| Index | Field(s) | Purpose |
+|---|---|---|
+| `idx_freigegeben` | `freigegeben` | Fast filtering of approved entries |
+| `idx_name` | `name` | Fast search by person name |
+| `idx_partei` | `partei` | Fast filtering by party |
+
+---
+
+### `status_straftat` Options
+
+| Value | Meaning |
+|---|---|
+| `Ermittlungen laufen` | Investigations ongoing |
+| `Verurteilt` | Convicted |
+| `Eingestellt` | Case dismissed / closed |
+
+---
+
+### `parlament` Options (23 total)
+
+| Value |
+|---|
+| Europäisches Parlament |
+| Bundestag |
+| Bundesrat |
+| Landtag Baden-Württemberg |
+| Landtag Bayern (Bayerischer Landtag) |
+| Abgeordnetenhaus Berlin |
+| Brandenburgischer Landtag |
+| Bürgerschaft Bremen |
+| Bürgerschaft Hamburg |
+| Hessischer Landtag |
+| Landtag Mecklenburg-Vorpommern |
+| Niedersächsischer Landtag |
+| Landtag Nordrhein-Westfalen |
+| Landtag Rheinland-Pfalz |
+| Landtag des Saarlandes |
+| Sächsischer Landtag |
+| Landtag Sachsen-Anhalt |
+| Schleswig-Holsteinischer Landtag |
+| Thüringer Landtag |
+| Stadtrat / Gemeinderat |
+| Kreistag |
+| Bezirkstag |
+| Sonstiges |
+
+*(Full list defined in `includes/helpers.php` → `handschelle_parlaments()`)*
+
+---
