@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 7.0 |
+| **Version** | 7.1 |
 | **Autor** | Bernd K.R. Dorfmüller |
 | **E-Mail** | Info@die-handschelle.de |
 | **Website** | https://www.die-handschelle.de |
@@ -1213,6 +1213,10 @@ IMPORTANT BEHAVIOURS
 ---
 
 ## Release Notes
+
+### 7.1 *(2026-03-15)*
+- **Cards & Forms**: Added `verstorben`/`dod` and `bemerkung_person` to frontend cards (display), frontend submission form, and inline edit form; JS toggle converted to delegated class-based handler (`hs-verstorben-cb` / `hs-dod-row`) so it works across all form instances on the same page.
+- **CSS**: Added `.hs-badge-verstorben` (grey badge) and `.hs-card-bemerkung-person` styles.
 
 ### 7.0 *(2026-03-15)*
 - **Fix Urteil maxlength in shortcodes**: Frontend submission form and frontend edit form both had `maxlength="50"` for `urteil`; corrected to `maxlength="200"` to match DB schema and admin form.

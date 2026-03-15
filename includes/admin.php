@@ -270,7 +270,7 @@ class Handschelle_Admin {
         $nonce       = wp_create_nonce( 'handschelle_admin_action' );
         ?>
         <div class="wrap hs-wrap">
-            <h1>🔒 Die-Handschelle <span class="hs-version">7.0</span></h1>
+            <h1>🔒 Die-Handschelle <span class="hs-version">7.1</span></h1>
             <div class="hs-stats-bar">
                 <span>Gesamt: <strong><?php echo $total; ?></strong></span>
                 <span>Ausstehend: <strong class="<?php echo $pending ? 'hs-warn' : ''; ?>"><?php echo $pending; ?></strong></span>
@@ -447,9 +447,9 @@ class Handschelle_Admin {
                     <div class="hs-field"><label>Geburtsort <span>(max. 100 Zeichen)</span></label><input type="text" name="geburtsort" maxlength="100" value="<?php echo $v('geburtsort'); ?>" placeholder="z.B. Berlin"></div>
                     <div class="hs-field"><label>Geburtsdatum</label><input type="date" name="geburtsdatum" value="<?php echo esc_attr( ( ! empty($entry->geburtsdatum) && $entry->geburtsdatum !== '0000-00-00' ) ? $entry->geburtsdatum : '' ); ?>"></div>
                     <div class="hs-field">
-                        <label class="hs-checkbox-label"><input type="checkbox" name="verstorben" id="hs-verstorben" value="1" <?php checked( intval($entry->verstorben ?? 0), 1 ); ?>> Verstorben</label>
+                        <label class="hs-checkbox-label"><input type="checkbox" name="verstorben" id="hs-verstorben" class="hs-verstorben-cb" value="1" <?php checked( intval($entry->verstorben ?? 0), 1 ); ?>> Verstorben</label>
                     </div>
-                    <div class="hs-field" id="hs-dod-row" style="<?php echo empty($entry->verstorben) ? 'display:none;' : ''; ?>">
+                    <div class="hs-field hs-dod-row" id="hs-dod-row" style="<?php echo empty($entry->verstorben) ? 'display:none;' : ''; ?>">
                         <label>Sterbedatum (DoD)</label>
                         <input type="date" name="dod" value="<?php echo esc_attr( ( ! empty($entry->dod) && $entry->dod !== '0000-00-00' ) ? $entry->dod : '' ); ?>">
                     </div>

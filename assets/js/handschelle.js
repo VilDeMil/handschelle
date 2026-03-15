@@ -134,18 +134,16 @@
         });
 
         // ── 10. Verstorben-Checkbox: DoD-Feld ein-/ausblenden ───
-        var $verstorben = $('#hs-verstorben');
-        var $dodRow     = $('#hs-dod-row');
-        if ($verstorben.length && $dodRow.length) {
-            $verstorben.on('change', function () {
-                if (this.checked) {
-                    $dodRow.slideDown(200);
-                } else {
-                    $dodRow.slideUp(200);
-                    $dodRow.find('input[type="date"]').val('');
-                }
-            });
-        }
+        // Delegated handler works for admin form, frontend form, and all inline edit forms
+        $(document).on('change', '.hs-verstorben-cb', function () {
+            var $row = $(this).closest('.hs-form-grid, .hs-edit-grid').find('.hs-dod-row');
+            if (this.checked) {
+                $row.slideDown(200);
+            } else {
+                $row.slideUp(200);
+                $row.find('input[type="date"]').val('');
+            }
+        });
 
         // ── 11. WP Media Library Picker (Admin) ─────────────────
         if ( typeof wp !== 'undefined' && wp.media ) {
