@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 6.4 |
+| **Version** | 7.0 — Multi-Offence |
 | **Autor** | Bernd K.R. Dorfmüller |
 | **E-Mail** | Info@die-handschelle.de |
 | **Website** | https://www.die-handschelle.de |
@@ -61,7 +61,7 @@ Bitte unterstützt das Projekt, indem ihr dabei helft, Straftäter in unseren Pa
 4. Upload the folder to your server: `/wp-content/plugins/die-handschelle/`
 5. In WordPress go to **Plugins → Installed Plugins**
 6. Find **Die Handschelle** and click **Activate**
-7. The database table `wp_{prefix}_die_handschelle` is created automatically on activation
+7. Two database tables are created automatically on activation: `wp_die_handschelle_personen` and `wp_die_handschelle_straftaten`
 
 ### Method 2: Clone with Git
 
@@ -86,7 +86,7 @@ wp plugin install https://github.com/VilDeMil/handschelle/archive/refs/heads/mas
 
 ### Updating
 
-When updating the plugin, missing database columns are added automatically on the next page load — no manual migration needed. Existing data is never changed or removed.
+When updating the plugin, missing database columns are added automatically on the next page load — no manual migration needed. Existing data is never changed or removed. If upgrading from a pre-7.0 single-table install, data is automatically migrated from `wp_die_handschelle` into the two new tables on `plugins_loaded`.
 
 ### Requirements
 
@@ -146,7 +146,7 @@ All shortcodes output HTML and can be placed on any WordPress page or post.
 | Shortcode | Description |
 |---|---|
 | `[handschelle]` | Frontend submission form for new entries |
-| `[handschelle-anzeige]` | Display all approved entries as cards (no pagination by default) |
+| `[handschelle-anzeige]` | Display all approved entries as cards grouped by person — each person card shows all their offences (no pagination by default) |
 | `[handschelle-suche]` | Full-text search field + Party and Person dropdowns |
 | `[handschelle-partei]` | Party search dropdown only |
 | `[handschelle-name]` | Person name search dropdown only |
@@ -158,7 +158,7 @@ All shortcodes output HTML and can be placed on any WordPress page or post.
 | `[handschelle-name-anzeige]` | Name dropdown – shows cards for selected person |
 | `[handschelle-name-partei]` | Party dropdown – shows cards for selected party |
 | `[handschelle-bilder]` | Image gallery – clickable photos, name + crime caption, hover tooltip |
-| `[handschelle-karte]` | Single entry card by ID: `[handschelle-karte id="5"]` |
+| `[handschelle-karte]` | Single person card by offence ID or person ID: `[handschelle-karte id="5"]` or `[handschelle-karte person_id="3"]` — shows all offences for that person |
 | `[handschelle-asc]` | Horizontal centered list: Partei (Anzahl), alphabetical, no header |
 | `[handschelle-asc-link]` | Same as `[handschelle-asc]` but party names are clickable links (`?hs_partei=`) with a hover tooltip listing all persons |
 | `[handschelle-disclaimer]` | Copyright / contact notice |
@@ -192,7 +192,7 @@ Renders a public submission form. New submissions are saved with `freigegeben = 
 
 ### `[handschelle-anzeige]`
 
-Displays all approved entries (`freigegeben = 1`) as responsive cards. Supports optional **text search** via URL parameter. Pagination is disabled by default (`limit=0`).
+Displays all approved entries (`freigegeben = 1`) as responsive cards **grouped by person**. Each person card shows all their offences as individual `.hs-offence-block` sections. When a person has more than one offence a count badge is shown and each offence gets a numbered header. Supports optional **text search** via URL parameter. Pagination is disabled by default (`limit=0`).
 
 ```
 [handschelle-anzeige]
@@ -217,15 +217,17 @@ Displays all approved entries (`freigegeben = 1`) as responsive cards. Supports 
 
 ### `[handschelle-karte]`
 
-Displays a single entry card by database ID. Only shows approved entries.
+Displays a full person card (with all offences) by offence ID or person ID. Only shows approved entries.
 
 ```
 [handschelle-karte id="5"]
+[handschelle-karte person_id="3"]
 ```
 
 | Attribute | Type | Description |
 |---|---|---|
-| `id` | int | Database ID of the entry to display |
+| `id` | int | Offence ID (`wp_die_handschelle_straftaten.id`) — resolves to the owning person |
+| `person_id` | int | Person ID (`wp_die_handschelle_personen.id`) — shows all approved offences |
 
 **Card contents:**
 - Profile photo — **clickable**, links to `?hs_name=` on the same page
@@ -429,22 +431,13 @@ Copyright / contact block.
 
 ## Fields / Database Schema
 
-**Table name:** `wp_{prefix}_die_handschelle`
-**Total fields:** 31
+Since v7.0 the plugin uses **two tables** with a 1:n relationship (one person → many offences).
 
-### Core Fields
-
-| Field | Type | Required | Description |
-|---|---|---|---|
-| `id` | INT AUTO_INCREMENT | — | Primary key |
-| `datum_eintrag` | DATE | — | Entry date (default: today) |
-| `erstellt_am` | DATETIME | — | Created timestamp (auto) |
-| `geaendert_am` | DATETIME | — | Last modified timestamp (auto) |
-
-### Person Fields
+### Table 1: `wp_die_handschelle_personen` — Person data
 
 | Field | Type | Max Length | Required | Description |
 |---|---|---|---|---|
+| `id` | INT AUTO_INCREMENT | — | — | Primary key |
 | `name` | VARCHAR | 50 | Yes | Person's full name |
 | `beruf` | VARCHAR | 50 | No | Profession / occupation |
 | `geburtsort` | VARCHAR | 100 | No | Place of birth |
@@ -455,46 +448,47 @@ Copyright / contact block.
 | `parlament` | VARCHAR | 100 | No | Parliament type (see options below) |
 | `parlament_name` | VARCHAR | 50 | No | Constituency / parliament seat name |
 | `status_aktiv` | TINYINT(1) | — | — | Active status: `1` = active, `0` = inactive (default `1`) |
+| `sm_facebook` | TEXT | — | No | Facebook |
+| `sm_youtube` | TEXT | — | No | YouTube |
+| `sm_personal` | TEXT | — | No | Personal profile |
+| `sm_twitter` | TEXT | — | No | Twitter / X |
+| `sm_homepage` | TEXT | — | No | Personal website |
+| `sm_wikipedia` | TEXT | — | No | Wikipedia |
+| `sm_linkedin` | TEXT | — | No | LinkedIn |
+| `sm_xing` | TEXT | — | No | Xing |
+| `sm_truth_social` | TEXT | — | No | Truth Social |
+| `sm_sonstige` | TEXT | — | No | Other |
+| `erstellt_am` | DATETIME | — | — | Created timestamp (auto) |
+| `geaendert_am` | DATETIME | — | — | Last modified timestamp (auto) |
 
-### Crime / Legal Fields
+**Indexes:** `idx_name` (`name`), `idx_partei` (`partei`)
+
+---
+
+### Table 2: `wp_die_handschelle_straftaten` — Offence data
 
 | Field | Type | Max Length | Required | Description |
 |---|---|---|---|---|
+| `id` | INT AUTO_INCREMENT | — | — | Primary key |
+| `person_id` | INT | — | Yes | Foreign key → `wp_die_handschelle_personen.id` |
+| `datum_eintrag` | DATE | — | — | Entry date (default: today) |
 | `straftat` | VARCHAR | 200 | Yes | Description of the crime / offence |
 | `status_straftat` | VARCHAR | 50 | No | Status of the criminal case (see options below) |
 | `urteil` | VARCHAR | 50 | No | Verdict / sentence |
 | `aktenzeichen` | VARCHAR | 50 | No | Case file / docket number |
 | `link_quelle` | TEXT | — | No | Source link (URL to article / document) |
 | `bemerkung` | TEXT | — | No | Admin notes / remarks |
+| `freigegeben` | TINYINT(1) | — | — | Published: `1` = approved, `0` = pending (default `0`) |
+| `erstellt_am` | DATETIME | — | — | Created timestamp (auto) |
+| `geaendert_am` | DATETIME | — | — | Last modified timestamp (auto) |
 
-### Publication Fields
+**Indexes:** `idx_freigegeben` (`freigegeben`), `idx_person_id` (`person_id`)
 
-| Field | Type | Description |
-|---|---|---|
-| `freigegeben` | TINYINT(1) | Published: `1` = approved, `0` = pending (default `0`) |
+---
 
-### Social Media Fields
+### Legacy table
 
-| Field | Type | Platform |
-|---|---|---|
-| `sm_facebook` | TEXT | Facebook |
-| `sm_youtube` | TEXT | YouTube |
-| `sm_personal` | TEXT | Personal profile |
-| `sm_twitter` | TEXT | Twitter / X |
-| `sm_homepage` | TEXT | Personal website |
-| `sm_wikipedia` | TEXT | Wikipedia |
-| `sm_linkedin` | TEXT | LinkedIn |
-| `sm_xing` | TEXT | Xing |
-| `sm_truth_social` | TEXT | Truth Social |
-| `sm_sonstige` | TEXT | Other |
-
-### Database Indexes
-
-| Index | Field(s) | Purpose |
-|---|---|---|
-| `idx_freigegeben` | `freigegeben` | Fast filtering of approved entries |
-| `idx_name` | `name` | Fast search by person name |
-| `idx_partei` | `partei` | Fast filtering by party |
+`wp_die_handschelle` (pre-7.0 single flat table) is kept as the **migration source**. On first load after upgrade `maybe_upgrade_table()` detects that `wp_die_handschelle_personen` is empty and automatically migrates all rows. Unique persons are grouped by name; every row creates one offence.
 
 ---
 
@@ -547,10 +541,12 @@ Copyright / contact block.
 Defined in `die-handschelle.php`:
 
 ```php
-HANDSCHELLE_VERSION     // '6.3'
-HANDSCHELLE_PLUGIN_DIR  // Absolute path to plugin directory
-HANDSCHELLE_PLUGIN_URL  // URL to plugin directory
-HANDSCHELLE_DB_TABLE    // Table name suffix, e.g. 'die_handschelle'
+HANDSCHELLE_VERSION              // '7.0'
+HANDSCHELLE_PLUGIN_DIR           // Absolute path to plugin directory
+HANDSCHELLE_PLUGIN_URL           // URL to plugin directory
+HANDSCHELLE_DB_TABLE             // 'die_handschelle'  (legacy migration source)
+HANDSCHELLE_DB_TABLE_PERSONEN    // 'die_handschelle_personen'
+HANDSCHELLE_DB_TABLE_STRAFTATEN  // 'die_handschelle_straftaten'
 ```
 
 ---
@@ -562,13 +558,18 @@ File: `includes/database.php`
 All methods are static. All queries use `$wpdb` prepared statements.
 
 ```php
-// Create the database table (called on plugin activation)
-Handschelle_Database::create_table();
+// ── Table creation / migration ───────────────────────────────────
+// Create both tables (called on plugin activation)
+Handschelle_Database::create_table();          // alias → create_tables()
+Handschelle_Database::create_tables();
 
-// Check version and add missing columns (called on plugins_loaded)
+// Add missing columns + auto-migrate legacy data (called on plugins_loaded)
 Handschelle_Database::maybe_upgrade_table();
 
-// Retrieve multiple entries
+// Migrate legacy flat table into the two new tables
+Handschelle_Database::migrate_from_legacy();
+
+// ── Flat-row queries (backward compatible, one row per offence) ──
 $entries = Handschelle_Database::get_all([
     'freigegeben' => 1,       // 1 = approved only, 0 = pending only, 'all' = no filter
     'partei'      => 'CDU',   // optional: filter by party
@@ -579,12 +580,33 @@ $entries = Handschelle_Database::get_all([
     'limit'       => 20,      // optional: max results (0 = all)
     'offset'      => 0,       // optional: pagination offset
 ]);
+// Each row has: $e->id (offence ID), $e->person_id, all person fields, all offence fields
 
-// Retrieve a single entry by ID
-$entry = Handschelle_Database::get_one( $id );
+$entry = Handschelle_Database::get_one( $offence_id );  // single flat row by offence ID
 
-// Insert a new entry (always sets freigegeben = 0; returns new ID)
-$new_id = Handschelle_Database::insert([
+// ── Grouped queries (for frontend display) ───────────────────────
+// Returns [ ['person' => stdClass, 'offences' => [stdClass, ...]], ... ]
+$groups = Handschelle_Database::get_persons_with_offences([
+    'freigegeben' => 1,
+    'partei'      => 'CDU',
+    'search'      => 'fraud',
+    'limit'       => 10,
+    'offset'      => 0,
+]);
+
+// Count distinct persons (for pagination with get_persons_with_offences)
+$total = Handschelle_Database::count_persons(['freigegeben' => 1]);
+
+// ── Person-level queries ─────────────────────────────────────────
+$person = Handschelle_Database::get_person( $person_id );
+$person = Handschelle_Database::find_person_by_name( 'Max Mustermann' );
+
+// Get all offences for a person ($approved_only = true|false)
+$offences = Handschelle_Database::get_offences_by_person( $person_id, true );
+
+// ── Insert ────────────────────────────────────────────────────────
+// Full insert: finds or creates person, always creates new offence; returns offence ID
+$offence_id = Handschelle_Database::insert([
     'name'            => 'Max Mustermann',
     'partei'          => 'ExamplePartei',
     'straftat'        => 'Betrug',
@@ -593,28 +615,42 @@ $new_id = Handschelle_Database::insert([
     'geburtsort'      => 'Berlin',
 ]);
 
-// Update an entry
-Handschelle_Database::update( $id, [
-    'freigegeben' => 1,
-    'urteil'      => 'Freigesprochen',
+// Insert only a person record; returns person ID
+$person_id = Handschelle_Database::insert_person([
+    'name'   => 'Max Mustermann',
+    'partei' => 'ExamplePartei',
 ]);
 
-// Delete an entry
-Handschelle_Database::delete( $id );
+// Insert only an offence record for an existing person; returns offence ID
+$offence_id = Handschelle_Database::insert_offence( $person_id, [
+    'straftat'        => 'Steuerhinterziehung',
+    'status_straftat' => 'Verurteilt',
+]);
 
-// Count entries (supports same filters as get_all)
-$total = Handschelle_Database::count_all(['freigegeben' => 1]);
+// ── Update ────────────────────────────────────────────────────────
+// Update by offence ID — routes person fields to personen table, offence fields to straftaten
+Handschelle_Database::update( $offence_id, [
+    'freigegeben' => 1,
+    'urteil'      => 'Freigesprochen',
+    'partei'      => 'CDU',   // routed to person record
+]);
 
-// Get distinct party names (for dropdowns)
+// Update only the person record
+Handschelle_Database::update_person( $person_id, ['partei' => 'CDU'] );
+
+// ── Delete ────────────────────────────────────────────────────────
+// Delete offence; if no offences remain for person, person is deleted too
+Handschelle_Database::delete( $offence_id );
+
+// ── Counts & dropdowns ───────────────────────────────────────────
+$total   = Handschelle_Database::count_all(['freigegeben' => 1]);   // count offences
 $parties = Handschelle_Database::get_distinct_parteien();
+$names   = Handschelle_Database::get_distinct_namen();
 
-// Get distinct person names (for dropdowns)
-$names = Handschelle_Database::get_distinct_namen();
-
-// Database maintenance (use with caution)
-Handschelle_Database::truncate_table();   // empty table
-Handschelle_Database::drop_table();       // delete table
-Handschelle_Database::recreate_table();   // drop + re-create
+// ── Database maintenance (use with caution) ──────────────────────
+Handschelle_Database::truncate_table();   // empty both tables
+Handschelle_Database::drop_table();       // delete both tables
+Handschelle_Database::recreate_table();   // drop + re-create both tables
 ```
 
 ---
@@ -658,7 +694,13 @@ $statuses = handschelle_status_straftat_options();
 // Resolve a display URL from an attachment ID or direct URL string
 $url = handschelle_get_image_url( $bild_value );
 
-// Sanitize and normalize all entry fields from raw POST data
+// Sanitize only person fields from raw POST data
+$person_data = handschelle_sanitize_person( $_POST );
+
+// Sanitize only offence fields from raw POST data
+$offence_data = handschelle_sanitize_offence( $_POST );
+
+// Sanitize all entry fields (person + offence merged — backward compat)
 $data = handschelle_sanitize_entry( $_POST );
 
 // Calculate age from a date string (Y-m-d); returns int or null if unknown
@@ -745,6 +787,10 @@ File: `assets/css/handschelle.css`
 | `.hs-bild-tooltip` | Hover tooltip with all person data |
 | `.hs-bild-caption` | Name caption below image |
 | `.hs-bild-straftat` | Crime caption below image |
+| `.hs-offences-count` | Badge showing total offence count on a person card (visible when > 1) |
+| `.hs-offence-block` | Wrapper for a single offence within a multi-offence person card |
+| `.hs-offence-header` | Numbered header per offence block (e.g. "Straftat 1 / 3") |
+| `.hs-offence-actions` | Action row inside an offence block (edit / approve / delete) |
 
 ---
 
@@ -753,9 +799,10 @@ File: `assets/css/handschelle.css`
 | Menu Item | Slug | Description |
 |---|---|---|
 | Die Handschelle | `handschelle` | Main menu (Overview) |
-| Übersicht | `handschelle` | All entries — filter tabs (Alle / Ausstehend / Freigegeben), bulk actions, age column |
-| + Neuer Eintrag | `handschelle-add` | Add new entry form |
+| Übersicht | `handschelle` | All entries — filter tabs (Alle / Ausstehend / Freigegeben), bulk actions, age column; ➕ Straftat button adds another offence to an existing person |
+| + Neuer Eintrag | `handschelle-add` | Add new person + first offence form |
 | *(Bearbeiten)* | `handschelle-edit` | Edit entry (hidden from sidebar, accessible via ✏ button) |
+| *(Neue Straftat)* | `handschelle-add-offence` | Add additional offence to existing person (hidden from sidebar, accessible via ➕ Straftat button) |
 | Import / Export | `handschelle-import-export` | CSV import & export |
 | Bilder | `handschelle-bilder` | Image list, ZIP export & ZIP import |
 | Backup & Restore | `handschelle-backup` | Full backup (CSV + images ZIP) and restore |
@@ -827,7 +874,8 @@ die-handschelle/
 - Social media icons are rendered as **inline SVG** with brand colors and hover effects — no external icon library required.
 - **Image uploads** are automatically renamed to `name-HA.ext` (e.g. `max-mustermann-HA.jpg`) using `sanitize_title()`.
 - The **admin image field** supports two workflows: (1) pick from the WP Media Library via the `wp.media` modal, or (2) upload a new file directly.
-- **Database auto-migration:** After updating the plugin, `maybe_upgrade_table()` runs on `plugins_loaded` and adds any missing columns via `dbDelta()`. No data is ever lost.
+- **Database auto-migration:** After updating the plugin, `maybe_upgrade_table()` runs on `plugins_loaded`, creates both new tables via `dbDelta()`, and — if the new `personen` table is empty — automatically migrates all rows from the legacy `wp_die_handschelle` flat table. Persons are deduplicated by name; every legacy row becomes one offence. No data is ever lost.
+- **Multiple offences per person:** Since v7.0 each person can have any number of offences. Adding a second offence via the **➕ Straftat** button in the overview creates a new row in `wp_die_handschelle_straftaten` linked to the existing person. Deleting the last offence of a person also removes the person record.
 
 ---
 
@@ -843,14 +891,14 @@ Update the version string in **all three places** — they must always be in syn
 
 | File | Location | Example |
 |---|---|---|
-| `die-handschelle.php` | `* Version:` header comment (line ~6) | `* Version:     6.4` |
-| `die-handschelle.php` | `HANDSCHELLE_VERSION` constant (line ~24) | `define( 'HANDSCHELLE_VERSION', '6.4' );` |
-| `includes/admin.php` | `<span class="hs-version">` in admin header | `<span class="hs-version">6.4</span>` |
-| `README.md` | Version row in the header table | `\| **Version** \| 6.4 \|` |
+| `die-handschelle.php` | `* Version:` header comment (line ~6) | `* Version:     7.0` |
+| `die-handschelle.php` | `HANDSCHELLE_VERSION` constant (line ~24) | `define( 'HANDSCHELLE_VERSION', '7.0' );` |
+| `includes/admin.php` | `<span class="hs-version">` in admin header | `<span class="hs-version">7.0</span>` |
+| `README.md` | Version row in the header table | `\| **Version** \| 7.0 — Multi-Offence \|` |
 
 **How to calculate the new version:**
 Take the current version shown in `README.md` → add `0.1` → round to one decimal place.
-Examples: `6.1 → 6.2`, `6.9 → 7.0`, `7.0 → 7.1`.
+Examples: `7.0 → 7.1`, `7.9 → 8.0`.
 
 ### Adding a Release Note
 
@@ -877,9 +925,15 @@ When adding a new shortcode:
 
 When adding a new column:
 
-1. Add it to `Handschelle_Database::create_table()` in `includes/database.php`
+1. Add it to `Handschelle_Database::create_tables()` in `includes/database.php`
 2. Add it to `Handschelle_Database::maybe_upgrade_table()` so existing installs migrate automatically
 3. Update the **Fields / Database Schema** table in `README.md`
+
+When adding a new admin page / submenu:
+
+1. Register it in `Handschelle_Admin::register_menus()`
+2. If it should be hidden from the sidebar (like edit / add-offence), add it to `hide_edit_menu_item()`
+3. Add a row to the **Admin Menu Structure** table in `README.md`
 
 ### General Rules
 
@@ -1163,6 +1217,18 @@ IMPORTANT BEHAVIOURS
 ---
 
 ## Release Notes
+
+### 7.0 *(2026-03-15)* — Multi-Offence
+- **Two-table database architecture**: Replaced the single flat `wp_die_handschelle` table with two normalised tables — `wp_die_handschelle_personen` (person data, social links) and `wp_die_handschelle_straftaten` (offences, 1:n FK to person). Added constants `HANDSCHELLE_DB_TABLE_PERSONEN` and `HANDSCHELLE_DB_TABLE_STRAFTATEN`.
+- **Multiple offences per person**: Each person can now have any number of offences. A new **➕ Straftat** button in the admin overview opens the `handschelle-add-offence` page and adds a new offence row to an existing person without duplicating person data.
+- **Auto-migration from legacy data**: `maybe_upgrade_table()` detects an empty `personen` table and automatically migrates all rows from the old flat table — unique persons are grouped by name, every legacy row becomes one offence record.
+- **Grouped frontend display**: `[handschelle-anzeige]`, `[handschelle-name-anzeige]`, `[handschelle-name-partei]` and `[handschelle-karte]` now render one card per person with all their offences listed as `.hs-offence-block` sections. A count badge appears when there is more than one offence.
+- **`[handschelle-karte]` new attribute**: Accepts both `id` (offence ID) and `person_id` (person ID) — both resolve to the full person card with all approved offences.
+- **New `Handschelle_Database` methods**: `create_tables()`, `migrate_from_legacy()`, `get_persons_with_offences()`, `count_persons()`, `get_person()`, `find_person_by_name()`, `get_offences_by_person()`, `insert_person()`, `insert_offence()`, `update_person()`.
+- **New helper functions**: `handschelle_sanitize_person()` and `handschelle_sanitize_offence()` — `handschelle_sanitize_entry()` kept as backward-compat wrapper.
+- **New CSS classes**: `.hs-offences-count`, `.hs-offence-block`, `.hs-offence-header`, `.hs-offence-actions` for multi-offence card layout.
+- **Image deduplication in `[handschelle-bilder]`**: Switched to `get_persons_with_offences()` to prevent the same person's photo appearing multiple times.
+- **README**: Updated all sections to reflect two-table schema, new constants, new DB class API, new helper functions, admin menu, shortcode docs, and CSS classes.
 
 ### 6.4 *(2026-03-15)*
 - **Complete README update**: Fixed `HANDSCHELLE_VERSION` constant example (`6.2`→`6.3`); corrected field/column count from 32 to 31 everywhere (Fields section, CSV section, Recreate prompt); fixed shortcode count from 16 to 19 in Plugin Structure; added missing `[handschelle-asc-link]` to Shortcodes overview table, detailed section, and Recreate prompt; updated AI-instructions version examples from `6.2` to `6.3`
