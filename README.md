@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 6.3 |
+| **Version** | 6.4 |
 | **Autor** | Bernd K.R. Dorfmüller |
 | **E-Mail** | Info@die-handschelle.de |
 | **Website** | https://www.die-handschelle.de |
@@ -162,6 +162,7 @@ All shortcodes output HTML and can be placed on any WordPress page or post.
 | `[handschelle-bilder]` | Image gallery – clickable photos, name + crime caption, hover tooltip |
 | `[handschelle-karte]` | Single entry card by ID: `[handschelle-karte id="5"]` |
 | `[handschelle-asc]` | Horizontal centered list: Partei (Anzahl), alphabetical, no header |
+| `[handschelle-asc-link]` | Same as `[handschelle-asc]` but party names are clickable links (`?hs_partei=`) with a hover tooltip listing all persons |
 | `[handschelle-disclaimer]` | Copyright / contact notice |
 | `[wordcloud-name]` | Word cloud of person names (sized by entry count) — shows Name (Partei) |
 | `[wordcloud-urteil]` | Word cloud of verdicts (`urteil`) sized by frequency |
@@ -375,6 +376,21 @@ Compact horizontal centered list of all parties with entry count, sorted A→Z. 
 
 ---
 
+### `[handschelle-asc-link]`
+
+Same as `[handschelle-asc]` but with two enhancements:
+
+- Party names are **clickable links** — navigates to `?hs_partei=<party>` on the current page
+- A **hover tooltip** lists all person names in that party (one per line)
+
+```
+[handschelle-asc-link]
+```
+
+**Example output:** `AfD (12) · CDU (8) · FDP (3)` — each party name is a link; hovering shows the persons
+
+---
+
 ### `[handschelle-disclaimer]`
 
 Copyright / contact block.
@@ -416,7 +432,7 @@ Copyright / contact block.
 ## Fields / Database Schema
 
 **Table name:** `wp_{prefix}_die_handschelle`
-**Total fields:** 32
+**Total fields:** 31
 
 ### Core Fields
 
@@ -533,7 +549,7 @@ Copyright / contact block.
 Defined in `die-handschelle.php`:
 
 ```php
-HANDSCHELLE_VERSION     // '6.2'
+HANDSCHELLE_VERSION     // '6.3'
 HANDSCHELLE_PLUGIN_DIR  // Absolute path to plugin directory
 HANDSCHELLE_PLUGIN_URL  // URL to plugin directory
 HANDSCHELLE_DB_TABLE    // Table name suffix, e.g. 'die_handschelle'
@@ -766,7 +782,7 @@ File: `assets/css/handschelle.css`
 
 The CSV export is UTF-8 with BOM, semicolon-delimited (Excel-compatible).
 
-**Column order (32 fields):**
+**Column order (31 fields):**
 `id · datum_eintrag · name · beruf · geburtsort · geburtsdatum · bild · partei · aufgabe_partei · parlament · parlament_name · status_aktiv · straftat · urteil · link_quelle · aktenzeichen · bemerkung · status_straftat · sm_facebook · sm_youtube · sm_personal · sm_twitter · sm_homepage · sm_wikipedia · sm_sonstige · sm_linkedin · sm_xing · sm_truth_social · freigegeben · erstellt_am · geaendert_am`
 
 The import is **header-based** — it reads the first row to determine the column order. This makes it fully backward-compatible with older CSVs (26 or 27 columns). Missing columns are silently ignored and default to empty.
@@ -791,7 +807,7 @@ die-handschelle/
 │   ├── image-handler.php         ← Handschelle_Image_Handler (upload + GD resize 450px)
 │   ├── admin.php                 ← Handschelle_Admin class (admin menus, forms,
 │   │                                CSV import/export, backup/restore)
-│   └── shortcodes.php            ← Handschelle_Shortcodes class (all 16 shortcodes,
+│   └── shortcodes.php            ← Handschelle_Shortcodes class (all 19 shortcodes,
 │                                    PRG submit handler, inline SVG icons)
 └── assets/
     ├── css/handschelle.css       ← Full stylesheet with CSS custom properties
@@ -829,10 +845,10 @@ Update the version string in **all three places** — they must always be in syn
 
 | File | Location | Example |
 |---|---|---|
-| `die-handschelle.php` | `* Version:` header comment (line ~6) | `* Version:     6.2` |
-| `die-handschelle.php` | `HANDSCHELLE_VERSION` constant (line ~24) | `define( 'HANDSCHELLE_VERSION', '6.2' );` |
-| `includes/admin.php` | `<span class="hs-version">` in admin header | `<span class="hs-version">6.2</span>` |
-| `README.md` | Version row in the header table | `\| **Version** \| 6.2 \|` |
+| `die-handschelle.php` | `* Version:` header comment (line ~6) | `* Version:     6.4` |
+| `die-handschelle.php` | `HANDSCHELLE_VERSION` constant (line ~24) | `define( 'HANDSCHELLE_VERSION', '6.4' );` |
+| `includes/admin.php` | `<span class="hs-version">` in admin header | `<span class="hs-version">6.4</span>` |
+| `README.md` | Version row in the header table | `\| **Version** \| 6.4 \|` |
 
 **How to calculate the new version:**
 Take the current version shown in `README.md` → add `0.1` → round to one decimal place.
@@ -915,7 +931,7 @@ die-handschelle/
     └── js/handschelle.js         ← frontend + admin JS (jQuery)
 
 ────────────────────────────────────────────────────────────────
-DATABASE TABLE:  {prefix}die_handschelle  (32 fields)
+DATABASE TABLE:  {prefix}die_handschelle  (31 fields)
 ────────────────────────────────────────────────────────────────
 Core:      id, datum_eintrag, erstellt_am, geaendert_am
 Person:    name (VARCHAR 50, required), beruf (50), geburtsort (100),
@@ -985,6 +1001,10 @@ SHORTCODES  (all in Handschelle_Shortcodes class)
 
 [handschelle-asc]
   Horizontal centred list: Partei (Anzahl), A→Z, small font.
+
+[handschelle-asc-link]
+  Same as [handschelle-asc] but party names are clickable links (?hs_partei=)
+  and a hover tooltip lists all person names per party.
 
 [handschelle-disclaimer]
   Copyright block: Die-Handschelle © 2026, tagline, email, website,
@@ -1062,7 +1082,7 @@ truncate_table() / drop_table() / recreate_table()
 CSV FORMAT
 ────────────────────────────────────────────────────────────────
 UTF-8 with BOM, semicolon delimiters (Excel-compatible).
-32 columns in this order:
+31 columns in this order:
 id · datum_eintrag · name · beruf · geburtsort · geburtsdatum · bild ·
 partei · aufgabe_partei · parlament · parlament_name · status_aktiv ·
 straftat · urteil · link_quelle · aktenzeichen · bemerkung · status_straftat ·
@@ -1146,7 +1166,10 @@ IMPORTANT BEHAVIOURS
 
 ## Release Notes
 
-### 6.3 *(2026-03-14)*
+### 6.4 *(2026-03-15)*
+- **Complete README update**: Fixed `HANDSCHELLE_VERSION` constant example (`6.2`→`6.3`); corrected field/column count from 32 to 31 everywhere (Fields section, CSV section, Recreate prompt); fixed shortcode count from 16 to 19 in Plugin Structure; added missing `[handschelle-asc-link]` to Shortcodes overview table, detailed section, and Recreate prompt; updated AI-instructions version examples from `6.2` to `6.3`
+
+### 6.3 *(2026-03-15)*
 - **Build / Package**: Added `## Build / Package` section with `zip` commands to create a distributable ZIP, a quick one-liner variant, and a GD verification command
 
 ### 6.2 *(2026-03-14)*
