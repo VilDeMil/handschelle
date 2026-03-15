@@ -755,8 +755,7 @@ class Handschelle_Shortcodes {
                 <a href="https://www.die-handschelle.de" target="_blank" rel="noopener noreferrer" class="hs-disclaimer-link">www.die-handschelle.de</a>
                 &nbsp;&middot;&nbsp;
                 <a href="mailto:Info@die-handschelle.de" class="hs-disclaimer-link">Info@die-handschelle.de</a>
-                &nbsp;&middot;&nbsp;
-                <a href="https://buymeacoffee.com/dorfmuellersak47" target="_blank" rel="noopener noreferrer" class="hs-disclaimer-link">&#9749; Unterstützen</a>
+
             </p>
         </div>
         <?php
