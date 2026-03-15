@@ -265,7 +265,7 @@ class Handschelle_Admin {
         $nonce       = wp_create_nonce( 'handschelle_admin_action' );
         ?>
         <div class="wrap hs-wrap">
-            <h1>🔒 Die-Handschelle <span class="hs-version">6.3</span></h1>
+            <h1>🔒 Die-Handschelle <span class="hs-version">6.4</span></h1>
             <div class="hs-stats-bar">
                 <span>Gesamt: <strong><?php echo $total; ?></strong></span>
                 <span>Ausstehend: <strong class="<?php echo $pending ? 'hs-warn' : ''; ?>"><?php echo $pending; ?></strong></span>
