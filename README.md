@@ -5,12 +5,77 @@
 
 | | |
 |---|---|
-| **Version** | 6.7 |
+| **Version** | 6.8 |
 | **Autor** | Bernd K.R. Dorfmüller |
 | **E-Mail** | Info@die-handschelle.de |
 | **Website** | https://www.die-handschelle.de |
 | **Lizenz** | GPL-2.0+ |
 | **Requires** | WordPress 5.5+, PHP 7.4+, GD Library |
+
+---
+
+## Table of Contents
+
+- [Einleitung / Introduction](#einleitung--introduction)
+- [Installation from GitHub](#installation-from-github)
+  - [Method 1: Download ZIP](#method-1-download-zip)
+  - [Method 2: Clone with Git](#method-2-clone-with-git)
+  - [Method 3: WP-CLI from GitHub URL](#method-3-wp-cli-from-github-url)
+  - [Updating](#updating)
+  - [Requirements](#requirements)
+- [Build / Package](#build--package)
+  - [Create a release ZIP](#create-a-release-zip)
+  - [Quick one-liner](#quick-one-liner-from-inside-the-repo)
+  - [Verify GD](#verify-gd-is-available-on-the-target-server)
+- [Shortcodes](#shortcodes)
+  - [Overview](#overview)
+  - [`[handschelle]`](#handschelle)
+  - [`[handschelle-anzeige]`](#handschelle-anzeige)
+  - [`[handschelle-karte]`](#handschelle-karte)
+  - [`[handschelle-suche]`](#handschelle-suche)
+  - [`[handschelle-partei]`](#handschelle-partei)
+  - [`[handschelle-name]`](#handschelle-name)
+  - [`[handschelle-statistik]`](#handschelle-statistik)
+  - [`[handschelle-statistik-nolink]`](#handschelle-statistik-nolink)
+  - [`[handschelle-statistik-partei]`](#handschelle-statistik-partei)
+  - [`[handschelle-statistik-name]`](#handschelle-statistik-name)
+  - [`[handschelle-statistik-ol]`](#handschelle-statistik-ol)
+  - [`[handschelle-name-anzeige]`](#handschelle-name-anzeige)
+  - [`[handschelle-name-partei]`](#handschelle-name-partei)
+  - [`[handschelle-bilder]`](#handschelle-bilder)
+  - [`[handschelle-asc]`](#handschelle-asc)
+  - [`[handschelle-asc-link]`](#handschelle-asc-link)
+  - [`[handschelle-disclaimer]`](#handschelle-disclaimer)
+  - [Typical Page Setup](#typical-page-setup)
+- [Fields / Database Schema](#fields--database-schema)
+  - [Core Fields](#core-fields)
+  - [Person Fields](#person-fields)
+  - [Crime / Legal Fields](#crime--legal-fields)
+  - [Publication Fields](#publication-fields)
+  - [Social Media Fields](#social-media-fields)
+  - [Database Indexes](#database-indexes)
+  - [`status_straftat` Options](#status_straftat-options)
+  - [`parlament` Options](#parlament-options-23-total)
+- [Code Reference](#code-reference)
+  - [Plugin Constants](#plugin-constants)
+  - [`Handschelle_Database` Class](#handschelle_database-class)
+  - [`Handschelle_Image_Handler` Class](#handschelle_image_handler-class)
+  - [Helper Functions](#helper-functions)
+  - [JavaScript API](#javascript-api)
+  - [CSS Custom Properties](#css-custom-properties-design-tokens)
+  - [Admin Menu Structure](#admin-menu-structure)
+  - [Backup & Restore](#backup--restore)
+  - [CSV Export / Import Format](#csv-export--import-format)
+- [Plugin Structure](#plugin-structure)
+- [Instructions for AI / LLM](#instructions-for-ai--llm)
+  - [Version Bumping](#version-bumping)
+  - [Adding a Release Note](#adding-a-release-note)
+  - [Shortcode Checklist](#shortcode-checklist)
+  - [Database / Schema Changes](#database--schema-changes)
+  - [General Rules](#general-rules)
+- [Recreate from Scratch](#recreate-from-scratch)
+- [Important Notes](#important-notes)
+- [Release Notes](#release-notes)
 
 ---
 
@@ -1148,6 +1213,9 @@ IMPORTANT BEHAVIOURS
 ---
 
 ## Release Notes
+
+### 6.8 *(2026-03-15)*
+- **Table of Contents**: Added TOC after the header metadata block with links to all `##` and `###` sections
 
 ### 6.7 *(2026-03-15)*
 - **Restore .txt content to README**: All documentation sections (Installation, Build, Shortcodes, Fields/Schema, Code Reference, Plugin Structure, AI Instructions, Recreate from Scratch) merged back inline into README.md; Dokumentation link section removed
