@@ -1,0 +1,289 @@
+## Shortcodes
+
+All shortcodes output HTML and can be placed on any WordPress page or post.
+
+### Overview
+
+| Shortcode | Description |
+|---|---|
+| `[handschelle]` | Frontend submission form for new entries |
+| `[handschelle-anzeige]` | Display all approved entries as cards (no pagination by default) |
+| `[handschelle-suche]` | Full-text search field + Party and Person dropdowns |
+| `[handschelle-partei]` | Party search dropdown only |
+| `[handschelle-name]` | Person name search dropdown only |
+| `[handschelle-statistik]` | Statistics table with bar chart per party (party names are links) |
+| `[handschelle-statistik-nolink]` | Same as `[handschelle-statistik]` but without links on party names |
+| `[handschelle-statistik-partei]` | Table: party / entry count (party links to filter) |
+| `[handschelle-statistik-name]` | Table: person name / entry count |
+| `[handschelle-statistik-ol]` | Ordered list: party – number of distinct names |
+| `[handschelle-name-anzeige]` | Name dropdown – shows cards for selected person |
+| `[handschelle-name-partei]` | Party dropdown – shows cards for selected party |
+| `[handschelle-bilder]` | Image gallery – clickable photos, name + crime caption, hover tooltip |
+| `[handschelle-karte]` | Single entry card by ID: `[handschelle-karte id="5"]` |
+| `[handschelle-asc]` | Horizontal centered list: Partei (Anzahl), alphabetical, no header |
+| `[handschelle-asc-link]` | Same as `[handschelle-asc]` but party names are clickable links (`?hs_partei=`) with a hover tooltip listing all persons |
+| `[handschelle-disclaimer]` | Copyright / contact notice |
+| `[wordcloud-name]` | Word cloud of person names (sized by entry count) — shows Name (Partei) |
+| `[wordcloud-urteil]` | Word cloud of verdicts (`urteil`) sized by frequency |
+
+---
+
+### `[handschelle]`
+
+Renders a public submission form. New submissions are saved with `freigegeben = 0` (not approved) and must be approved by an admin before they appear on the site.
+
+```
+[handschelle]
+```
+
+**Form fields presented to visitors:**
+- Name (required)
+- Profession
+- Birth date & birth place
+- Party, position in party
+- Parliament type & name
+- Active status
+- Crime description (required, max 200 characters)
+- Crime status, verdict, source link, case file number
+- Notes / remarks
+- Social media links (Facebook, YouTube, Twitter/X, personal, homepage, Wikipedia, LinkedIn, Xing, Truth Social, other)
+- Photo upload
+
+---
+
+### `[handschelle-anzeige]`
+
+Displays all approved entries (`freigegeben = 1`) as responsive cards. Supports optional **text search** via URL parameter. Pagination is disabled by default (`limit=0`).
+
+```
+[handschelle-anzeige]
+[handschelle-anzeige partei="CDU"]
+[handschelle-anzeige limit="12"]
+```
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `partei` | string | — | Filter by political party name |
+| `name` | string | — | Filter by person name |
+| `limit` | int | `0` | Cards per page (0 = all, disables pagination) |
+
+**URL parameters:**
+
+| Parameter | Description |
+|---|---|
+| `hs_search` | Full-text search (searches name, party, and crime description) |
+| `hs_paged` | Page number when `limit > 0` |
+
+---
+
+### `[handschelle-karte]`
+
+Displays a single entry card by database ID. Only shows approved entries.
+
+```
+[handschelle-karte id="5"]
+```
+
+| Attribute | Type | Description |
+|---|---|---|
+| `id` | int | Database ID of the entry to display |
+
+**Card contents:**
+- Profile photo — **clickable**, links to `?hs_name=` on the same page
+- Name, profession, birth date + age, birth place
+- Party, position, parliament
+- Crime description & status badge
+- Verdict, case number
+- Footer: source link · Google · Qwant · DuckDuckGo · Bing · Abgeordnetenwatch · social media icons
+
+---
+
+### `[handschelle-suche]`
+
+Renders a **full-text search field** and two auto-submitting dropdowns (Party and Person name). Combine with `[handschelle-anzeige]` on the same page.
+
+```
+[handschelle-suche]
+```
+
+---
+
+### `[handschelle-partei]`
+
+Renders only the Party search dropdown. After selection shows all cards for that party.
+
+```
+[handschelle-partei]
+```
+
+---
+
+### `[handschelle-name]`
+
+Renders only the Person name search dropdown. After selection shows all cards for that person plus **Google, Qwant, DuckDuckGo, Bing, Abgeordnetenwatch** search buttons.
+
+```
+[handschelle-name]
+```
+
+---
+
+### `[handschelle-statistik]`
+
+Statistics table: entries per party with bar chart. Party names link to `?hs_partei=`.
+
+```
+[handschelle-statistik]
+```
+
+---
+
+### `[handschelle-statistik-nolink]`
+
+Same as `[handschelle-statistik]` but party names are plain text (no links).
+
+```
+[handschelle-statistik-nolink]
+```
+
+---
+
+### `[handschelle-statistik-partei]`
+
+Table: Party → entry count. Party names link to `?hs_name_partei=`.
+
+```
+[handschelle-statistik-partei]
+```
+
+---
+
+### `[handschelle-statistik-name]`
+
+Table: Person name → entry count.
+
+```
+[handschelle-statistik-name]
+```
+
+---
+
+### `[handschelle-statistik-ol]`
+
+Numbered list: party — count of distinct person names, sorted descending.
+
+```
+[handschelle-statistik-ol]
+```
+
+**Example:**
+1. CDU – 5 Namen
+2. SPD – 3 Namen
+3. AfD – 2 Namen
+
+---
+
+### `[handschelle-name-anzeige]`
+
+Name dropdown + result cards for the selected person. Includes Google, Qwant, DuckDuckGo, Bing, Abgeordnetenwatch buttons.
+
+```
+[handschelle-name-anzeige]
+```
+
+---
+
+### `[handschelle-name-partei]`
+
+Party dropdown + result cards for the selected party.
+
+```
+[handschelle-name-partei]
+```
+
+---
+
+### `[handschelle-bilder]`
+
+Responsive image gallery of all approved entries that have a photo.
+
+- Images are displayed at max 300×300 px (aspect ratio preserved)
+- **Name** and **Straftat** shown as caption below each image
+- **Hover tooltip** shows all available person data (party, profession, parliament, crime, status, verdict, case number)
+- **Clicking an image** navigates to `?hs_name=<name>` — shows the person's detail cards
+
+```
+[handschelle-bilder]
+[handschelle-bilder link="/personen/"]
+```
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `link` | string | current page | Base URL of the target page with `[handschelle-name]`. If empty, uses the current page. |
+
+---
+
+### `[handschelle-asc]`
+
+Compact horizontal centered list of all parties with entry count, sorted A→Z. No header, small font. Ideal for sidebars or page footers.
+
+```
+[handschelle-asc]
+```
+
+**Example output:** `AfD (12) · CDU (8) · FDP (3) · SPD (5)`
+
+---
+
+### `[handschelle-asc-link]`
+
+Same as `[handschelle-asc]` but with two enhancements:
+
+- Party names are **clickable links** — navigates to `?hs_partei=<party>` on the current page
+- A **hover tooltip** lists all person names in that party (one per line)
+
+```
+[handschelle-asc-link]
+```
+
+**Example output:** `AfD (12) · CDU (8) · FDP (3)` — each party name is a link; hovering shows the persons
+
+---
+
+### `[handschelle-disclaimer]`
+
+Copyright / contact block.
+
+```
+[handschelle-disclaimer]
+```
+
+**Output:**
+> **Die-Handschelle © 2026**
+> „Wer in unseren Parlamenten ist oder war kriminell?" Eine Datenbank der Straftaten.
+> [www.die-handschelle.de](https://www.die-handschelle.de) · [Info@die-handschelle.de](mailto:Info@die-handschelle.de) · ☕ Unterstützen
+
+---
+
+### Typical Page Setup
+
+```
+<!-- Main display page -->
+[handschelle-suche]
+[handschelle-anzeige]
+
+<!-- Gallery page -->
+[handschelle-bilder link="/person/"]
+
+<!-- Statistics page -->
+[handschelle-statistik]
+[handschelle-asc]
+
+<!-- Submit page -->
+[handschelle]
+
+<!-- Person detail page (target for bilder links) -->
+[handschelle-name]
+```
+
+---
