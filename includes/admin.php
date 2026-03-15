@@ -58,8 +58,12 @@ class Handschelle_Admin {
                 $data      = handschelle_sanitize_entry( $_POST );
                 $attach_id = Handschelle_Image_Handler::handle_upload_and_resize( 'bild_upload', $data['name'] ?? '', $data['partei'] ?? '' );
                 if ( $attach_id ) $data['bild'] = $attach_id;
-                Handschelle_Database::insert( $data );
-                $this->redirect( admin_url( 'admin.php?page=handschelle' ), 'Eintrag gespeichert – bitte freigeben.' );
+                $result = Handschelle_Database::insert( $data );
+                if ( $result ) {
+                    $this->redirect( admin_url( 'admin.php?page=handschelle' ), 'Eintrag gespeichert – bitte freigeben.' );
+                } else {
+                    $this->redirect( admin_url( 'admin.php?page=handschelle' ), '⚠ Fehler beim Speichern. Name fehlt oder Datenbankfehler.' );
+                }
                 break;
 
             case 'add_offence':
@@ -70,13 +74,12 @@ class Handschelle_Admin {
                     break;
                 }
                 $offence_data = handschelle_sanitize_offence( $_POST );
-                Handschelle_Database::insert_offence( $person_id, $offence_data );
-                // Also update person data if fields were submitted
-                $person_data = handschelle_sanitize_person( $_POST );
-                $attach_id   = Handschelle_Image_Handler::handle_upload_and_resize( 'bild_upload', $person_data['name'] ?? '', $person_data['partei'] ?? '' );
-                if ( $attach_id ) $person_data['bild'] = $attach_id;
-                Handschelle_Database::update_person( $person_id, $person_data );
-                $this->redirect( admin_url( 'admin.php?page=handschelle' ), 'Neue Straftat gespeichert – bitte freigeben.' );
+                $result       = Handschelle_Database::insert_offence( $person_id, $offence_data );
+                if ( $result ) {
+                    $this->redirect( admin_url( 'admin.php?page=handschelle' ), 'Neue Straftat gespeichert – bitte freigeben.' );
+                } else {
+                    $this->redirect( admin_url( 'admin.php?page=handschelle' ), '⚠ Fehler beim Speichern der Straftat.' );
+                }
                 break;
 
             case 'edit':

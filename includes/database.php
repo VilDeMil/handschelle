@@ -64,8 +64,8 @@ class Handschelle_Database {
             `sm_linkedin`     TEXT,
             `sm_xing`         TEXT,
             `sm_truth_social` TEXT,
-            `erstellt_am`     DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            `geaendert_am`    DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            `erstellt_am`     DATETIME         NULL DEFAULT NULL,
+            `geaendert_am`    DATETIME         NULL DEFAULT NULL,
             PRIMARY KEY (`id`),
             KEY `idx_name`   (`name`),
             KEY `idx_partei` (`partei`)
@@ -85,8 +85,8 @@ class Handschelle_Database {
             `bemerkung`       TEXT,
             `status_straftat` VARCHAR(50)      NOT NULL DEFAULT 'Ermittlungen laufen',
             `freigegeben`     TINYINT(1)       NOT NULL DEFAULT 0,
-            `erstellt_am`     DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            `geaendert_am`    DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            `erstellt_am`     DATETIME         NULL DEFAULT NULL,
+            `geaendert_am`    DATETIME         NULL DEFAULT NULL,
             PRIMARY KEY (`id`),
             KEY `idx_person_id`   (`person_id`),
             KEY `idx_freigegeben` (`freigegeben`)
@@ -515,6 +515,8 @@ class Handschelle_Database {
     ================================================================ */
     public static function insert_person( $data ) {
         global $wpdb;
+        if ( empty( $data['erstellt_am'] ) )  $data['erstellt_am']  = current_time( 'mysql' );
+        if ( empty( $data['geaendert_am'] ) ) $data['geaendert_am'] = current_time( 'mysql' );
         $wpdb->insert( $wpdb->prefix . HANDSCHELLE_DB_TABLE_PERSONEN, $data );
         return $wpdb->insert_id;
     }
@@ -548,6 +550,7 @@ class Handschelle_Database {
             } );
             unset( $updates['name'] ); // don't update name
             if ( ! empty( $updates ) ) {
+                $updates['geaendert_am'] = current_time( 'mysql' );
                 $wpdb->update(
                     $wpdb->prefix . HANDSCHELLE_DB_TABLE_PERSONEN,
                     $updates,
@@ -557,6 +560,8 @@ class Handschelle_Database {
             return intval( $existing->id );
         }
 
+        $person_data['erstellt_am']  = current_time( 'mysql' );
+        $person_data['geaendert_am'] = current_time( 'mysql' );
         $wpdb->insert( $wpdb->prefix . HANDSCHELLE_DB_TABLE_PERSONEN, $person_data );
         return $wpdb->insert_id;
     }
@@ -578,6 +583,7 @@ class Handschelle_Database {
 
         // Update offence
         if ( ! empty( $offence_data ) ) {
+            $offence_data['geaendert_am'] = current_time( 'mysql' );
             $wpdb->update(
                 $wpdb->prefix . HANDSCHELLE_DB_TABLE_STRAFTATEN,
                 $offence_data,
@@ -606,6 +612,7 @@ class Handschelle_Database {
     ================================================================ */
     public static function update_person( $person_id, $data ) {
         global $wpdb;
+        $data['geaendert_am'] = current_time( 'mysql' );
         return $wpdb->update(
             $wpdb->prefix . HANDSCHELLE_DB_TABLE_PERSONEN,
             $data,

@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 7.0 — Multi-Offence |
+| **Version** | 7.1 |
 | **Autor** | Bernd K.R. Dorfmüller |
 | **E-Mail** | Info@die-handschelle.de |
 | **Website** | https://www.die-handschelle.de |
@@ -1217,6 +1217,12 @@ IMPORTANT BEHAVIOURS
 ---
 
 ## Release Notes
+
+### 7.1 *(2026-03-15)*
+- **Bugfix – Neue Straftat (➕ Straftat) löscht Personendaten**: Der `add_offence`-Handler rief `update_person()` mit leeren Feldern auf (das Formular enthält keine Personen-Felder), was Name, Partei und alle anderen Personen-Daten auf leere Strings setzte. Der `update_person()`-Aufruf wurde entfernt; Personendaten bleiben beim Hinzufügen einer weiteren Straftat unverändert.
+- **Bugfix – Datenbankschema MySQL 5.5-kompatibel**: `DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP` ist erst ab MySQL 5.6 gültig. Auf älteren Hosts schlug `CREATE TABLE` lautlos fehl, sodass keine Einträge gespeichert werden konnten. Die Spalten `erstellt_am` und `geaendert_am` sind jetzt `DATETIME NULL DEFAULT NULL`; die Werte werden in PHP explizit gesetzt.
+- **Bugfix – Admin „Neuer Eintrag"**: Fehler beim Speichern wird jetzt mit einer Fehlermeldung angezeigt statt lautlos als Erfolg umgeleitet.
+- **Timestamps explizit gesetzt**: `erstellt_am`/`geaendert_am` werden in allen Insert- und Update-Operationen in PHP gesetzt (kein Verlass mehr auf MySQL-Defaults).
 
 ### 7.0 *(2026-03-15)* — Multi-Offence
 - **Two-table database architecture**: Replaced the single flat `wp_die_handschelle` table with two normalised tables — `wp_die_handschelle_personen` (person data, social links) and `wp_die_handschelle_straftaten` (offences, 1:n FK to person). Added constants `HANDSCHELLE_DB_TABLE_PERSONEN` and `HANDSCHELLE_DB_TABLE_STRAFTATEN`.
