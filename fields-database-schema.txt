@@ -33,7 +33,7 @@
 
 | Field | Type | Max Length | Required | Description |
 |---|---|---|---|---|
-| `straftat` | VARCHAR | 200 | Yes | Description of the crime / offence |
+| `straftat` | TEXT | — | Yes | Description of the crime / offence (no length limit) |
 | `status_straftat` | VARCHAR | 50 | No | Status of the criminal case (see options below) |
 | `urteil` | VARCHAR | 200 | No | Verdict / sentence |
 | `aktenzeichen` | VARCHAR | 50 | No | Case file / docket number |

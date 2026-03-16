@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 7.9 |
+| **Version** | 8.0 |
 | **Autor** | Bernd K.R. Dorfmüller |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
@@ -17,6 +17,7 @@
 ## Table of Contents
 
 - [Einleitung / Introduction](#einleitung--introduction)
+- [To Do](#to-do)
 - [Installation from GitHub](#installation-from-github)
   - [Method 1: Download ZIP](#method-1-download-zip)
   - [Method 2: Clone with Git](#method-2-clone-with-git)
@@ -98,6 +99,17 @@ Das Projekt „Die-Handschelle" steht noch ganz am Anfang. „Die-Handschelle" w
 Bitte unterstützt das Projekt, indem ihr dabei helft, Straftäter in unseren Parlamenten zu identifizieren.
 
 **Danke — „Die-Handschelle"**
+
+---
+
+## To Do
+
+Planned features for upcoming versions:
+
+- **Mailing-Liste**: Newsletter / subscription list so followers are notified when new entries are published.
+- **Multilanguage**: Full multilingual support (DE / EN and more) via the WordPress language system.
+- **Multiple Offences**: Support for recording multiple separate crimes per person, each with its own status, verdict, and source link.
+- **Multiuser**: Role-based multi-user system with individual dashboards, personal submission histories, and per-user moderation rights.
 
 ---
 
@@ -197,26 +209,27 @@ All shortcodes output HTML and can be placed on any WordPress page or post.
 |---|---|
 | `[handschelle]` | Frontend submission form for new entries |
 | `[handschelle-anzeige]` | Display all approved entries as cards (no pagination by default) |
-| `[handschelle-suche]` | Full-text search field + Party and Person dropdowns |
-| `[handschelle-partei]` | Party search dropdown only |
-| `[handschelle-name]` | Person name search dropdown only |
-| `[handschelle-statistik]` | Statistics table with bar chart per party (party names are links) |
-| `[handschelle-statistik-nolink]` | Same as `[handschelle-statistik]` but without links on party names |
-| `[handschelle-statistik-partei]` | Table: party / entry count (party links to filter) |
-| `[handschelle-statistik-name]` | Table: person name / entry count |
-| `[handschelle-statistik-ol]` | Ordered list: party – number of distinct names |
-| `[handschelle-name-anzeige]` | Name dropdown – shows cards for selected person |
-| `[handschelle-name-partei]` | Party dropdown – shows cards for selected party |
-| `[handschelle-bilder]` | Image gallery – clickable photos, name + crime caption, hover tooltip |
-| `[handschelle-karte]` | Single entry card by ID: `[handschelle-karte id="5"]` |
 | `[handschelle-asc]` | Horizontal centered list: Partei (Anzahl), alphabetical, no header |
 | `[handschelle-asc-link]` | Same as `[handschelle-asc]` but party names are clickable links (`?hs_partei=`) with a hover tooltip listing all persons |
+| `[handschelle-bilder]` | Image gallery – clickable photos, name + crime caption (black), hover tooltip |
 | `[handschelle-disclaimer]` | Copyright / contact notice |
+| `[handschelle-karte]` | Single entry card by ID: `[handschelle-karte id="5"]` |
+| `[handschelle-login]` | WordPress-Anmeldeformular; zeigt nach Login eine Willkommensmeldung mit Abmelden-Button |
+| `[handschelle-name]` | Person name search dropdown only |
+| `[handschelle-name-anzeige]` | Name dropdown – shows cards for selected person |
+| `[handschelle-name-partei]` | Party dropdown – shows cards for selected party |
+| `[handschelle-partei]` | Party search dropdown only |
+| `[handschelle-register]` | WordPress-Registrierungsformular mit Benutzername, E-Mail und Passwort; respektiert die WordPress-Einstellung „Jeder kann sich registrieren" |
+| `[handschelle-statistik]` | Statistics table with bar chart per party (party names are links) |
+| `[handschelle-statistik-name]` | Table: person name / entry count |
+| `[handschelle-statistik-nolink]` | Same as `[handschelle-statistik]` but without links on party names |
+| `[handschelle-statistik-ol]` | Ordered list: party – number of distinct names |
+| `[handschelle-statistik-partei]` | Table: party / entry count (party links to filter) |
+| `[handschelle-straftat]` | Scrolling ticker: Partei · Name · full Straftat · Status — white background, black border, black crime text |
+| `[handschelle-suche]` | Full-text search field + Party and Person dropdowns |
+| `[handschelle-ticker]` | Scrolling news ticker: Name · Party · full Straftat text |
 | `[wordcloud-name]` | Word cloud of person names (sized by entry count) — shows Name (Partei) |
 | `[wordcloud-urteil]` | Word cloud of verdicts (`urteil`) sized by frequency |
-| `[handschelle-straftat]` | News ticker: Partei (red) · Name · Straftat · Status Straftat — white background, black border |
-| `[handschelle-login]` | WordPress-Anmeldeformular; zeigt nach Login eine Willkommensmeldung mit Abmelden-Button |
-| `[handschelle-register]` | WordPress-Registrierungsformular mit Benutzername, E-Mail und Passwort; respektiert die WordPress-Einstellung „Jeder kann sich registrieren" |
 
 ---
 
@@ -235,7 +248,7 @@ Renders a public submission form. New submissions are saved with `freigegeben = 
 - Party, position in party
 - Parliament type & name
 - Active status
-- Crime description (required, max 200 characters)
+- Crime description (required)
 - Crime status, verdict, source link, case file number
 - Notes / remarks
 - Social media links (Facebook, YouTube, Twitter/X, personal, homepage, Wikipedia, LinkedIn, Xing, Truth Social, other)
@@ -571,27 +584,27 @@ Zeigt ein Registrierungsformular für neue WordPress-Nutzer. Funktioniert nur, w
 
 | Field | Type | Max Length | Required | Description |
 |---|---|---|---|---|
-| `name` | VARCHAR | 50 | Yes | Person's full name |
-| `beruf` | VARCHAR | 50 | No | Profession / occupation |
-| `geburtsort` | VARCHAR | 100 | No | Place of birth |
-| `geburtsdatum` | DATE | — | No | Date of birth (age is calculated automatically) |
-| `bild` | TEXT | — | No | WordPress attachment ID or image URL |
-| `partei` | VARCHAR | 50 | No | Political party |
 | `aufgabe_partei` | VARCHAR | 100 | No | Position / role within the party |
+| `beruf` | VARCHAR | 50 | No | Profession / occupation |
+| `bild` | TEXT | — | No | WordPress attachment ID or image URL |
+| `geburtsdatum` | DATE | — | No | Date of birth (age is calculated automatically) |
+| `geburtsort` | VARCHAR | 100 | No | Place of birth |
+| `name` | VARCHAR | 50 | Yes | Person's full name |
 | `parlament` | VARCHAR | 100 | No | Parliament type (see options below) |
 | `parlament_name` | VARCHAR | 50 | No | Constituency / parliament seat name |
+| `partei` | VARCHAR | 50 | No | Political party |
 | `status_aktiv` | TINYINT(1) | — | — | Active status: `1` = active, `0` = inactive (default `1`) |
 
 ### Crime / Legal Fields
 
 | Field | Type | Max Length | Required | Description |
 |---|---|---|---|---|
-| `straftat` | VARCHAR | 200 | Yes | Description of the crime / offence |
-| `status_straftat` | VARCHAR | 50 | No | Status of the criminal case (see options below) |
-| `urteil` | VARCHAR | 50 | No | Verdict / sentence |
 | `aktenzeichen` | VARCHAR | 50 | No | Case file / docket number |
-| `link_quelle` | TEXT | — | No | Source link (URL to article / document) |
 | `bemerkung` | TEXT | — | No | Admin notes / remarks |
+| `link_quelle` | TEXT | — | No | Source link (URL to article / document) |
+| `status_straftat` | VARCHAR | 50 | No | Status of the criminal case (see options below) |
+| `straftat` | TEXT | — | Yes | Description of the crime / offence (no length limit) |
+| `urteil` | VARCHAR | 50 | No | Verdict / sentence |
 
 ### Publication Fields
 
@@ -604,15 +617,15 @@ Zeigt ein Registrierungsformular für neue WordPress-Nutzer. Funktioniert nur, w
 | Field | Type | Platform |
 |---|---|---|
 | `sm_facebook` | TEXT | Facebook |
-| `sm_youtube` | TEXT | YouTube |
-| `sm_personal` | TEXT | Personal profile |
-| `sm_twitter` | TEXT | Twitter / X |
 | `sm_homepage` | TEXT | Personal website |
-| `sm_wikipedia` | TEXT | Wikipedia |
 | `sm_linkedin` | TEXT | LinkedIn |
-| `sm_xing` | TEXT | Xing |
-| `sm_truth_social` | TEXT | Truth Social |
+| `sm_personal` | TEXT | Personal profile |
 | `sm_sonstige` | TEXT | Other |
+| `sm_truth_social` | TEXT | Truth Social |
+| `sm_twitter` | TEXT | Twitter / X |
+| `sm_wikipedia` | TEXT | Wikipedia |
+| `sm_xing` | TEXT | Xing |
+| `sm_youtube` | TEXT | YouTube |
 
 ### Database Indexes
 
@@ -673,7 +686,7 @@ Zeigt ein Registrierungsformular für neue WordPress-Nutzer. Funktioniert nur, w
 Defined in `die-handschelle.php`:
 
 ```php
-HANDSCHELLE_VERSION     // '6.3'
+HANDSCHELLE_VERSION     // '8.0'
 HANDSCHELLE_PLUGIN_DIR  // Absolute path to plugin directory
 HANDSCHELLE_PLUGIN_URL  // URL to plugin directory
 HANDSCHELLE_DB_TABLE    // Table name suffix, e.g. 'die_handschelle'
@@ -932,7 +945,7 @@ die-handschelle/
 │   ├── admin.php                 ← Handschelle_Admin class (admin menus, forms,
 │   │                                CSV import/export, backup/restore)
 │   └── shortcodes.php            ← Handschelle_Shortcodes class (all 19 shortcodes,
-│                                    PRG submit handler, inline SVG icons)
+│                                    PRG submit handler, inline SVG icons, 24 shortcodes)
 └── assets/
     ├── css/handschelle.css       ← Full stylesheet with CSS custom properties
     └── js/handschelle.js         ← Frontend and admin JS
@@ -1289,6 +1302,10 @@ IMPORTANT BEHAVIOURS
 ---
 
 ## Release Notes
+
+### 8.0 *(2026-03-16)*
+- **README**: Shortcodes overview table sorted A-Z; added missing `[handschelle-ticker]` entry; fields in Person, Crime/Legal and Social Media schema groups sorted A-Z; `straftat` type corrected to TEXT (no limit); version constant updated to 8.0; shortcodes.php count corrected to 24.
+- **To Do**: Added To Do section (after Einleitung) with planned features: Mailing-Liste, Multilanguage, Multiple Offences, Multiuser.
 
 ### 7.9 *(2026-03-16)*
 - **Straftat-Feld**: Textfarbe auf Schwarz (#000000) gesetzt in allen Anzeigebereichen (Karte, Bild-Tooltip, Ticker); 200-Zeichen-Limit entfernt (kein maxlength, kein substr-Truncation); vollständiger Text wird in beiden Ticker-Shortcodes angezeigt.

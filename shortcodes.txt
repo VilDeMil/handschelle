@@ -16,6 +16,8 @@ All shortcodes output HTML and can be placed on any WordPress page or post.
 | `[handschelle-statistik-partei]` | Table: party / entry count (party links to filter) |
 | `[handschelle-statistik-name]` | Table: person name / entry count |
 | `[handschelle-statistik-ol]` | Ordered list: party – number of distinct names |
+| `[handschelle-ticker]` | News ticker: Name · Party · Straftat (scrolling) |
+| `[handschelle-straftat]` | Straftat ticker: Party · Name · full crime text · status badge |
 | `[handschelle-name-anzeige]` | Name dropdown – shows cards for selected person |
 | `[handschelle-name-partei]` | Party dropdown – shows cards for selected party |
 | `[handschelle-bilder]` | Image gallery – clickable photos, name + crime caption, hover tooltip |
@@ -25,6 +27,8 @@ All shortcodes output HTML and can be placed on any WordPress page or post.
 | `[handschelle-disclaimer]` | Copyright / contact notice |
 | `[wordcloud-name]` | Word cloud of person names (sized by entry count) — shows Name (Partei) |
 | `[wordcloud-urteil]` | Word cloud of verdicts (`urteil`) sized by frequency |
+| `[handschelle-login]` | Login form with „stay logged in" checkbox and optional redirect |
+| `[handschelle-register]` | Registration form (respects WP „Anyone can register" setting) |
 
 ---
 
@@ -43,7 +47,7 @@ Renders a public submission form. New submissions are saved with `freigegeben = 
 - Party, position in party
 - Parliament type & name
 - Active status
-- Crime description (required, max 200 characters)
+- Crime description (required)
 - Crime status, verdict, source link, case file number
 - Notes / remarks
 - Social media links (Facebook, YouTube, Twitter/X, personal, homepage, Wikipedia, LinkedIn, Xing, Truth Social, other)
