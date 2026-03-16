@@ -1565,10 +1565,14 @@ class Handschelle_Shortcodes {
             exit;
         }
 
-        $username  = sanitize_user( wp_unslash( $_POST['hs_reg_user'] ?? '' ) );
-        $email     = sanitize_email( wp_unslash( $_POST['hs_reg_email'] ?? '' ) );
-        $password  = wp_unslash( $_POST['hs_reg_pass'] ?? '' );
-        $password2 = wp_unslash( $_POST['hs_reg_pass2'] ?? '' );
+        $username   = sanitize_user( wp_unslash( $_POST['hs_reg_user'] ?? '' ) );
+        $email      = sanitize_email( wp_unslash( $_POST['hs_reg_email'] ?? '' ) );
+        $password   = wp_unslash( $_POST['hs_reg_pass'] ?? '' );
+        $password2  = wp_unslash( $_POST['hs_reg_pass2'] ?? '' );
+        $first_name = sanitize_text_field( wp_unslash( $_POST['hs_reg_first_name'] ?? '' ) );
+        $last_name  = sanitize_text_field( wp_unslash( $_POST['hs_reg_last_name'] ?? '' ) );
+        $nickname   = sanitize_text_field( wp_unslash( $_POST['hs_reg_nickname'] ?? '' ) );
+        $website    = esc_url_raw( wp_unslash( $_POST['hs_reg_website'] ?? '' ) );
 
         // Validierung
         if ( empty( $username ) || empty( $email ) || empty( $password ) ) {
@@ -1593,6 +1597,13 @@ class Handschelle_Shortcodes {
         if ( is_wp_error( $user_id ) ) {
             wp_safe_redirect( add_query_arg( 'hs_reg_error', 'failed', $return_url ) );
         } else {
+            wp_update_user( array(
+                'ID'         => $user_id,
+                'first_name' => $first_name,
+                'last_name'  => $last_name,
+                'nickname'   => $nickname ?: $username,
+                'user_url'   => $website,
+            ) );
             update_user_meta( $user_id, 'hs_user_status', 'pending' );
             wp_new_user_notification( $user_id, null, 'admin' ); // notify admin only; user cannot log in yet
             wp_safe_redirect( add_query_arg( 'hs_reg_pending', '1', $return_url ) );
@@ -1671,6 +1682,43 @@ class Handschelle_Shortcodes {
                         >
                     </div>
 
+                    <div class="hs-form-row">
+                        <div class="hs-form-group">
+                            <label for="hs-reg-first-name" class="hs-label">Vorname</label>
+                            <input
+                                type="text"
+                                id="hs-reg-first-name"
+                                name="hs_reg_first_name"
+                                class="hs-input"
+                                autocomplete="given-name"
+                                value="<?php echo esc_attr( sanitize_text_field( wp_unslash( $_POST['hs_reg_first_name'] ?? '' ) ) ); ?>"
+                            >
+                        </div>
+                        <div class="hs-form-group">
+                            <label for="hs-reg-last-name" class="hs-label">Nachname</label>
+                            <input
+                                type="text"
+                                id="hs-reg-last-name"
+                                name="hs_reg_last_name"
+                                class="hs-input"
+                                autocomplete="family-name"
+                                value="<?php echo esc_attr( sanitize_text_field( wp_unslash( $_POST['hs_reg_last_name'] ?? '' ) ) ); ?>"
+                            >
+                        </div>
+                    </div>
+
+                    <div class="hs-form-group">
+                        <label for="hs-reg-nickname" class="hs-label">Spitzname</label>
+                        <input
+                            type="text"
+                            id="hs-reg-nickname"
+                            name="hs_reg_nickname"
+                            class="hs-input"
+                            autocomplete="nickname"
+                            value="<?php echo esc_attr( sanitize_text_field( wp_unslash( $_POST['hs_reg_nickname'] ?? '' ) ) ); ?>"
+                        >
+                    </div>
+
                     <div class="hs-form-group">
                         <label for="hs-reg-email" class="hs-label">E-Mail-Adresse <span class="hs-required">*</span></label>
                         <input
@@ -1681,6 +1729,19 @@ class Handschelle_Shortcodes {
                             autocomplete="email"
                             required
                             value="<?php echo esc_attr( sanitize_email( wp_unslash( $_POST['hs_reg_email'] ?? '' ) ) ); ?>"
+                        >
+                    </div>
+
+                    <div class="hs-form-group">
+                        <label for="hs-reg-website" class="hs-label">Webseite</label>
+                        <input
+                            type="url"
+                            id="hs-reg-website"
+                            name="hs_reg_website"
+                            class="hs-input"
+                            autocomplete="url"
+                            placeholder="https://"
+                            value="<?php echo esc_attr( esc_url_raw( wp_unslash( $_POST['hs_reg_website'] ?? '' ) ) ); ?>"
                         >
                     </div>
 
