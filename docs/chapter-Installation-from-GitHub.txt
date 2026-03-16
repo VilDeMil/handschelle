@@ -1,0 +1,53 @@
+## Installation from GitHub
+
+### Method 1: Download ZIP
+
+1. Open the repository on GitHub: `https://github.com/VilDeMil/handschelle`
+2. Click **Code → Download ZIP**
+3. Extract the ZIP — rename the extracted folder to `die-handschelle`
+4. Upload the folder to your server: `/wp-content/plugins/die-handschelle/`
+5. In WordPress go to **Plugins → Installed Plugins**
+6. Find **Die Handschelle** and click **Activate**
+7. The database table `wp_{prefix}_die_handschelle` is created automatically on activation
+
+### Method 2: Clone with Git
+
+```bash
+# Navigate to your WordPress plugins directory
+cd /var/www/html/wp-content/plugins/
+
+# Clone the repository
+git clone https://github.com/VilDeMil/handschelle.git die-handschelle
+
+# Activate via WP-CLI (optional)
+wp plugin activate die-handschelle
+```
+
+### Method 3: WP-CLI from GitHub URL
+
+```bash
+# Install directly using WP-CLI and GitHub ZIP
+wp plugin install https://github.com/VilDeMil/handschelle/archive/refs/heads/master.zip \
+  --activate --force
+```
+
+### Updating
+
+When updating the plugin, missing database columns are added automatically on the next page load — no manual migration needed. Existing data is never changed or removed.
+
+### Requirements
+
+| Requirement | Minimum Version |
+|---|---|
+| WordPress | 5.5+ |
+| PHP | 7.4+ |
+| GD Library | any (for image resizing) |
+| MySQL / MariaDB | any WordPress-compatible version |
+
+To verify GD is available on your server:
+```php
+<?php
+var_dump(extension_loaded('gd')); // should print: bool(true)
+```
+
+---

@@ -1,0 +1,21 @@
+## Plugin Structure
+
+```
+die-handschelle/
+├── die-handschelle.php           ← Main plugin file: constants, hooks, asset enqueue
+├── includes/
+│   ├── helpers.php               ← Parliament list, status options, sanitizer,
+│   │                                image URL helper, handschelle_calc_age()
+│   ├── database.php              ← Handschelle_Database class (CRUD, table management,
+│   │                                maybe_upgrade_table() for auto-migration)
+│   ├── image-handler.php         ← Handschelle_Image_Handler (upload + GD resize 450px)
+│   ├── admin.php                 ← Handschelle_Admin class (admin menus, forms,
+│   │                                CSV import/export, backup/restore)
+│   └── shortcodes.php            ← Handschelle_Shortcodes class (25 shortcodes,
+│                                    PRG submit handlers, inline SVG icons)
+└── assets/
+    ├── css/handschelle.css       ← Full stylesheet with CSS custom properties
+    └── js/handschelle.js         ← Frontend and admin JS
+```
+
+---
