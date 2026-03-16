@@ -32,6 +32,7 @@
   - [`[handschelle-asc-link]`](#handschelle-asc-link)
   - [`[handschelle-disclaimer]`](#handschelle-disclaimer)
   - [`[handschelle-straftat-link]`](#handschelle-straftat-link)
+  - [`[handschelle-result]`](#handschelle-result)
   - [Typical Page Setup](#typical-page-setup)
 - [Fields / Database Schema](#fields--database-schema)
   - [Core Fields](#core-fields)

@@ -51,6 +51,7 @@ class Handschelle_Shortcodes {
         add_shortcode( 'handschelle-ticker',           array( $this, 'sc_ticker' ) );
         add_shortcode( 'handschelle-straftat',         array( $this, 'sc_straftat_ticker' ) );
         add_shortcode( 'handschelle-straftat-link',    array( $this, 'sc_straftat_ticker_link' ) );
+        add_shortcode( 'handschelle-result',           array( $this, 'sc_result' ) );
         add_shortcode( 'handschelle-login',            array( $this, 'sc_login' ) );
         add_shortcode( 'handschelle-register',         array( $this, 'sc_register' ) );
 
@@ -555,6 +556,34 @@ class Handschelle_Shortcodes {
                         <?php endif; ?>
                     </div>
                 <?php endif; ?>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /* ================================================================
+       [handschelle-result] – Zeigt Karten für ?hs_name_name=<Name>
+       Zeigt nichts an, wenn kein Name übergeben wurde.
+    ================================================================ */
+    public function sc_result( $atts ) {
+        $name = sanitize_text_field( wp_unslash( $_GET['hs_name_name'] ?? '' ) );
+
+        if ( empty( $name ) ) {
+            return '';
+        }
+
+        $entries = Handschelle_Database::get_all( array( 'freigegeben' => 1, 'name' => $name ) );
+
+        if ( empty( $entries ) ) {
+            return '';
+        }
+
+        ob_start();
+        ?>
+        <div class="hs-frontend hs-full-width">
+            <div class="hs-cards-single">
+                <?php foreach ( $entries as $e ) echo $this->render_card( $e ); ?>
             </div>
         </div>
         <?php
