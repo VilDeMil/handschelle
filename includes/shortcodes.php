@@ -82,8 +82,19 @@ class Handschelle_Shortcodes {
                             <div class="hs-field"><label>Datum</label><input type="date" name="datum_eintrag" value="<?php echo esc_attr( date('Y-m-d') ); ?>" required></div>
                             <div class="hs-field"><label>Name <span>(max. 50 Zeichen)</span></label><input type="text" name="name" maxlength="50" required placeholder="Vor- und Nachname"></div>
                             <div class="hs-field"><label>Beruf <span>(max. 50 Zeichen)</span></label><input type="text" name="beruf" maxlength="50" placeholder="z.B. Politiker, Unternehmer"></div>
+                            <div class="hs-field"><label>Spitzname <span>(max. 100 Zeichen)</span></label><input type="text" name="spitzname" maxlength="100" placeholder="z.B. Der Fuchs"></div>
                             <div class="hs-field"><label>Geburtsort <span>(max. 100 Zeichen)</span></label><input type="text" name="geburtsort" maxlength="100" placeholder="z.B. Berlin"></div>
+                            <div class="hs-field">
+                                <label>Geburtsland</label>
+                                <select name="geburtsland">
+                                    <?php foreach ( handschelle_laender() as $land ) : ?>
+                                        <option value="<?php echo esc_attr($land); ?>" <?php selected( $land, 'Deutschland' ); ?>><?php echo esc_html($land); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
                             <div class="hs-field"><label>Geburtsdatum</label><input type="date" name="geburtsdatum"></div>
+                            <div class="hs-field"><label>Private E-Mail</label><input type="email" name="private_email" maxlength="200" placeholder="privat@beispiel.de"></div>
+                            <div class="hs-field"><label>Öffentliche E-Mail</label><input type="email" name="oeffentliche_email" maxlength="200" placeholder="kontakt@beispiel.de"></div>
                             <div class="hs-field">
                                 <label class="hs-checkbox-label"><input type="checkbox" name="verstorben" class="hs-verstorben-cb" value="1"> Verstorben</label>
                             </div>
