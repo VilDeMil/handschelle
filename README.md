@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 8.0 |
+| **Version** | 8.5 |
 | **Autor** | Bernd K.R. Dorfmüller |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
@@ -47,6 +47,7 @@
   - [`[handschelle-asc]`](#handschelle-asc)
   - [`[handschelle-asc-link]`](#handschelle-asc-link)
   - [`[handschelle-disclaimer]`](#handschelle-disclaimer)
+  - [`[handschelle-straftat-link]`](#handschelle-straftat-link)
   - [Typical Page Setup](#typical-page-setup)
 - [Fields / Database Schema](#fields--database-schema)
   - [Core Fields](#core-fields)
@@ -219,13 +220,14 @@ All shortcodes output HTML and can be placed on any WordPress page or post.
 | `[handschelle-name-anzeige]` | Name dropdown – shows cards for selected person |
 | `[handschelle-name-partei]` | Party dropdown – shows cards for selected party |
 | `[handschelle-partei]` | Party search dropdown only |
-| `[handschelle-register]` | WordPress-Registrierungsformular mit Benutzername, E-Mail und Passwort; respektiert die WordPress-Einstellung „Jeder kann sich registrieren" |
+| `[handschelle-register]` | Registrierungsformular: Benutzername, Vorname, Nachname, Spitzname, E-Mail, Webseite, Passwort; neues Konto erhält Status `pending` – Login erst nach Admin-Freischaltung |
 | `[handschelle-statistik]` | Statistics table with bar chart per party (party names are links) |
 | `[handschelle-statistik-name]` | Table: person name / entry count |
 | `[handschelle-statistik-nolink]` | Same as `[handschelle-statistik]` but without links on party names |
 | `[handschelle-statistik-ol]` | Ordered list: party – number of distinct names |
 | `[handschelle-statistik-partei]` | Table: party / entry count (party links to filter) |
 | `[handschelle-straftat]` | Scrolling ticker: Partei · Name · full Straftat · Status — white background, black border, black crime text |
+| `[handschelle-straftat-link]` | Same as `[handschelle-straftat]` but Name is a link (`?hs_name_name=`) and Partei is a link (`?hs_name_partei=`); optional `page` attribute to set target URL |
 | `[handschelle-suche]` | Full-text search field + Party and Person dropdowns |
 | `[handschelle-ticker]` | Scrolling news ticker: Name · Party · full Straftat text |
 | `[wordcloud-name]` | Word cloud of person names (sized by entry count) — shows Name (Partei) |
@@ -519,6 +521,30 @@ Horizontally scrolling news ticker displaying all approved entries. Each item sh
 
 ---
 
+### `[handschelle-straftat-link]`
+
+Same as `[handschelle-straftat]` but **Name** and **Partei** are clickable links.
+
+```
+[handschelle-straftat-link]
+[handschelle-straftat-link speed="60"]
+[handschelle-straftat-link page="/straftaten/"]
+```
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `speed` | int | `40` | Scroll duration in seconds (lower = faster, minimum 5) |
+| `page` | string | aktuelle Seite | Target URL for all links |
+
+**Link targets:**
+
+| Click on | URL parameter added |
+|---|---|
+| Name | `?hs_name_name=<name>` (read by `[handschelle-name-anzeige]`) |
+| Partei | `?hs_name_partei=<partei>` (read by `[handschelle-name-partei]`) |
+
+---
+
 ### `[handschelle-login]`
 
 Zeigt ein WordPress-Anmeldeformular. Ist der Nutzer bereits eingeloggt, wird stattdessen eine Willkommensnachricht mit Abmelden-Button angezeigt.
@@ -543,6 +569,8 @@ Zeigt ein WordPress-Anmeldeformular. Ist der Nutzer bereits eingeloggt, wird sta
 
 Zeigt ein Registrierungsformular für neue WordPress-Nutzer. Funktioniert nur, wenn in den WordPress-Einstellungen unter **Einstellungen → Allgemein** die Option „Jeder kann sich registrieren" aktiviert ist.
 
+Neue Konten erhalten den Status **`pending`** und können sich nicht einloggen, bis ein Admin sie im Menü **Die-Handschelle → 👥 Benutzer** freischaltet.
+
 ```
 [handschelle-register]
 [handschelle-register redirect="/willkommen/"]
@@ -553,16 +581,25 @@ Zeigt ein Registrierungsformular für neue WordPress-Nutzer. Funktioniert nur, w
 | `redirect` | string | aktuelle Seite | URL, zu der nach der Registrierung weitergeleitet wird |
 
 **Felder:**
-- Benutzername (Pflicht)
-- E-Mail-Adresse (Pflicht)
-- Passwort (Pflicht, min. 6 Zeichen)
-- Passwort wiederholen (Pflicht)
+
+| Feld | Pflicht | Gespeichert als |
+|---|---|---|
+| Benutzername | ✅ | `user_login` |
+| Vorname | — | `first_name` |
+| Nachname | — | `last_name` |
+| Spitzname | — | `nickname` (fällt auf Benutzername zurück) |
+| E-Mail-Adresse | ✅ | `user_email` |
+| Webseite | — | `user_url` |
+| Passwort (min. 6 Zeichen) | ✅ | — |
+| Passwort wiederholen | ✅ | — |
 
 **Verhalten:**
 - Registrierungen deaktiviert → Hinweismeldung
 - Eingeloggt → Hinweistext mit aktuellem Benutzernamen
-- Erfolgreiche Registrierung → Bestätigungsmeldung + E-Mail-Benachrichtigung an Nutzer und Admin
+- Erfolgreiche Registrierung → Hinweismeldung „wartet auf Freischaltung" + E-Mail-Benachrichtigung an Admin
 - Fehler (doppelter Name, E-Mail vergeben, Passwörter ungleich) → jeweils passende Fehlermeldung
+- Pending-Konten → Login gesperrt mit Hinweis
+- Deaktivierte Konten → Login gesperrt mit Hinweis
 
 ---
 
@@ -1302,6 +1339,18 @@ IMPORTANT BEHAVIOURS
 ---
 
 ## Release Notes
+
+### 8.5 *(2026-03-16)*
+- **Straftat-Link-Ticker** `[handschelle-straftat-link]`: Neuer Shortcode – identisches Layout wie `[handschelle-straftat]`, aber Name und Partei sind klickbare Links; Name verlinkt auf `?hs_name_name=<name>`, Partei auf `?hs_name_partei=<partei>`; optionales Attribut `page` für Ziel-URL (Standard: aktuelle Seite).
+- **CSS**: `.hs-st-link` – dezenter Unterstrich-Stil (dotted) für Ticker-Links; Hover-Effekt (Opacity).
+
+### 8.4 *(2026-03-16)*
+- **Registrierungsformular erweitert**: `[handschelle-register]` hat jetzt zusätzliche optionale Felder: Vorname, Nachname, Spitzname, Webseite; Vorname/Nachname nebeneinander (2-Spalten-Grid, responsive); gespeichert via `wp_update_user()` nach Kontoerstellung.
+
+### 8.3 *(2026-03-16)*
+- **Benutzer-Freischaltung**: Neue Registrierungen erhalten den Status `pending` (User-Meta `hs_user_status`); Login ist gesperrt bis zur Freischaltung; Admin wird per E-Mail benachrichtigt.
+- **Login-Sperre**: `authenticate`-Filter blockiert `pending`- und `deactivated`-Konten mit jeweils eigenem Fehlertext.
+- **Admin-Menü: 👥 Benutzer** (`Die-Handschelle → Benutzer`): Übersicht aller Benutzer mit Status-Badge; Aktionen: Freischalten, Deaktivieren, Löschen; Pending-Zähler als Badge im Menütitel; Admins sind vor Änderungen geschützt.
 
 ### 8.0 *(2026-03-16)*
 - **README**: Shortcodes overview table sorted A-Z; added missing `[handschelle-ticker]` entry; fields in Person, Crime/Legal and Social Media schema groups sorted A-Z; `straftat` type corrected to TEXT (no limit); version constant updated to 8.0; shortcodes.php count corrected to 24.

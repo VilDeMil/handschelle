@@ -1,0 +1,15 @@
+# Die-Handschelle
+
+> Dokumentation von Straftaten politischer Personen als WordPress-Plugin.
+> Documentation of crimes by political figures as a WordPress plugin.
+
+| | |
+|---|---|
+| **Version** | 8.5 |
+| **Autor** | Bernd K.R. Dorfmüller |
+| **E-Mail** | info@die-handschelle.com |
+| **Website** | https://www.die-handschelle.com |
+| **Lizenz** | GPL-2.0+ |
+| **Requires** | WordPress 5.5+, PHP 7.4+, GD Library |
+
+---

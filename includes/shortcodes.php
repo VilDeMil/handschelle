@@ -50,6 +50,7 @@ class Handschelle_Shortcodes {
         add_shortcode( 'wordcloud-urteil',             array( $this, 'sc_wordcloud_urteil' ) );
         add_shortcode( 'handschelle-ticker',           array( $this, 'sc_ticker' ) );
         add_shortcode( 'handschelle-straftat',         array( $this, 'sc_straftat_ticker' ) );
+        add_shortcode( 'handschelle-straftat-link',    array( $this, 'sc_straftat_ticker_link' ) );
         add_shortcode( 'handschelle-login',            array( $this, 'sc_login' ) );
         add_shortcode( 'handschelle-register',         array( $this, 'sc_register' ) );
 
@@ -1410,6 +1411,61 @@ class Handschelle_Shortcodes {
             $name           = '<span class="hs-st-name">'           . esc_html( $r->name )                                                              . '</span>';
             $straftat       = $r->straftat       ? ' <span class="hs-st-straftat">'       . esc_html( $r->straftat )          . '</span>' : '';
             $status_straftat = $r->status_straftat ? ' <span class="hs-st-status">'       . esc_html( $r->status_straftat )                             . '</span>' : '';
+            $items .= '<span class="hs-st-item">' . $partei . $name . $straftat . $status_straftat . '</span>';
+        }
+
+        ob_start();
+        ?>
+        <div class="hs-st-wrap">
+            <div class="hs-st-viewport">
+                <div class="hs-st-track" style="animation-duration:<?php echo esc_attr( $speed ); ?>s">
+                    <?php echo $items . $items; // duplicate for seamless loop ?>
+                </div>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /* ================================================================
+       [handschelle-straftat-link] – News-Ticker mit klickbaren Links
+       Wie [handschelle-straftat], aber Name → ?hs_name_name=…
+       und Partei → ?hs_name_partei=…
+       Attribute:
+         speed  – Scrollgeschwindigkeit in Sekunden (Standard: 40)
+         page   – Ziel-URL für die Links (Standard: aktuelle Seite)
+    ================================================================ */
+    public function sc_straftat_ticker_link( $atts ) {
+        global $wpdb;
+        $atts = shortcode_atts( array(
+            'speed' => 40,
+            'page'  => '',
+        ), $atts, 'handschelle-straftat-link' );
+
+        $speed    = max( 5, intval( $atts['speed'] ) );
+        $base_url = $atts['page'] ? esc_url( $atts['page'] ) : esc_url( get_permalink() );
+
+        $table = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
+        $rows  = $wpdb->get_results(
+            "SELECT name, partei, straftat, status_straftat
+             FROM `{$table}`
+             WHERE freigegeben = 1
+             ORDER BY id DESC"
+        );
+
+        if ( empty( $rows ) ) {
+            return '<p class="hs-st-empty">Keine Einträge vorhanden.</p>';
+        }
+
+        $items = '';
+        foreach ( $rows as $r ) {
+            $name_url   = esc_url( add_query_arg( 'hs_name_name',   rawurlencode( $r->name ),   $base_url ) );
+            $partei_url = $r->partei ? esc_url( add_query_arg( 'hs_name_partei', rawurlencode( $r->partei ), $base_url ) ) : '';
+
+            $partei         = $r->partei   ? '<a href="' . $partei_url . '" class="hs-st-partei hs-st-link">'   . esc_html( $r->partei )         . '</a> ' : '';
+            $name           = '<a href="' . $name_url . '" class="hs-st-name hs-st-link">' . esc_html( $r->name ) . '</a>';
+            $straftat       = $r->straftat       ? ' <span class="hs-st-straftat">'       . esc_html( $r->straftat )        . '</span>' : '';
+            $status_straftat = $r->status_straftat ? ' <span class="hs-st-status">'       . esc_html( $r->status_straftat ) . '</span>' : '';
             $items .= '<span class="hs-st-item">' . $partei . $name . $straftat . $status_straftat . '</span>';
         }
 
