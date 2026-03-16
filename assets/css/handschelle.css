@@ -764,6 +764,8 @@
 }
 .hs-required { color: var(--hs-accent); }
 .hs-register-hint { font-size: .8rem; color: var(--hs-muted); margin: -.4rem 0 .8rem; }
+.hs-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1rem; }
+@media (max-width: 480px) { .hs-form-row { grid-template-columns: 1fr; } }
 .hs-register-loggedin {
     background: var(--hs-card-bg);
     border: 1px solid var(--hs-border);
