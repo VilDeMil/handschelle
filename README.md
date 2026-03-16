@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 7.8 |
+| **Version** | 7.9 |
 | **Autor** | Bernd K.R. Dorfmüller |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
@@ -1289,6 +1289,9 @@ IMPORTANT BEHAVIOURS
 ---
 
 ## Release Notes
+
+### 7.9 *(2026-03-16)*
+- **Straftat-Feld**: Textfarbe auf Schwarz (#000000) gesetzt in allen Anzeigebereichen (Karte, Bild-Tooltip, Ticker); 200-Zeichen-Limit entfernt (kein maxlength, kein substr-Truncation); vollständiger Text wird in beiden Ticker-Shortcodes angezeigt.
 
 ### 7.8 *(2026-03-16)*
 - **Registrierungs-Formular** `[handschelle-register]`: Neues Registrierungs-Shortcode mit Feldern für Benutzername, E-Mail und Passwort (mit Bestätigung); respektiert die WordPress-Einstellung „Jeder kann sich registrieren", zeigt passende Fehlermeldungen und sendet nach Erfolg E-Mails an Nutzer und Admin.

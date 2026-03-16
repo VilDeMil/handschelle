@@ -217,7 +217,7 @@ class Handschelle_Admin {
                 'parlament'       => sanitize_text_field( $g('parlament') ),
                 'parlament_name'  => substr( sanitize_text_field( $g('parlament_name') ), 0, 50 ),
                 'status_aktiv'    => intval( $g('status_aktiv') ),
-                'straftat'        => substr( sanitize_textarea_field( $g('straftat') ), 0, 200 ),
+                'straftat'        => sanitize_textarea_field( $g('straftat') ),
                 'urteil'          => substr( sanitize_text_field( $g('urteil') ), 0, 200 ),
                 'link_quelle'     => esc_url_raw( $g('link_quelle') ),
                 'aktenzeichen'    => substr( sanitize_text_field( $g('aktenzeichen') ), 0, 50 ),
@@ -537,7 +537,7 @@ class Handschelle_Admin {
             <div class="hs-form-section">
                 <h2>⚖ Details zur Straftat</h2>
                 <div class="hs-form-grid">
-                    <div class="hs-field hs-field-full"><label>Straftat <span>(max. 200 Zeichen)</span></label><textarea name="straftat" maxlength="200" rows="3" required><?php echo esc_textarea($entry->straftat ?? ''); ?></textarea><small class="hs-char-counter" data-target="straftat">0 / 200 Zeichen</small></div>
+                    <div class="hs-field hs-field-full"><label>Straftat</label><textarea name="straftat" rows="3" required><?php echo esc_textarea($entry->straftat ?? ''); ?></textarea></div>
                     <div class="hs-field"><label>Urteil <span>(max. 200 Zeichen)</span></label><input type="text" name="urteil" maxlength="200" value="<?php echo $v('urteil'); ?>" placeholder="z.B. 2 Jahre auf Bewährung"></div>
                     <div class="hs-field"><label>Link zur Quelle</label><input type="url" name="link_quelle" value="<?php echo $v('link_quelle'); ?>" placeholder="https://…"></div>
                     <div class="hs-field"><label>Aktenzeichen <span>(max. 50 Zeichen)</span></label><input type="text" name="aktenzeichen" maxlength="50" value="<?php echo $v('aktenzeichen'); ?>" placeholder="z.B. 1 StR 123/24"></div>
@@ -1052,7 +1052,7 @@ class Handschelle_Admin {
                     'parlament'       => sanitize_text_field( $g( 'parlament' ) ),
                     'parlament_name'  => substr( sanitize_text_field( $g( 'parlament_name' ) ), 0, 50 ),
                     'status_aktiv'    => intval( $g( 'status_aktiv' ) ),
-                    'straftat'        => substr( sanitize_textarea_field( $g( 'straftat' ) ), 0, 200 ),
+                    'straftat'        => sanitize_textarea_field( $g( 'straftat' ) ),
                     'urteil'          => substr( sanitize_text_field( $g( 'urteil' ) ), 0, 200 ),
                     'link_quelle'     => esc_url_raw( $g( 'link_quelle' ) ),
                     'aktenzeichen'    => substr( sanitize_text_field( $g( 'aktenzeichen' ) ), 0, 50 ),
