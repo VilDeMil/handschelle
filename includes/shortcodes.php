@@ -1593,8 +1593,9 @@ class Handschelle_Shortcodes {
         if ( is_wp_error( $user_id ) ) {
             wp_safe_redirect( add_query_arg( 'hs_reg_error', 'failed', $return_url ) );
         } else {
-            wp_new_user_notification( $user_id, null, 'both' );
-            wp_safe_redirect( add_query_arg( 'hs_reg_success', '1', $return_url ) );
+            update_user_meta( $user_id, 'hs_user_status', 'pending' );
+            wp_new_user_notification( $user_id, null, 'admin' ); // notify admin only; user cannot log in yet
+            wp_safe_redirect( add_query_arg( 'hs_reg_pending', '1', $return_url ) );
         }
         exit;
     }
@@ -1626,7 +1627,7 @@ class Handschelle_Shortcodes {
             </div>
             <?php
         } else {
-            $reg_success = ! empty( $_GET['hs_reg_success'] );
+            $reg_pending = ! empty( $_GET['hs_reg_pending'] );
             $reg_error   = sanitize_key( $_GET['hs_reg_error'] ?? '' );
 
             $error_messages = array(
@@ -1641,9 +1642,9 @@ class Handschelle_Shortcodes {
             <div class="hs-register-wrap">
                 <h2 class="hs-section-title">📋 Konto erstellen</h2>
 
-                <?php if ( $reg_success ) : ?>
+                <?php if ( $reg_pending ) : ?>
                     <div class="hs-alert hs-alert-success">
-                        ✅ Registrierung erfolgreich! Du kannst dich jetzt anmelden.
+                        ✅ Konto erstellt! Deine Registrierung wird geprüft und vom Administrator freigeschaltet. Du erhältst eine Benachrichtigung.
                     </div>
                 <?php elseif ( $reg_error && isset( $error_messages[ $reg_error ] ) ) : ?>
                     <div class="hs-alert hs-alert-error">
@@ -1651,7 +1652,7 @@ class Handschelle_Shortcodes {
                     </div>
                 <?php endif; ?>
 
-                <?php if ( ! $reg_success ) : ?>
+                <?php if ( ! $reg_pending ) : ?>
                 <form method="post" class="hs-register-form" autocomplete="on">
                     <?php wp_nonce_field( 'hs_register', 'hs_register_nonce' ); ?>
                     <input type="hidden" name="hs_register_submit"   value="1">

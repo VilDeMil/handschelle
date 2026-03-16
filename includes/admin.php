@@ -19,6 +19,7 @@ class Handschelle_Admin {
         add_action( 'admin_init',    array( $this, 'handle_actions' ) );
         add_action( 'admin_notices', array( $this, 'show_notice' ) );
         add_action( 'admin_head',    array( $this, 'hide_edit_menu_item' ) );
+        add_filter( 'authenticate',  array( $this, 'block_pending_users' ), 30, 3 );
     }
 
     /* ── Bearbeitungsseite aus Menü ausblenden (bleibt aber erreichbar) ── */
@@ -38,6 +39,9 @@ class Handschelle_Admin {
         add_submenu_page( 'handschelle', 'Bilder',             'Bilder',          'manage_options', 'handschelle-bilder',        array( $this, 'page_bilder' ) );
         add_submenu_page( 'handschelle', 'Backup & Restore',  'Backup & Restore','manage_options', 'handschelle-backup',        array( $this, 'page_backup' ) );
         add_submenu_page( 'handschelle', 'Datenbank',          'Datenbank',       'manage_options', 'handschelle-db',            array( $this, 'page_database' ) );
+        $pending_count = count( get_users( array( 'meta_key' => 'hs_user_status', 'meta_value' => 'pending' ) ) );
+        $users_label   = '👥 Benutzer' . ( $pending_count ? ' <span class="awaiting-mod">' . $pending_count . '</span>' : '' );
+        add_submenu_page( 'handschelle', 'Benutzer',           $users_label,      'manage_options', 'handschelle-users',          array( $this, 'page_users' ) );
     }
 
     /* ================================================================
@@ -127,6 +131,31 @@ class Handschelle_Admin {
                     $this->redirect( admin_url( 'admin.php?page=handschelle' ), count( $ids ) . ' Eintrag/Einträge ' . $label[ $op ] . '.' );
                 }
                 $this->redirect( admin_url( 'admin.php?page=handschelle' ), 'Keine Einträge ausgewählt.' );
+                break;
+
+            case 'activate_user':
+                $uid = intval( $_REQUEST['uid'] ?? 0 );
+                if ( $uid && get_userdata( $uid ) ) {
+                    update_user_meta( $uid, 'hs_user_status', 'active' );
+                    $this->redirect( admin_url( 'admin.php?page=handschelle-users' ), 'Benutzer freigeschaltet.' );
+                }
+                break;
+
+            case 'deactivate_user':
+                $uid = intval( $_REQUEST['uid'] ?? 0 );
+                if ( $uid && get_userdata( $uid ) ) {
+                    update_user_meta( $uid, 'hs_user_status', 'deactivated' );
+                    $this->redirect( admin_url( 'admin.php?page=handschelle-users' ), 'Benutzer deaktiviert.' );
+                }
+                break;
+
+            case 'delete_hs_user':
+                $uid = intval( $_REQUEST['uid'] ?? 0 );
+                if ( $uid && get_userdata( $uid ) && ! user_can( $uid, 'manage_options' ) ) {
+                    require_once ABSPATH . 'wp-admin/includes/user.php';
+                    wp_delete_user( $uid );
+                    $this->redirect( admin_url( 'admin.php?page=handschelle-users' ), 'Benutzer gelöscht.' );
+                }
                 break;
 
             case 'export_csv':        $this->export_csv(); break;
@@ -1088,6 +1117,96 @@ class Handschelle_Admin {
             admin_url( 'admin.php?page=handschelle-backup' ),
             "Wiederherstellung abgeschlossen: {$entry_count} Einträge importiert, {$img_count} Bilder importiert."
         );
+    }
+
+    /* ================================================================
+       LOGIN-SPERRE: ausstehende / deaktivierte Benutzer
+    ================================================================ */
+    public function block_pending_users( $user, $username, $password ) {
+        if ( is_wp_error( $user ) || ! ( $user instanceof WP_User ) ) return $user;
+        $status = get_user_meta( $user->ID, 'hs_user_status', true );
+        if ( $status === 'pending' ) {
+            return new WP_Error( 'hs_pending', __( 'Dein Konto wartet noch auf Freischaltung durch einen Administrator.', 'die-handschelle' ) );
+        }
+        if ( $status === 'deactivated' ) {
+            return new WP_Error( 'hs_deactivated', __( 'Dein Konto wurde deaktiviert. Bitte wende dich an den Administrator.', 'die-handschelle' ) );
+        }
+        return $user;
+    }
+
+    /* ================================================================
+       SEITE: BENUTZER-VERWALTUNG
+    ================================================================ */
+    public function page_users() {
+        $nonce   = wp_create_nonce( 'handschelle_admin_action' );
+        $users   = get_users( array( 'orderby' => 'registered', 'order' => 'DESC', 'exclude' => array( get_current_user_id() ) ) );
+        $pending = array_filter( $users, fn( $u ) => get_user_meta( $u->ID, 'hs_user_status', true ) === 'pending' );
+        ?>
+        <div class="wrap hs-wrap">
+            <h1>👥 Benutzer-Verwaltung <span class="hs-version"><?php echo esc_html( HANDSCHELLE_VERSION ); ?></span></h1>
+
+            <?php if ( ! empty( $pending ) ) : ?>
+                <div class="notice notice-warning"><p>⏳ <strong><?php echo count( $pending ); ?> Konto(s)</strong> warten auf Freischaltung.</p></div>
+            <?php endif; ?>
+
+            <table class="widefat fixed striped hs-admin-table" style="margin-top:1rem;">
+                <thead>
+                    <tr>
+                        <th>Benutzername</th>
+                        <th>E-Mail</th>
+                        <th>Rolle</th>
+                        <th>Registriert</th>
+                        <th style="width:160px">Status</th>
+                        <th style="width:260px">Aktionen</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php if ( empty( $users ) ) : ?>
+                    <tr><td colspan="6" style="text-align:center;padding:2rem;color:#999;">Keine Benutzer vorhanden.</td></tr>
+                <?php endif; ?>
+                <?php foreach ( $users as $u ) :
+                    $status   = get_user_meta( $u->ID, 'hs_user_status', true );
+                    $is_admin = user_can( $u->ID, 'manage_options' );
+                    $roles    = array_map( fn( $r ) => translate_user_role( $r ), $u->roles );
+                ?>
+                    <tr>
+                        <td><strong><?php echo esc_html( $u->user_login ); ?></strong><br><small><?php echo esc_html( $u->display_name ); ?></small></td>
+                        <td><?php echo esc_html( $u->user_email ); ?></td>
+                        <td><?php echo esc_html( implode( ', ', $roles ) ); ?></td>
+                        <td><?php echo esc_html( date_i18n( 'd.m.Y', strtotime( $u->user_registered ) ) ); ?></td>
+                        <td>
+                            <?php if ( $is_admin ) : ?>
+                                <span class="hs-badge hs-badge-aktiv">Administrator</span>
+                            <?php elseif ( $status === 'pending' ) : ?>
+                                <span class="hs-badge hs-badge-pending">⏳ Ausstehend</span>
+                            <?php elseif ( $status === 'deactivated' ) : ?>
+                                <span class="hs-badge hs-badge-inaktiv">🚫 Deaktiviert</span>
+                            <?php else : ?>
+                                <span class="hs-badge hs-badge-aktiv">✅ Aktiv</span>
+                            <?php endif; ?>
+                        </td>
+                        <td class="hs-actions">
+                            <?php if ( ! $is_admin ) : ?>
+                                <?php if ( $status !== 'active' && $status !== '' ) : ?>
+                                    <a href="<?php echo esc_url( admin_url( "admin.php?page=handschelle-users&hs_action=activate_user&uid={$u->ID}&_wpnonce={$nonce}" ) ); ?>"
+                                       class="button button-small button-primary">✅ Freischalten</a>
+                                <?php endif; ?>
+                                <?php if ( $status !== 'deactivated' ) : ?>
+                                    <a href="<?php echo esc_url( admin_url( "admin.php?page=handschelle-users&hs_action=deactivate_user&uid={$u->ID}&_wpnonce={$nonce}" ) ); ?>"
+                                       class="button button-small">🚫 Deaktivieren</a>
+                                <?php endif; ?>
+                                <a href="<?php echo esc_url( admin_url( "admin.php?page=handschelle-users&hs_action=delete_hs_user&uid={$u->ID}&_wpnonce={$nonce}" ) ); ?>"
+                                   class="button button-small hs-btn-delete"
+                                   onclick="return confirm('Benutzer <?php echo esc_js( $u->user_login ); ?> wirklich löschen?')">🗑 Löschen</a>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+            <?php echo $this->hs_footer(); ?>
+        </div>
+        <?php
     }
 
     /* ================================================================
