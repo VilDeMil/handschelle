@@ -48,6 +48,7 @@ class Handschelle_Shortcodes {
         add_shortcode( 'handschelle-asc-link',         array( $this, 'sc_asc_link' ) );
         add_shortcode( 'wordcloud-name',               array( $this, 'sc_wordcloud_name' ) );
         add_shortcode( 'wordcloud-urteil',             array( $this, 'sc_wordcloud_urteil' ) );
+        add_shortcode( 'handschelle-ticker',           array( $this, 'sc_ticker' ) );
 
         // Submit früh verarbeiten – BEVOR Header gesendet werden
         add_action( 'init', array( $this, 'early_frontend_submit' ) );
@@ -1322,6 +1323,54 @@ class Handschelle_Shortcodes {
         echo '</div>';
         return ob_get_clean();
     }
+    /* ================================================================
+       [handschelle-ticker] – News-Ticker mit Name & Straftat
+       Attribute:
+         speed  – Scrollgeschwindigkeit in Sekunden (Standard: 40)
+                  Niedrigerer Wert = schneller
+    ================================================================ */
+    public function sc_ticker( $atts ) {
+        global $wpdb;
+        $atts = shortcode_atts( array(
+            'speed' => 40,
+        ), $atts, 'handschelle-ticker' );
+
+        $speed = max( 5, intval( $atts['speed'] ) );
+
+        $table = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
+        $rows  = $wpdb->get_results(
+            "SELECT name, partei, straftat
+             FROM `{$table}`
+             WHERE freigegeben = 1
+             ORDER BY id DESC"
+        );
+
+        if ( empty( $rows ) ) {
+            return '<p class="hs-ticker-empty">Keine Einträge vorhanden.</p>';
+        }
+
+        $items = '';
+        foreach ( $rows as $r ) {
+            $name    = esc_html( $r->name );
+            $partei  = $r->partei ? ' <span class="hs-ticker-partei">(' . esc_html( $r->partei ) . ')</span>' : '';
+            $straftat = $r->straftat ? ' &mdash; <span class="hs-ticker-straftat">' . esc_html( wp_trim_words( $r->straftat, 12, '…' ) ) . '</span>' : '';
+            $items .= '<span class="hs-ticker-item"><span class="hs-ticker-name">' . $name . '</span>' . $partei . $straftat . '</span>';
+        }
+
+        ob_start();
+        ?>
+        <div class="hs-ticker-wrap">
+            <span class="hs-ticker-label">&#x1F4F0; Aktuell</span>
+            <div class="hs-ticker-viewport">
+                <div class="hs-ticker-track" style="animation-duration:<?php echo esc_attr( $speed ); ?>s">
+                    <?php echo $items . $items; // duplicate for seamless loop ?>
+                </div>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
 }
 
 new Handschelle_Shortcodes();

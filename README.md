@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 7.3 |
+| **Version** | 7.5 |
 | **Autor** | Bernd K.R. Dorfmüller |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
@@ -1213,6 +1213,12 @@ IMPORTANT BEHAVIOURS
 ---
 
 ## Release Notes
+
+### 7.5 *(2026-03-16)*
+- **News-Ticker** `[handschelle-ticker]`: Neuer Shortcode mit horizontalem CSS-Laufband; zeigt Name, Partei und Straftat aller freigegebenen Einträge. Geschwindigkeit über Attribut `speed` (Sekunden, Standard 40, Minimum 5) einstellbar.
+
+### 7.4 *(2026-03-16)*
+- **Profilfelder in Karten & Formularen**: Neue Felder `geburtsland`, `email_privat`, `email_oeffentlich` und `spitzname` werden nun in Frontend-Karten, Inline-Edit-Formular und Admin-Übersicht angezeigt.
 
 ### 7.3 *(2026-03-15)*
 - **Domain & E-Mail update**: Changed all references from `www.die-handschelle.de` → `www.die-handschelle.com` and `Info@die-handschelle.de` → `info@die-handschelle.com` across shortcodes, README, and all doc files; also fixed typo `info@hanschelle.com` → `info@die-handschelle.com` in the "Eintrag melden" mailto link.
