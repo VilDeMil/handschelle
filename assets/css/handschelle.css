@@ -718,3 +718,58 @@
     transition: opacity .18s;
 }
 .hs-btn-logout:hover { opacity: .85; color: #fff; }
+
+/* ================================================================
+   Registrierungs-Formular  [handschelle-register]
+================================================================ */
+.hs-register-wrap {
+    max-width: 440px;
+    margin: 0 auto;
+    font-family: var(--hs-font);
+    color: #222;
+}
+.hs-register-form {
+    background: var(--hs-card-bg);
+    border: 1px solid var(--hs-border);
+    border-radius: var(--hs-radius);
+    padding: 1.8rem 2rem;
+    box-shadow: var(--hs-shadow);
+}
+.hs-register-form .hs-form-group {
+    margin-bottom: 1.1rem;
+}
+.hs-register-form .hs-label {
+    display: block;
+    font-weight: 600;
+    font-size: .875rem;
+    color: #333;
+    margin-bottom: .35rem;
+}
+.hs-register-form .hs-input {
+    width: 100%;
+    padding: .55rem .85rem;
+    border: 1px solid var(--hs-border);
+    border-radius: var(--hs-radius);
+    font-size: .95rem;
+    font-family: var(--hs-font);
+    color: #222;
+    background: #fff;
+    transition: border-color .15s;
+    box-sizing: border-box;
+}
+.hs-register-form .hs-input:focus {
+    outline: none;
+    border-color: var(--hs-accent);
+    box-shadow: 0 0 0 3px rgba(192,57,43,.12);
+}
+.hs-required { color: var(--hs-accent); }
+.hs-register-hint { font-size: .8rem; color: var(--hs-muted); margin: -.4rem 0 .8rem; }
+.hs-register-loggedin {
+    background: var(--hs-card-bg);
+    border: 1px solid var(--hs-border);
+    border-radius: var(--hs-radius);
+    padding: 1.4rem 1.8rem;
+    box-shadow: var(--hs-shadow);
+    text-align: center;
+}
+.hs-register-info { margin: 0; font-size: 1rem; color: #333; }
