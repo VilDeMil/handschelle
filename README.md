@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 8.6 |
+| **Version** | 8.8 |
 | **Autor** | Bernd K.R. Dorfmüller |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
@@ -232,6 +232,7 @@ All shortcodes output HTML and can be placed on any WordPress page or post.
 | `[handschelle-straftat-link]` | Same as `[handschelle-straftat]` but Name is a link (`?hs_name_name=`) and Partei is a link (`?hs_name_partei=`); optional `page` attribute to set target URL |
 | `[handschelle-suche]` | Full-text search field + Party and Person dropdowns |
 | `[handschelle-ticker]` | Scrolling news ticker: Name · Party · full Straftat text |
+| `[handschelle-ticker-icons]` | Wie `[handschelle-straftat-link]` mit Profilbild-Icon (oder Initial-Platzhalter) vor dem Namen |
 | `[wordcloud-name]` | Word cloud of person names (sized by entry count) — shows Name (Partei) |
 | `[wordcloud-urteil]` | Word cloud of verdicts (`urteil`) sized by frequency |
 
@@ -1370,6 +1371,12 @@ IMPORTANT BEHAVIOURS
 ---
 
 ## Release Notes
+
+### 8.8 *(2026-03-16)*
+- **`[handschelle-ticker-icons]`**: Neuer Shortcode – identisch wie `[handschelle-straftat-link]`, aber mit kleinem rundem Profilbild (28 px) vor dem Namen; kein Bild → Initiale des Namens als Platzhalter (dunkelblauer Kreis). Attribute `speed` und `page` wie bei `[handschelle-straftat-link]`.
+
+### 8.7 *(2026-03-16)*
+- **`[handschelle-straftat-link]`**: Jeder Eintrag ist jetzt als Ganzes ein klickbarer Link (`<a>`) auf `?hs_name_name=<name>`; einzelne Partei- und Name-Links entfernt zugunsten des Item-Links.
 
 ### 8.6 *(2026-03-16)*
 - **`[handschelle-result]`**: Neuer Shortcode – zeigt Eintrags-Karten für `?hs_name_name=<name>`; zeigt nichts an, wenn kein Name übergeben wurde oder keine freigegebenen Einträge vorhanden sind. Gedacht als Zielseite für Links aus `[handschelle-straftat-link]`.
