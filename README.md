@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 7.4 |
+| **Version** | 7.5 |
 | **Autor** | Bernd K.R. Dorfmüller |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
@@ -452,7 +452,7 @@ Horizontal scrolling newsticker that continuously displays the most recent appro
 | Attribute | Default | Description |
 |-----------|---------|-------------|
 | `limit`   | `30`    | Number of most-recent entries to show |
-| `speed`   | `40`    | Full-scroll duration in seconds (lower = faster) |
+| `speed`   | `normal` | Scroll speed: `slow` (60 s) / `normal` (40 s) / `fast` (20 s). Unknown values fall back to `normal`. |
 
 **Output:** A dark banner with a red "Aktuell" label, scrolling entries in the form `Name – Straftat [Status]`. The name is highlighted in gold; the status badge is shown in a muted pill. The track is duplicated internally so the animation loops seamlessly.
 
@@ -1233,8 +1233,11 @@ IMPORTANT BEHAVIOURS
 
 ## Release Notes
 
+### 7.5 *(2026-03-16)*
+- **`[handschelle-ticker]` named speed levels**: `speed` attribute now accepts `slow` / `normal` / `fast` instead of raw seconds. Mapping: slow = 60 s, normal = 40 s, fast = 20 s. Unknown values fall back to `normal`.
+
 ### 7.4 *(2026-03-16)*
-- **Newsticker `[handschelle-ticker]`**: New shortcode that renders a horizontal CSS-animated news ticker. Displays approved entries as scrolling **Name – Straftat [Status]** items. Supports `limit` (default 30) and `speed` (default 40 s) attributes; hovering pauses the animation.
+- **Newsticker `[handschelle-ticker]`**: New shortcode that renders a horizontal CSS-animated news ticker. Displays approved entries as scrolling **Name – Straftat [Status]** items. Supports `limit` (default 30) and `speed` (default `normal`) attributes; hovering pauses the animation.
 
 ### 7.3 *(2026-03-15)*
 - **Domain & E-Mail update**: Changed all references from `www.die-handschelle.de` → `www.die-handschelle.com` and `Info@die-handschelle.de` → `info@die-handschelle.com` across shortcodes, README, and all doc files; also fixed typo `info@hanschelle.com` → `info@die-handschelle.com` in the "Eintrag melden" mailto link.

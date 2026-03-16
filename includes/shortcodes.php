@@ -1304,10 +1304,11 @@ class Handschelle_Shortcodes {
         global $wpdb;
         $atts  = shortcode_atts( array(
             'limit' => 30,
-            'speed' => 40,
+            'speed' => 'normal',
         ), $atts, 'handschelle-ticker' );
-        $limit = max( 1, intval( $atts['limit'] ) );
-        $speed = max( 5, intval( $atts['speed'] ) );
+        $limit     = max( 1, intval( $atts['limit'] ) );
+        $speed_map = array( 'slow' => 60, 'normal' => 40, 'fast' => 20 );
+        $speed     = $speed_map[ $atts['speed'] ] ?? $speed_map['normal'];
         $table = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
 
         $rows = $wpdb->get_results( $wpdb->prepare(
