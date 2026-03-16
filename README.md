@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 7.5 |
+| **Version** | 7.6 |
 | **Autor** | Bernd K.R. Dorfmüller |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
@@ -214,6 +214,7 @@ All shortcodes output HTML and can be placed on any WordPress page or post.
 | `[handschelle-disclaimer]` | Copyright / contact notice |
 | `[wordcloud-name]` | Word cloud of person names (sized by entry count) — shows Name (Partei) |
 | `[wordcloud-urteil]` | Word cloud of verdicts (`urteil`) sized by frequency |
+| `[handschelle-straftat]` | News ticker: Partei (red) · Name · Straftat · Status Straftat — white background, black border |
 
 ---
 
@@ -474,6 +475,32 @@ Copyright / contact block.
 <!-- Person detail page (target for bilder links) -->
 [handschelle-name]
 ```
+
+---
+
+### `[handschelle-straftat]`
+
+Horizontally scrolling news ticker displaying all approved entries. Each item shows **Partei**, **Name**, **Straftat** and **Status Straftat** with a white background and black border.
+
+```
+[handschelle-straftat]
+[handschelle-straftat speed="60"]
+```
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `speed` | int | `40` | Scroll duration in seconds (lower = faster, minimum 5) |
+
+**Color scheme:**
+
+| Element | Color |
+|---|---|
+| Background | white |
+| Border | black |
+| Partei | red |
+| Name | black |
+| Straftat | black |
+| Status Straftat | red |
 
 ---
 
@@ -1213,6 +1240,9 @@ IMPORTANT BEHAVIOURS
 ---
 
 ## Release Notes
+
+### 7.6 *(2026-03-16)*
+- **Straftat-Ticker** `[handschelle-straftat]`: Neuer News-Ticker mit weißem Hintergrund und schwarzem Rahmen; zeigt Partei (rot), Name (schwarz), Straftat (schwarz) und Status Straftat (rot) aller freigegebenen Einträge. Geschwindigkeit über Attribut `speed` einstellbar.
 
 ### 7.5 *(2026-03-16)*
 - **News-Ticker** `[handschelle-ticker]`: Neuer Shortcode mit horizontalem CSS-Laufband; zeigt Name, Partei und Straftat aller freigegebenen Einträge. Geschwindigkeit über Attribut `speed` (Sekunden, Standard 40, Minimum 5) einstellbar.

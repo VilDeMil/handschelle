@@ -49,6 +49,7 @@ class Handschelle_Shortcodes {
         add_shortcode( 'wordcloud-name',               array( $this, 'sc_wordcloud_name' ) );
         add_shortcode( 'wordcloud-urteil',             array( $this, 'sc_wordcloud_urteil' ) );
         add_shortcode( 'handschelle-ticker',           array( $this, 'sc_ticker' ) );
+        add_shortcode( 'handschelle-straftat',         array( $this, 'sc_straftat_ticker' ) );
 
         // Submit früh verarbeiten – BEVOR Header gesendet werden
         add_action( 'init', array( $this, 'early_frontend_submit' ) );
@@ -1363,6 +1364,53 @@ class Handschelle_Shortcodes {
             <span class="hs-ticker-label">&#x1F4F0; Aktuell</span>
             <div class="hs-ticker-viewport">
                 <div class="hs-ticker-track" style="animation-duration:<?php echo esc_attr( $speed ); ?>s">
+                    <?php echo $items . $items; // duplicate for seamless loop ?>
+                </div>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /* ================================================================
+       [handschelle-straftat] – News-Ticker: Partei · Name · Straftat · Status
+       Attribute:
+         speed  – Scrollgeschwindigkeit in Sekunden (Standard: 40)
+    ================================================================ */
+    public function sc_straftat_ticker( $atts ) {
+        global $wpdb;
+        $atts = shortcode_atts( array(
+            'speed' => 40,
+        ), $atts, 'handschelle-straftat' );
+
+        $speed = max( 5, intval( $atts['speed'] ) );
+
+        $table = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
+        $rows  = $wpdb->get_results(
+            "SELECT name, partei, straftat, status_straftat
+             FROM `{$table}`
+             WHERE freigegeben = 1
+             ORDER BY id DESC"
+        );
+
+        if ( empty( $rows ) ) {
+            return '<p class="hs-st-empty">Keine Einträge vorhanden.</p>';
+        }
+
+        $items = '';
+        foreach ( $rows as $r ) {
+            $partei         = $r->partei         ? '<span class="hs-st-partei">'         . esc_html( $r->partei )                                       . '</span> ' : '';
+            $name           = '<span class="hs-st-name">'           . esc_html( $r->name )                                                              . '</span>';
+            $straftat       = $r->straftat       ? ' <span class="hs-st-straftat">'       . esc_html( wp_trim_words( $r->straftat, 12, '…' ) )          . '</span>' : '';
+            $status_straftat = $r->status_straftat ? ' <span class="hs-st-status">'       . esc_html( $r->status_straftat )                             . '</span>' : '';
+            $items .= '<span class="hs-st-item">' . $partei . $name . $straftat . $status_straftat . '</span>';
+        }
+
+        ob_start();
+        ?>
+        <div class="hs-st-wrap">
+            <div class="hs-st-viewport">
+                <div class="hs-st-track" style="animation-duration:<?php echo esc_attr( $speed ); ?>s">
                     <?php echo $items . $items; // duplicate for seamless loop ?>
                 </div>
             </div>
