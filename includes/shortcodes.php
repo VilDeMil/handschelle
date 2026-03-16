@@ -949,6 +949,7 @@ class Handschelle_Shortcodes {
                     </div>
                 <?php endif; ?>
                 <?php if ( ! empty( $e->bemerkung_person ) ) : ?><div class="hs-card-bemerkung-person"><span class="hs-label">👤 Bemerkung zur Person:</span><p><?php echo nl2br(esc_html($e->bemerkung_person)); ?></p></div><?php endif; ?>
+                <?php if ( $is_admin && ! empty( $e->private_email ) ) : ?><div class="hs-card-row"><span class="hs-label">🔒 Private E-Mail:</span> <?php echo esc_html($e->private_email); ?></div><?php endif; ?>
                 <?php if ( $e->urteil ) : ?><div class="hs-card-row"><span class="hs-label">📋 Urteil:</span> <?php echo esc_html($e->urteil); ?></div><?php endif; ?>
                 <?php if ( $e->aktenzeichen ) : ?><div class="hs-card-row"><span class="hs-label">📁 Aktenzeichen:</span> <?php echo esc_html($e->aktenzeichen); ?></div><?php endif; ?>
                 <div class="hs-card-row">
@@ -986,7 +987,11 @@ class Handschelle_Shortcodes {
             $footer_links[] = '<a href="' . esc_attr( $melden_href ) . '" class="hs-sm-link hs-melden-link" data-sm="melden" title="Eintrag melden">⚠️ Eintrag melden!</a>';
             ?>
             <div class="hs-card-footer"><?php echo implode( '', $footer_links ); ?></div>
-            <div class="hs-card-date">Eingetragen am <?php echo esc_html( date_i18n('d.m.Y', strtotime($e->datum_eintrag)) ); ?></div>
+            <div class="hs-card-date">
+                Eingetragen am <?php echo esc_html( date_i18n('d.m.Y', strtotime($e->datum_eintrag)) ); ?>
+                <?php if ( ! empty( $e->erstellt_am ) ) : ?> &middot; Erstellt: <?php echo esc_html( date_i18n('d.m.Y H:i', strtotime($e->erstellt_am)) ); ?><?php endif; ?>
+                <?php if ( ! empty( $e->geaendert_am ) && $e->geaendert_am !== $e->erstellt_am ) : ?> &middot; Aktualisiert: <?php echo esc_html( date_i18n('d.m.Y H:i', strtotime($e->geaendert_am)) ); ?><?php endif; ?>
+            </div>
 
             <?php if ( $is_logged_in ) : ?>
             <!-- ── Inline-Bearbeitungsformular (eingeklappt) ─────── -->
