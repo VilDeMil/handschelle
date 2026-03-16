@@ -534,7 +534,7 @@ class Handschelle_Shortcodes {
                     <select name="hs_name_anzeige" class="hs-select" onchange="this.form.submit()">
                         <option value="">-- Person auswählen --</option>
                         <?php foreach ( $namen as $n ) : ?>
-                            <option value="<?php echo esc_attr($n); ?>" <?php selected($selected,$n); ?>><?php echo esc_html($n); ?></option>
+                            <option value="<?php echo esc_attr($n); ?>" <?php selected($selected,$n); ?>><?php echo esc_html( hs_display_name( $n ) ); ?></option>
                         <?php endforeach; ?>
                     </select>
                     <noscript><button type="submit" class="hs-btn">Suchen</button></noscript>
@@ -691,7 +691,7 @@ class Handschelle_Shortcodes {
                             <tbody>
                             <?php foreach ( $rows as $r ) : ?>
                                 <tr>
-                                    <td class="hs-stat-partei"><?php echo esc_html( $r->name ); ?></td>
+                                    <td class="hs-stat-partei"><?php echo esc_html( hs_display_name( $r->name ) ); ?></td>
                                     <td class="hs-stat-count"><?php echo intval( $r->anzahl ); ?></td>
                                 </tr>
                             <?php endforeach; ?>
@@ -883,7 +883,7 @@ class Handschelle_Shortcodes {
                 <select name="hs_name" class="hs-select" onchange="this.form.submit()">
                     <option value="">-- Person auswählen --</option>
                     <?php foreach ( $namen as $n ) : ?>
-                        <option value="<?php echo esc_attr($n); ?>" <?php selected($selected,$n); ?>><?php echo esc_html($n); ?></option>
+                        <option value="<?php echo esc_attr($n); ?>" <?php selected($selected,$n); ?>><?php echo esc_html( hs_display_name( $n ) ); ?></option>
                     <?php endforeach; ?>
                 </select>
                 <noscript><button type="submit" class="hs-btn">Suchen</button></noscript>
@@ -892,7 +892,7 @@ class Handschelle_Shortcodes {
                 $entries = Handschelle_Database::get_all( array( 'name' => $selected ) );
             ?>
                 <div class="hs-search-results">
-                    <h4>Einträge für: <em><?php echo esc_html($selected); ?></em> <span class="hs-count">(<?php echo count($entries); ?>)</span></h4>
+                    <h4>Einträge für: <em><?php echo esc_html( hs_display_name( $selected ) ); ?></em> <span class="hs-count">(<?php echo count($entries); ?>)</span></h4>
                     <div class="hs-search-buttons">
                         <a href="<?php echo esc_url( 'https://www.google.com/search?q=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 GOOGLE</a>
                         <a href="<?php echo esc_url( 'https://www.qwant.com/?l=de&q=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 Qwant</a>
@@ -934,13 +934,13 @@ class Handschelle_Shortcodes {
             <div class="hs-card-header">
                 <div class="hs-card-img-wrap <?php echo $img_url ? '' : 'hs-card-img-placeholder'; ?>">
                     <?php if ( $img_url ) : ?>
-                    <a href="<?php echo esc_url( add_query_arg( 'hs_name', $e->name, get_permalink() ) ); ?>" title="<?php echo esc_attr( $e->name ); ?> – Details anzeigen" class="hs-card-img-link">
-                        <img src="<?php echo esc_url($img_url); ?>" alt="<?php echo esc_attr($e->name); ?>" class="hs-card-img">
+                    <a href="<?php echo esc_url( add_query_arg( 'hs_name', $e->name, get_permalink() ) ); ?>" title="<?php echo esc_attr( hs_display_name( $e->name ) ); ?> – Details anzeigen" class="hs-card-img-link">
+                        <img src="<?php echo esc_url($img_url); ?>" alt="<?php echo esc_attr( hs_display_name( $e->name ) ); ?>" class="hs-card-img">
                     </a>
                     <?php else : ?>👤<?php endif; ?>
                 </div>
                 <div class="hs-card-meta">
-                    <h3 class="hs-card-name"><?php echo esc_html($e->name); ?><?php if ( ! empty( $e->spitzname ) ) : ?> <span class="hs-card-spitzname">(„<?php echo esc_html($e->spitzname); ?>")</span><?php endif; ?></h3>
+                    <h3 class="hs-card-name"><?php echo esc_html( hs_display_name( $e->name ) ); ?><?php if ( ! empty( $e->spitzname ) ) : ?> <span class="hs-card-spitzname">(„<?php echo esc_html($e->spitzname); ?>")</span><?php endif; ?></h3>
                     <?php if ( $e->beruf ) : ?><p class="hs-card-beruf"><?php echo esc_html($e->beruf); ?></p><?php endif; ?>
                     <?php if ( $e->partei ) : ?><p class="hs-card-partei">🏛 <?php echo esc_html($e->partei); ?><?php if($e->aufgabe_partei) echo ' &ndash; '.esc_html($e->aufgabe_partei); ?></p><?php endif; ?>
                     <?php if ( $e->parlament ) : ?><p class="hs-card-parlament">📜 <?php echo esc_html($e->parlament); ?><?php if($e->parlament_name) echo ' ('.esc_html($e->parlament_name).')'; ?></p><?php endif; ?>
@@ -1192,11 +1192,11 @@ class Handschelle_Shortcodes {
                         <div class="hs-bild-item">
                             <div class="hs-bild-img-wrap">
                                 <img src="<?php echo esc_url( $img_url ); ?>"
-                                     alt="<?php echo esc_attr( $e->name ); ?>"
+                                     alt="<?php echo esc_attr( hs_display_name( $e->name ) ); ?>"
                                      class="hs-bild-img"
                                      style="max-height:300px;width:auto;height:auto;display:block;">
                             </div>
-                            <p class="hs-bild-caption"><?php echo esc_html( $e->name ); ?></p>
+                            <p class="hs-bild-caption"><?php echo esc_html( hs_display_name( $e->name ) ); ?></p>
                             <?php if ( ! empty( $e->straftat ) ) : ?>
                                 <p class="hs-bild-straftat"><?php echo esc_html( $e->straftat ); ?></p>
                             <?php endif; ?>
@@ -1305,7 +1305,7 @@ class Handschelle_Shortcodes {
                 ? $min_em + ( $r->cnt / $max ) * ( $max_em - $min_em )
                 : ( $min_em + $max_em ) / 2;
             $color = $colors[ $i % count( $colors ) ];
-            $label = esc_html( $r->name );
+            $label = esc_html( hs_display_name( $r->name ) );
             if ( ! empty( $r->partei ) ) {
                 $label .= ' <span class="hs-wc-partei">(' . esc_html( $r->partei ) . ')</span>';
             }
@@ -1313,7 +1313,7 @@ class Handschelle_Shortcodes {
                 '<span class="hs-wordcloud-item" style="font-size:%.2fem;color:%s;" title="%s (%d×)">%s</span>',
                 $size,
                 esc_attr( $color ),
-                esc_attr( $r->name ),
+                esc_attr( hs_display_name( $r->name ) ),
                 intval( $r->cnt ),
                 $label
             );
@@ -1390,7 +1390,7 @@ class Handschelle_Shortcodes {
 
         $items = '';
         foreach ( $rows as $r ) {
-            $name    = esc_html( $r->name );
+            $name    = esc_html( hs_display_name( $r->name ) );
             $partei  = $r->partei ? ' <span class="hs-ticker-partei">(' . esc_html( $r->partei ) . ')</span>' : '';
             $straftat = $r->straftat ? ' &mdash; <span class="hs-ticker-straftat">' . esc_html( $r->straftat ) . '</span>' : '';
             $items .= '<span class="hs-ticker-item"><span class="hs-ticker-name">' . $name . '</span>' . $partei . $straftat . '</span>';
@@ -1438,7 +1438,7 @@ class Handschelle_Shortcodes {
         $items = '';
         foreach ( $rows as $r ) {
             $partei         = $r->partei         ? '<span class="hs-st-partei">'         . esc_html( $r->partei )                                       . '</span> ' : '';
-            $name           = '<span class="hs-st-name">'           . esc_html( $r->name )                                                              . '</span>';
+            $name           = '<span class="hs-st-name">'           . esc_html( hs_display_name( $r->name ) )                                          . '</span>';
             $straftat       = $r->straftat       ? ' <span class="hs-st-straftat">'       . esc_html( $r->straftat )          . '</span>' : '';
             $status_straftat = $r->status_straftat ? ' <span class="hs-st-status">'       . esc_html( $r->status_straftat )                             . '</span>' : '';
             $items .= '<span class="hs-st-item">' . $partei . $name . $straftat . $status_straftat . '</span>';
@@ -1491,7 +1491,7 @@ class Handschelle_Shortcodes {
         foreach ( $rows as $r ) {
             $entry_url       = esc_url( add_query_arg( 'hs_name_name', rawurlencode( $r->name ), $base_url ) );
             $partei          = $r->partei          ? '<span class="hs-st-partei">'  . esc_html( $r->partei )          . '</span> ' : '';
-            $name            = '<span class="hs-st-name">'   . esc_html( $r->name )            . '</span>';
+            $name            = '<span class="hs-st-name">'   . esc_html( hs_display_name( $r->name ) ) . '</span>';
             $straftat        = $r->straftat        ? ' <span class="hs-st-straftat">' . esc_html( $r->straftat )        . '</span>' : '';
             $status_straftat = $r->status_straftat ? ' <span class="hs-st-status">'  . esc_html( $r->status_straftat ) . '</span>' : '';
             $items .= '<a href="' . $entry_url . '" class="hs-st-item hs-st-link">' . $partei . $name . $straftat . $status_straftat . '</a>';
@@ -1546,14 +1546,14 @@ class Handschelle_Shortcodes {
             $img_url   = handschelle_get_image_url( $r->bild );
 
             if ( $img_url ) {
-                $icon = '<img src="' . esc_url( $img_url ) . '" alt="' . esc_attr( $r->name ) . '" class="hs-ti-icon" loading="lazy">';
+                $icon = '<img src="' . esc_url( $img_url ) . '" alt="' . esc_attr( hs_display_name( $r->name ) ) . '" class="hs-ti-icon" loading="lazy">';
             } else {
-                $initial = mb_strtoupper( mb_substr( $r->name, 0, 1 ) );
+                $initial = is_user_logged_in() ? mb_strtoupper( mb_substr( $r->name, 0, 1 ) ) : '?';
                 $icon    = '<span class="hs-ti-icon hs-ti-initial">' . esc_html( $initial ) . '</span>';
             }
 
             $partei          = $r->partei          ? '<span class="hs-st-partei">'   . esc_html( $r->partei )          . '</span> ' : '';
-            $name            = '<span class="hs-st-name">'    . esc_html( $r->name )            . '</span>';
+            $name            = '<span class="hs-st-name">'    . esc_html( hs_display_name( $r->name ) ) . '</span>';
             $straftat        = $r->straftat        ? ' <span class="hs-st-straftat">' . esc_html( $r->straftat )        . '</span>' : '';
             $status_straftat = $r->status_straftat ? ' <span class="hs-st-status">'  . esc_html( $r->status_straftat ) . '</span>' : '';
 
