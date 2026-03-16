@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 9.1 |
+| **Version** | 9.2 |
 | **Autor** | Bernd K.R. Dorfmüller |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
@@ -1371,6 +1371,9 @@ IMPORTANT BEHAVIOURS
 ---
 
 ## Release Notes
+
+### 9.2 *(2026-03-16)*
+- **Website-Icon für Gäste**: Nicht eingeloggte Besucher sehen statt des Personenfotos das Website-Icon (`get_site_icon_url`). Das Foto-Bild ist nicht verlinkt – der Klick-Link zum Detailprofil entfällt für Gäste.
 
 ### 9.1 *(2026-03-16)*
 - **Karten-Footer für Gäste ausgeblendet**: Nicht eingeloggte Besucher sehen keine Links mehr in Karten (keine Quelle, keine E-Mail, keine Suchmaschinen, kein Social-Media, kein „Eintrag melden"). Der gesamte `hs-card-footer` wird nur noch gerendert, wenn `is_user_logged_in()` gilt.

@@ -936,9 +936,13 @@ class Handschelle_Shortcodes {
             <div class="hs-card-header">
                 <div class="hs-card-img-wrap <?php echo $display_img ? '' : 'hs-card-img-placeholder'; ?>">
                     <?php if ( $display_img ) : ?>
+                    <?php if ( $is_logged_in ) : ?>
                     <a href="<?php echo esc_url( add_query_arg( 'hs_name', $e->name, get_permalink() ) ); ?>" title="<?php echo esc_attr( hs_display_name( $e->name ) ); ?> – Details anzeigen" class="hs-card-img-link">
-                        <img src="<?php echo esc_url( $display_img ); ?>" alt="<?php echo esc_attr( hs_display_name( $e->name ) ); ?>" class="hs-card-img<?php echo $is_logged_in ? '' : ' hs-card-img-siteicon'; ?>">
+                        <img src="<?php echo esc_url( $display_img ); ?>" alt="<?php echo esc_attr( hs_display_name( $e->name ) ); ?>" class="hs-card-img">
                     </a>
+                    <?php else : ?>
+                        <img src="<?php echo esc_url( $display_img ); ?>" alt="Website-Icon" class="hs-card-img hs-card-img-siteicon">
+                    <?php endif; ?>
                     <?php else : ?>👤<?php endif; ?>
                 </div>
                 <div class="hs-card-meta">
