@@ -991,7 +991,7 @@ class Handschelle_Shortcodes {
                 </div>
                 <?php if ( $e->bemerkung ) : ?><div class="hs-card-bemerkung"><span class="hs-label">💬 Bemerkung:</span><p><?php echo nl2br(esc_html($e->bemerkung)); ?></p></div><?php endif; ?>
             </div>
-            <?php
+            <?php if ( $is_logged_in ) :
             $footer_links = array();
             // Quelle
             if ( ! empty( $e->link_quelle ) ) {
@@ -1020,13 +1020,14 @@ class Handschelle_Shortcodes {
             $footer_links[] = '<a href="' . esc_attr( $melden_href ) . '" class="hs-sm-link hs-melden-link" data-sm="melden" title="Eintrag melden">⚠️ Eintrag melden!</a>';
             ?>
             <div class="hs-card-footer"><?php echo implode( '', $footer_links ); ?></div>
+            <?php endif; ?>
             <div class="hs-card-date">
                 Eingetragen am <?php echo esc_html( date_i18n('d.m.Y', strtotime($e->datum_eintrag)) ); ?>
                 <?php if ( ! empty( $e->erstellt_am ) ) : ?> &middot; Erstellt: <?php echo esc_html( date_i18n('d.m.Y H:i', strtotime($e->erstellt_am)) ); ?><?php endif; ?>
                 <?php if ( ! empty( $e->geaendert_am ) && $e->geaendert_am !== $e->erstellt_am ) : ?> &middot; Aktualisiert: <?php echo esc_html( date_i18n('d.m.Y H:i', strtotime($e->geaendert_am)) ); ?><?php endif; ?>
             </div>
 
-            <?php if ( $is_logged_in ) : ?>
+            <?php if ( $is_author ) : ?>
             <!-- ── Inline-Bearbeitungsformular (eingeklappt) ─────── -->
             <div class="hs-card-edit-panel" id="hs-edit-panel-<?php echo intval($e->id); ?>" style="display:none;">
                 <div class="hs-card-edit-header">
