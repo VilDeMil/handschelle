@@ -1,5 +1,8 @@
 ## Release Notes
 
+### 8.6 *(2026-03-16)*
+- **`[handschelle-result]`**: Neuer Shortcode – zeigt Eintrags-Karten für `?hs_name_name=<name>`; zeigt nichts an, wenn kein Name übergeben wurde oder keine freigegebenen Einträge vorhanden sind. Gedacht als Zielseite für Links aus `[handschelle-straftat-link]`.
+
 ### 8.5 *(2026-03-16)*
 - **Straftat-Link-Ticker** `[handschelle-straftat-link]`: Neuer Shortcode – identisches Layout wie `[handschelle-straftat]`, aber Name und Partei sind klickbare Links; Name verlinkt auf `?hs_name_name=<name>`, Partei auf `?hs_name_partei=<partei>`; optionales Attribut `page` für Ziel-URL (Standard: aktuelle Seite).
 - **CSS**: `.hs-st-link` – dezenter Unterstrich-Stil (dotted) für Ticker-Links; Hover-Effekt (Opacity).

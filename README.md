@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 8.5 |
+| **Version** | 8.6 |
 | **Autor** | Bernd K.R. Dorfmüller |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
@@ -48,6 +48,7 @@
   - [`[handschelle-asc-link]`](#handschelle-asc-link)
   - [`[handschelle-disclaimer]`](#handschelle-disclaimer)
   - [`[handschelle-straftat-link]`](#handschelle-straftat-link)
+  - [`[handschelle-result]`](#handschelle-result)
   - [Typical Page Setup](#typical-page-setup)
 - [Fields / Database Schema](#fields--database-schema)
   - [Core Fields](#core-fields)
@@ -220,6 +221,7 @@ All shortcodes output HTML and can be placed on any WordPress page or post.
 | `[handschelle-name-anzeige]` | Name dropdown – shows cards for selected person |
 | `[handschelle-name-partei]` | Party dropdown – shows cards for selected party |
 | `[handschelle-partei]` | Party search dropdown only |
+| `[handschelle-result]` | Zeigt Eintrags-Karten für `?hs_name_name=<name>`; zeigt nichts, wenn kein Name bekannt |
 | `[handschelle-register]` | Registrierungsformular: Benutzername, Vorname, Nachname, Spitzname, E-Mail, Webseite, Passwort; neues Konto erhält Status `pending` – Login erst nach Admin-Freischaltung |
 | `[handschelle-statistik]` | Statistics table with bar chart per party (party names are links) |
 | `[handschelle-statistik-name]` | Table: person name / entry count |
@@ -518,6 +520,34 @@ Horizontally scrolling news ticker displaying all approved entries. Each item sh
 | Name | black |
 | Straftat | black |
 | Status Straftat | red |
+
+---
+
+### `[handschelle-result]`
+
+Zeigt Eintrags-Karten für die über den URL-Parameter `hs_name_name` übergebene Person. Zeigt **nichts** an, wenn kein Name übergeben wurde oder keine freigegebenen Einträge vorhanden sind.
+
+Gedacht als Zielseite für Links aus `[handschelle-straftat-link]`.
+
+```
+[handschelle-result]
+```
+
+**Kein Attribut erforderlich.** Der Name kommt ausschließlich aus dem URL-Parameter.
+
+| URL-Parameter | Quelle | Beschreibung |
+|---|---|---|
+| `?hs_name_name=<name>` | `[handschelle-straftat-link]` | Name der anzuzeigenden Person |
+
+**Typische Kombination:**
+
+```
+<!-- Ticker-Seite -->
+[handschelle-straftat-link page="/person/"]
+
+<!-- Zielseite /person/ -->
+[handschelle-result]
+```
 
 ---
 
@@ -1340,6 +1370,9 @@ IMPORTANT BEHAVIOURS
 ---
 
 ## Release Notes
+
+### 8.6 *(2026-03-16)*
+- **`[handschelle-result]`**: Neuer Shortcode – zeigt Eintrags-Karten für `?hs_name_name=<name>`; zeigt nichts an, wenn kein Name übergeben wurde oder keine freigegebenen Einträge vorhanden sind. Gedacht als Zielseite für Links aus `[handschelle-straftat-link]`.
 
 ### 8.5 *(2026-03-16)*
 - **Straftat-Link-Ticker** `[handschelle-straftat-link]`: Neuer Shortcode – identisches Layout wie `[handschelle-straftat]`, aber Name und Partei sind klickbare Links; Name verlinkt auf `?hs_name_name=<name>`, Partei auf `?hs_name_partei=<partei>`; optionales Attribut `page` für Ziel-URL (Standard: aktuelle Seite).
