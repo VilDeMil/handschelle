@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 8.8 |
+| **Version** | 8.9 |
 | **Autor** | Bernd K.R. Dorfmüller |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
@@ -1371,6 +1371,9 @@ IMPORTANT BEHAVIOURS
 ---
 
 ## Release Notes
+
+### 8.9 *(2026-03-16)*
+- **Name-Datenschutz (global)**: Neue Hilfsfunktion `hs_display_name()` in `helpers.php`. Nicht eingeloggte Besucher sehen statt des Namens `████████`. Gilt für alle Shortcodes: Karten (`render_card`), alle Ticker-Varianten, Wordcloud, Statistik-Tabelle, Bilder-Galerie und Namens-Dropdowns.
 
 ### 8.8 *(2026-03-16)*
 - **`[handschelle-ticker-icons]`**: Neuer Shortcode – identisch wie `[handschelle-straftat-link]`, aber mit kleinem rundem Profilbild (28 px) vor dem Namen; kein Bild → Initiale des Namens als Platzhalter (dunkelblauer Kreis). Attribute `speed` und `page` wie bei `[handschelle-straftat-link]`.
