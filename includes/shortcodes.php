@@ -48,6 +48,7 @@ class Handschelle_Shortcodes {
         add_shortcode( 'handschelle-asc-link',         array( $this, 'sc_asc_link' ) );
         add_shortcode( 'wordcloud-name',               array( $this, 'sc_wordcloud_name' ) );
         add_shortcode( 'wordcloud-urteil',             array( $this, 'sc_wordcloud_urteil' ) );
+        add_shortcode( 'handschelle-ticker',           array( $this, 'sc_ticker' ) );
 
         // Submit früh verarbeiten – BEVOR Header gesendet werden
         add_action( 'init', array( $this, 'early_frontend_submit' ) );
@@ -1293,6 +1294,56 @@ class Handschelle_Shortcodes {
             );
         }
         echo '</div>';
+        return ob_get_clean();
+    }
+
+    /* ================================================================
+       [handschelle-ticker] – Laufender Newsticker mit Namen
+    ================================================================ */
+    public function sc_ticker( $atts ) {
+        global $wpdb;
+        $atts  = shortcode_atts( array(
+            'limit' => 30,
+            'speed' => 40,
+        ), $atts, 'handschelle-ticker' );
+        $limit = max( 1, intval( $atts['limit'] ) );
+        $speed = max( 5, intval( $atts['speed'] ) );
+        $table = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
+
+        $rows = $wpdb->get_results( $wpdb->prepare(
+            "SELECT name, partei, straftat, status_straftat
+             FROM `{$table}`
+             WHERE freigegeben = 1
+             ORDER BY erstellt_am DESC
+             LIMIT %d",
+            $limit
+        ) );
+
+        if ( empty( $rows ) ) {
+            return '<div class="hs-ticker-wrap"><span class="hs-ticker-empty">Keine Einträge vorhanden.</span></div>';
+        }
+
+        // Build items – duplicate for seamless loop
+        $items_html = '';
+        foreach ( $rows as $r ) {
+            $badge = esc_html( $r->status_straftat );
+            $items_html .= sprintf(
+                '<span class="hs-ticker-item"><strong class="hs-ticker-name">%s</strong><span class="hs-ticker-sep">–</span><span class="hs-ticker-straftat">%s</span>%s</span>',
+                esc_html( $r->name ),
+                esc_html( $r->straftat ),
+                $badge ? sprintf( '<span class="hs-ticker-badge">%s</span>', $badge ) : ''
+            );
+        }
+
+        ob_start();
+        ?>
+        <div class="hs-ticker-wrap" role="marquee" aria-live="off">
+            <span class="hs-ticker-label">&#x1F4F0;&nbsp;Aktuell</span>
+            <div class="hs-ticker-track" style="animation-duration:<?php echo esc_attr( $speed ); ?>s">
+                <?php echo $items_html . $items_html; // duplicate for seamless loop ?>
+            </div>
+        </div>
+        <?php
         return ob_get_clean();
     }
 }

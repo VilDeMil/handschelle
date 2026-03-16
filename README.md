@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 7.3 |
+| **Version** | 7.4 |
 | **Autor** | Bernd K.R. Dorfmüller |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
@@ -214,6 +214,7 @@ All shortcodes output HTML and can be placed on any WordPress page or post.
 | `[handschelle-disclaimer]` | Copyright / contact notice |
 | `[wordcloud-name]` | Word cloud of person names (sized by entry count) — shows Name (Partei) |
 | `[wordcloud-urteil]` | Word cloud of verdicts (`urteil`) sized by frequency |
+| `[handschelle-ticker]` | Horizontal scrolling newsticker showing Name – Crime for approved entries |
 
 ---
 
@@ -436,6 +437,24 @@ Same as `[handschelle-asc]` but with two enhancements:
 ```
 
 **Example output:** `AfD (12) · CDU (8) · FDP (3)` — each party name is a link; hovering shows the persons
+
+---
+
+### `[handschelle-ticker]`
+
+Horizontal scrolling newsticker that continuously displays the most recent approved entries as **Name – Crime** pairs. Hovering pauses the animation.
+
+```
+[handschelle-ticker]
+[handschelle-ticker limit="20" speed="30"]
+```
+
+| Attribute | Default | Description |
+|-----------|---------|-------------|
+| `limit`   | `30`    | Number of most-recent entries to show |
+| `speed`   | `40`    | Full-scroll duration in seconds (lower = faster) |
+
+**Output:** A dark banner with a red "Aktuell" label, scrolling entries in the form `Name – Straftat [Status]`. The name is highlighted in gold; the status badge is shown in a muted pill. The track is duplicated internally so the animation loops seamlessly.
 
 ---
 
@@ -1213,6 +1232,9 @@ IMPORTANT BEHAVIOURS
 ---
 
 ## Release Notes
+
+### 7.4 *(2026-03-16)*
+- **Newsticker `[handschelle-ticker]`**: New shortcode that renders a horizontal CSS-animated news ticker. Displays approved entries as scrolling **Name – Straftat [Status]** items. Supports `limit` (default 30) and `speed` (default 40 s) attributes; hovering pauses the animation.
 
 ### 7.3 *(2026-03-15)*
 - **Domain & E-Mail update**: Changed all references from `www.die-handschelle.de` → `www.die-handschelle.com` and `Info@die-handschelle.de` → `info@die-handschelle.com` across shortcodes, README, and all doc files; also fixed typo `info@hanschelle.com` → `info@die-handschelle.com` in the "Eintrag melden" mailto link.
