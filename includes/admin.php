@@ -277,7 +277,7 @@ class Handschelle_Admin {
         $nonce       = wp_create_nonce( 'handschelle_admin_action' );
         ?>
         <div class="wrap hs-wrap">
-            <h1>🔒 Die-Handschelle <span class="hs-version">7.3</span></h1>
+            <h1>🔒 Die-Handschelle <span class="hs-version"><?php echo esc_html( HANDSCHELLE_VERSION ); ?></span></h1>
             <div class="hs-stats-bar">
                 <span>Gesamt: <strong><?php echo $total; ?></strong></span>
                 <span>Ausstehend: <strong class="<?php echo $pending ? 'hs-warn' : ''; ?>"><?php echo $pending; ?></strong></span>
@@ -352,7 +352,12 @@ class Handschelle_Admin {
                                     <div style="width:56px;height:56px;background:#eee;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;">👤</div>
                                 <?php endif; ?>
                             </td>
-                            <td><strong><?php echo esc_html( $e->name ); ?></strong><br><small><?php echo esc_html( $e->beruf ); ?></small></td>
+                            <td>
+                                <strong><?php echo esc_html( $e->name ); ?></strong>
+                                <?php if ( ! empty( $e->spitzname ) ) : ?> <small style="color:#888;">(„<?php echo esc_html( $e->spitzname ); ?>")</small><?php endif; ?>
+                                <br><small><?php echo esc_html( $e->beruf ); ?></small>
+                                <?php if ( ! empty( $e->oeffentliche_email ) ) : ?><br><small>✉ <?php echo esc_html( $e->oeffentliche_email ); ?></small><?php endif; ?>
+                            </td>
                             <td><?php $age = handschelle_calc_age( $e->geburtsdatum ?? '' ); echo $age !== null ? $age : '—'; ?></td>
                             <td><?php echo esc_html( $e->partei ); ?><br><small><?php echo esc_html( $e->aufgabe_partei ); ?></small></td>
                             <td><?php echo esc_html( mb_substr( $e->straftat, 0, 80 ) ) . ( mb_strlen( $e->straftat ) > 80 ? '…' : '' ); ?></td>
