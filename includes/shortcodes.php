@@ -949,6 +949,7 @@ class Handschelle_Shortcodes {
                     </div>
                 <?php endif; ?>
                 <?php if ( ! empty( $e->bemerkung_person ) ) : ?><div class="hs-card-bemerkung-person"><span class="hs-label">👤 Bemerkung zur Person:</span><p><?php echo nl2br(esc_html($e->bemerkung_person)); ?></p></div><?php endif; ?>
+                <?php if ( $is_admin && ! empty( $e->private_email ) ) : ?><div class="hs-card-row"><span class="hs-label">🔒 Private E-Mail:</span> <?php echo esc_html($e->private_email); ?></div><?php endif; ?>
                 <?php if ( $e->urteil ) : ?><div class="hs-card-row"><span class="hs-label">📋 Urteil:</span> <?php echo esc_html($e->urteil); ?></div><?php endif; ?>
                 <?php if ( $e->aktenzeichen ) : ?><div class="hs-card-row"><span class="hs-label">📁 Aktenzeichen:</span> <?php echo esc_html($e->aktenzeichen); ?></div><?php endif; ?>
                 <div class="hs-card-row">
@@ -986,7 +987,11 @@ class Handschelle_Shortcodes {
             $footer_links[] = '<a href="' . esc_attr( $melden_href ) . '" class="hs-sm-link hs-melden-link" data-sm="melden" title="Eintrag melden">⚠️ Eintrag melden!</a>';
             ?>
             <div class="hs-card-footer"><?php echo implode( '', $footer_links ); ?></div>
-            <div class="hs-card-date">Eingetragen am <?php echo esc_html( date_i18n('d.m.Y', strtotime($e->datum_eintrag)) ); ?></div>
+            <div class="hs-card-date">
+                Eingetragen am <?php echo esc_html( date_i18n('d.m.Y', strtotime($e->datum_eintrag)) ); ?>
+                <?php if ( ! empty( $e->erstellt_am ) ) : ?> &middot; Erstellt: <?php echo esc_html( date_i18n('d.m.Y H:i', strtotime($e->erstellt_am)) ); ?><?php endif; ?>
+                <?php if ( ! empty( $e->geaendert_am ) && $e->geaendert_am !== $e->erstellt_am ) : ?> &middot; Aktualisiert: <?php echo esc_html( date_i18n('d.m.Y H:i', strtotime($e->geaendert_am)) ); ?><?php endif; ?>
+            </div>
 
             <?php if ( $is_logged_in ) : ?>
             <!-- ── Inline-Bearbeitungsformular (eingeklappt) ─────── -->
@@ -1588,8 +1593,9 @@ class Handschelle_Shortcodes {
         if ( is_wp_error( $user_id ) ) {
             wp_safe_redirect( add_query_arg( 'hs_reg_error', 'failed', $return_url ) );
         } else {
-            wp_new_user_notification( $user_id, null, 'both' );
-            wp_safe_redirect( add_query_arg( 'hs_reg_success', '1', $return_url ) );
+            update_user_meta( $user_id, 'hs_user_status', 'pending' );
+            wp_new_user_notification( $user_id, null, 'admin' ); // notify admin only; user cannot log in yet
+            wp_safe_redirect( add_query_arg( 'hs_reg_pending', '1', $return_url ) );
         }
         exit;
     }
@@ -1621,7 +1627,7 @@ class Handschelle_Shortcodes {
             </div>
             <?php
         } else {
-            $reg_success = ! empty( $_GET['hs_reg_success'] );
+            $reg_pending = ! empty( $_GET['hs_reg_pending'] );
             $reg_error   = sanitize_key( $_GET['hs_reg_error'] ?? '' );
 
             $error_messages = array(
@@ -1636,9 +1642,9 @@ class Handschelle_Shortcodes {
             <div class="hs-register-wrap">
                 <h2 class="hs-section-title">📋 Konto erstellen</h2>
 
-                <?php if ( $reg_success ) : ?>
+                <?php if ( $reg_pending ) : ?>
                     <div class="hs-alert hs-alert-success">
-                        ✅ Registrierung erfolgreich! Du kannst dich jetzt anmelden.
+                        ✅ Konto erstellt! Deine Registrierung wird geprüft und vom Administrator freigeschaltet. Du erhältst eine Benachrichtigung.
                     </div>
                 <?php elseif ( $reg_error && isset( $error_messages[ $reg_error ] ) ) : ?>
                     <div class="hs-alert hs-alert-error">
@@ -1646,7 +1652,7 @@ class Handschelle_Shortcodes {
                     </div>
                 <?php endif; ?>
 
-                <?php if ( ! $reg_success ) : ?>
+                <?php if ( ! $reg_pending ) : ?>
                 <form method="post" class="hs-register-form" autocomplete="on">
                     <?php wp_nonce_field( 'hs_register', 'hs_register_nonce' ); ?>
                     <input type="hidden" name="hs_register_submit"   value="1">
