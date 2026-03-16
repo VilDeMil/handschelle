@@ -147,9 +147,8 @@ class Handschelle_Shortcodes {
                         <h3>⚖ Details zur Straftat</h3>
                         <div class="hs-form-grid">
                             <div class="hs-field hs-field-full">
-                                <label>Straftat <span>(max. 200 Zeichen)</span></label>
-                                <textarea name="straftat" maxlength="200" rows="3" placeholder="Kurze Beschreibung der Straftat …" required></textarea>
-                                <small class="hs-char-counter" data-target="straftat">0 / 200 Zeichen</small>
+                                <label>Straftat</label>
+                                <textarea name="straftat" rows="3" placeholder="Kurze Beschreibung der Straftat …" required></textarea>
                             </div>
                             <div class="hs-field"><label>Urteil <span>(max. 200 Zeichen)</span></label><input type="text" name="urteil" maxlength="200" placeholder="z.B. 2 Jahre auf Bewährung"></div>
                             <div class="hs-field"><label>Link zur Quelle</label><input type="url" name="link_quelle" placeholder="https://…"></div>
@@ -1075,9 +1074,8 @@ class Handschelle_Shortcodes {
                         <!-- Straftat -->
                         <div class="hs-edit-section-title">⚖ Straftat</div>
                         <div class="hs-field hs-field-full">
-                            <label>Straftat <span>(max. 200 Zeichen)</span></label>
-                            <textarea name="straftat" maxlength="200" rows="3" required><?php echo esc_textarea($e->straftat); ?></textarea>
-                            <small class="hs-char-counter" data-target="straftat">0 / 200 Zeichen</small>
+                            <label>Straftat</label>
+                            <textarea name="straftat" rows="3" required><?php echo esc_textarea($e->straftat); ?></textarea>
                         </div>
                         <div class="hs-field"><label>Urteil <span>(max. 200)</span></label><input type="text" name="urteil" maxlength="200" value="<?php echo esc_attr($e->urteil); ?>"></div>
                         <div class="hs-field"><label>Link zur Quelle</label><input type="url" name="link_quelle" value="<?php echo esc_attr($e->link_quelle); ?>"></div>
@@ -1358,7 +1356,7 @@ class Handschelle_Shortcodes {
         foreach ( $rows as $r ) {
             $name    = esc_html( $r->name );
             $partei  = $r->partei ? ' <span class="hs-ticker-partei">(' . esc_html( $r->partei ) . ')</span>' : '';
-            $straftat = $r->straftat ? ' &mdash; <span class="hs-ticker-straftat">' . esc_html( wp_trim_words( $r->straftat, 12, '…' ) ) . '</span>' : '';
+            $straftat = $r->straftat ? ' &mdash; <span class="hs-ticker-straftat">' . esc_html( $r->straftat ) . '</span>' : '';
             $items .= '<span class="hs-ticker-item"><span class="hs-ticker-name">' . $name . '</span>' . $partei . $straftat . '</span>';
         }
 
@@ -1405,7 +1403,7 @@ class Handschelle_Shortcodes {
         foreach ( $rows as $r ) {
             $partei         = $r->partei         ? '<span class="hs-st-partei">'         . esc_html( $r->partei )                                       . '</span> ' : '';
             $name           = '<span class="hs-st-name">'           . esc_html( $r->name )                                                              . '</span>';
-            $straftat       = $r->straftat       ? ' <span class="hs-st-straftat">'       . esc_html( wp_trim_words( $r->straftat, 12, '…' ) )          . '</span>' : '';
+            $straftat       = $r->straftat       ? ' <span class="hs-st-straftat">'       . esc_html( $r->straftat )          . '</span>' : '';
             $status_straftat = $r->status_straftat ? ' <span class="hs-st-status">'       . esc_html( $r->status_straftat )                             . '</span>' : '';
             $items .= '<span class="hs-st-item">' . $partei . $name . $straftat . $status_straftat . '</span>';
         }
