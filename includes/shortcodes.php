@@ -52,6 +52,7 @@ class Handschelle_Shortcodes {
         add_shortcode( 'handschelle-straftat',         array( $this, 'sc_straftat_ticker' ) );
         add_shortcode( 'handschelle-straftat-link',    array( $this, 'sc_straftat_ticker_link' ) );
         add_shortcode( 'handschelle-result',           array( $this, 'sc_result' ) );
+        add_shortcode( 'handschelle-ticker-icons',     array( $this, 'sc_ticker_icons' ) );
         add_shortcode( 'handschelle-login',            array( $this, 'sc_login' ) );
         add_shortcode( 'handschelle-register',         array( $this, 'sc_register' ) );
 
@@ -1494,6 +1495,71 @@ class Handschelle_Shortcodes {
             $straftat        = $r->straftat        ? ' <span class="hs-st-straftat">' . esc_html( $r->straftat )        . '</span>' : '';
             $status_straftat = $r->status_straftat ? ' <span class="hs-st-status">'  . esc_html( $r->status_straftat ) . '</span>' : '';
             $items .= '<a href="' . $entry_url . '" class="hs-st-item hs-st-link">' . $partei . $name . $straftat . $status_straftat . '</a>';
+        }
+
+        ob_start();
+        ?>
+        <div class="hs-st-wrap">
+            <div class="hs-st-viewport">
+                <div class="hs-st-track" style="animation-duration:<?php echo esc_attr( $speed ); ?>s">
+                    <?php echo $items . $items; // duplicate for seamless loop ?>
+                </div>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /* ================================================================
+       [handschelle-ticker-icons] – Ticker mit Profilbild-Icon vor dem Namen
+       Wie [handschelle-straftat-link], aber mit kleinem Bild vor dem Namen.
+       Kein Bild: Initiale des Namens als Platzhalter.
+       Attribute:
+         speed  – Scrollgeschwindigkeit in Sekunden (Standard: 40)
+         page   – Ziel-URL für die Links (Standard: aktuelle Seite)
+    ================================================================ */
+    public function sc_ticker_icons( $atts ) {
+        global $wpdb;
+        $atts = shortcode_atts( array(
+            'speed' => 40,
+            'page'  => '',
+        ), $atts, 'handschelle-ticker-icons' );
+
+        $speed    = max( 5, intval( $atts['speed'] ) );
+        $base_url = $atts['page'] ? esc_url( $atts['page'] ) : esc_url( get_permalink() );
+
+        $table = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
+        $rows  = $wpdb->get_results(
+            "SELECT name, partei, straftat, status_straftat, bild
+             FROM `{$table}`
+             WHERE freigegeben = 1
+             ORDER BY id DESC"
+        );
+
+        if ( empty( $rows ) ) {
+            return '<p class="hs-st-empty">Keine Einträge vorhanden.</p>';
+        }
+
+        $items = '';
+        foreach ( $rows as $r ) {
+            $entry_url = esc_url( add_query_arg( 'hs_name_name', rawurlencode( $r->name ), $base_url ) );
+            $img_url   = handschelle_get_image_url( $r->bild );
+
+            if ( $img_url ) {
+                $icon = '<img src="' . esc_url( $img_url ) . '" alt="' . esc_attr( $r->name ) . '" class="hs-ti-icon" loading="lazy">';
+            } else {
+                $initial = mb_strtoupper( mb_substr( $r->name, 0, 1 ) );
+                $icon    = '<span class="hs-ti-icon hs-ti-initial">' . esc_html( $initial ) . '</span>';
+            }
+
+            $partei          = $r->partei          ? '<span class="hs-st-partei">'   . esc_html( $r->partei )          . '</span> ' : '';
+            $name            = '<span class="hs-st-name">'    . esc_html( $r->name )            . '</span>';
+            $straftat        = $r->straftat        ? ' <span class="hs-st-straftat">' . esc_html( $r->straftat )        . '</span>' : '';
+            $status_straftat = $r->status_straftat ? ' <span class="hs-st-status">'  . esc_html( $r->status_straftat ) . '</span>' : '';
+
+            $items .= '<a href="' . $entry_url . '" class="hs-st-item hs-st-link">'
+                    . $icon . $partei . $name . $straftat . $status_straftat
+                    . '</a>';
         }
 
         ob_start();

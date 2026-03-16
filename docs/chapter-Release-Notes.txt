@@ -1,5 +1,8 @@
 ## Release Notes
 
+### 8.8 *(2026-03-16)*
+- **`[handschelle-ticker-icons]`**: Neuer Shortcode – identisch wie `[handschelle-straftat-link]`, aber mit kleinem rundem Profilbild (28 px) vor dem Namen; kein Bild → Initiale des Namens als Platzhalter (dunkelblauer Kreis). Attribute `speed` und `page` wie bei `[handschelle-straftat-link]`.
+
 ### 8.7 *(2026-03-16)*
 - **`[handschelle-straftat-link]`**: Jeder Eintrag ist jetzt als Ganzes ein klickbarer Link (`<a>`) auf `?hs_name_name=<name>`; einzelne Partei- und Name-Links entfernt zugunsten des Item-Links.
 
