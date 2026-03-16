@@ -723,7 +723,7 @@ Neue Konten erhalten den Status **`pending`** und können sich nicht einloggen, 
 Defined in `die-handschelle.php`:
 
 ```php
-HANDSCHELLE_VERSION     // '8.0'
+HANDSCHELLE_VERSION     // '8.5'
 HANDSCHELLE_PLUGIN_DIR  // Absolute path to plugin directory
 HANDSCHELLE_PLUGIN_URL  // URL to plugin directory
 HANDSCHELLE_DB_TABLE    // Table name suffix, e.g. 'die_handschelle'
@@ -936,6 +936,7 @@ File: `assets/css/handschelle.css`
 | Bilder | `handschelle-bilder` | Image list, ZIP export & ZIP import |
 | Backup & Restore | `handschelle-backup` | Full backup (CSV + images ZIP) and restore |
 | Datenbank | `handschelle-db` | Database management (truncate / recreate / drop) |
+| 👥 Benutzer | `handschelle-users` | User management — list all users, approve (pending→active), deactivate, delete; pending count badge |
 
 ---
 
@@ -981,8 +982,8 @@ die-handschelle/
 │   ├── image-handler.php         ← Handschelle_Image_Handler (upload + GD resize 450px)
 │   ├── admin.php                 ← Handschelle_Admin class (admin menus, forms,
 │   │                                CSV import/export, backup/restore)
-│   └── shortcodes.php            ← Handschelle_Shortcodes class (all 19 shortcodes,
-│                                    PRG submit handler, inline SVG icons, 24 shortcodes)
+│   └── shortcodes.php            ← Handschelle_Shortcodes class (25 shortcodes,
+│                                    PRG submit handlers, inline SVG icons)
 └── assets/
     ├── css/handschelle.css       ← Full stylesheet with CSS custom properties
     └── js/handschelle.js         ← Frontend and admin JS
