@@ -115,7 +115,7 @@ function handschelle_sanitize_entry( $post ) {
         'parlament'       => sanitize_text_field( $post['parlament']       ?? '' ),
         'parlament_name'  => substr( sanitize_text_field( $post['parlament_name'] ?? '' ), 0, 50 ),
         'status_aktiv'    => ! empty( $post['status_aktiv'] ) ? intval( $post['status_aktiv'] ) : 0,
-        'straftat'        => substr( sanitize_textarea_field( $post['straftat']   ?? '' ), 0, 200 ),
+        'straftat'        => sanitize_textarea_field( $post['straftat']   ?? '' ),
         'urteil'          => substr( sanitize_text_field( $post['urteil']         ?? '' ), 0, 200 ),
         'link_quelle'     => esc_url_raw( $post['link_quelle']     ?? '' ),
         'aktenzeichen'    => substr( sanitize_text_field( $post['aktenzeichen']   ?? '' ), 0, 50 ),
