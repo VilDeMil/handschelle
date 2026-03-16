@@ -36,7 +36,7 @@ Person:    name (VARCHAR 50, required), beruf (50), geburtsort (100),
            partei (50), aufgabe_partei (100),
            parlament (VARCHAR 100 – see list below),
            parlament_name (50), status_aktiv (TINYINT, default 1)
-Crime:     straftat (VARCHAR 200, required),
+Crime:     straftat (TEXT, required, no length limit),
            status_straftat (VARCHAR 50: "Ermittlungen laufen" |
              "Verurteilt" | "Eingestellt"),
            urteil (50), aktenzeichen (50),
@@ -65,6 +65,7 @@ SHORTCODES  (all in Handschelle_Shortcodes class)
 [handschelle]
   Public submission form. Saves with freigegeben=0.
   Fields: all person + crime + social fields, photo upload.
+  straftat field has no character limit.
   Submit handler runs on 'init' hook (PRG pattern).
   Nonce verified; on failure show visible error, no silent redirect.
 
@@ -93,11 +94,31 @@ SHORTCODES  (all in Handschelle_Shortcodes class)
 [handschelle-name-partei]    Party dropdown + cards for selected party
 
 [handschelle-bilder link=""]
-  Gallery of entries with photos. Plain <img> tags, no links, no hover.
-  Name + Straftat as captions. max-height 300px, width auto.
+  Gallery of entries with photos. Name + Straftat as captions.
+  Straftat text color: black. max-height 300px, width auto.
+  Clickable images + hover tooltip with all person data.
 
 [handschelle-asc]
   Horizontal centred list: Partei (Anzahl), A→Z, small font.
+
+[handschelle-asc-link]
+  Same as [handschelle-asc] but party names are clickable links (?hs_partei=)
+  and a hover tooltip lists all person names per party.
+
+[handschelle-ticker speed="30"]
+  Scrolling news ticker: Name · Party · full Straftat text. Black text.
+
+[handschelle-straftat speed="30"]
+  Scrolling straftat ticker: Party · Name · full crime text · status badge.
+  Straftat text is shown in full (not truncated), color black.
+
+[handschelle-login]
+  Login form with username/password, "stay logged in" checkbox, forgot-password
+  link, and optional redirect attribute.
+
+[handschelle-register]
+  Registration form (username, email, password + confirmation).
+  Respects WP "Anyone can register" setting. Sends emails to user + admin.
 
 [handschelle-disclaimer]
   Copyright block: Die-Handschelle © 2026, tagline, email, website,
