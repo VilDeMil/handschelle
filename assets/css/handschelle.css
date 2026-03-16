@@ -505,3 +505,63 @@
 .hs-wordcloud-item:hover { opacity:.7; transform:scale(1.1); }
 .hs-wc-partei { font-size:.72em; font-weight:400; opacity:.65; }
 .hs-wordcloud-empty { color:var(--hs-muted); font-style:italic; }
+
+/* ================================================================
+   News-Ticker  [handschelle-ticker]
+================================================================ */
+.hs-ticker-wrap {
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    background: var(--hs-primary);
+    color: #fff;
+    border-radius: var(--hs-radius);
+    font-family: var(--hs-font);
+    font-size: .92rem;
+    box-shadow: var(--hs-shadow);
+    width: 100%;
+}
+.hs-ticker-label {
+    flex-shrink: 0;
+    background: var(--hs-accent);
+    color: #fff;
+    font-weight: 700;
+    font-size: .82rem;
+    letter-spacing: .04em;
+    padding: .55rem .9rem;
+    white-space: nowrap;
+}
+.hs-ticker-viewport {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+}
+.hs-ticker-track {
+    display: inline-flex;
+    white-space: nowrap;
+    animation: hs-ticker-scroll linear infinite;
+    will-change: transform;
+}
+@keyframes hs-ticker-scroll {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+.hs-ticker-item {
+    display: inline-block;
+    padding: .55rem 2.2rem;
+    border-right: 1px solid rgba(255,255,255,.12);
+}
+.hs-ticker-name {
+    font-weight: 700;
+    color: #fff;
+}
+.hs-ticker-partei {
+    font-size: .85em;
+    opacity: .75;
+    margin-left: .2em;
+}
+.hs-ticker-straftat {
+    font-size: .87em;
+    color: var(--hs-gold);
+}
+.hs-ticker-empty { color: var(--hs-muted); font-style: italic; }
