@@ -904,7 +904,7 @@ class Handschelle_Shortcodes {
                     <?php else : ?>👤<?php endif; ?>
                 </div>
                 <div class="hs-card-meta">
-                    <h3 class="hs-card-name"><?php echo esc_html($e->name); ?></h3>
+                    <h3 class="hs-card-name"><?php echo esc_html($e->name); ?><?php if ( ! empty( $e->spitzname ) ) : ?> <span class="hs-card-spitzname">(„<?php echo esc_html($e->spitzname); ?>")</span><?php endif; ?></h3>
                     <?php if ( $e->beruf ) : ?><p class="hs-card-beruf"><?php echo esc_html($e->beruf); ?></p><?php endif; ?>
                     <?php if ( $e->partei ) : ?><p class="hs-card-partei">🏛 <?php echo esc_html($e->partei); ?><?php if($e->aufgabe_partei) echo ' &ndash; '.esc_html($e->aufgabe_partei); ?></p><?php endif; ?>
                     <?php if ( $e->parlament ) : ?><p class="hs-card-parlament">📜 <?php echo esc_html($e->parlament); ?><?php if($e->parlament_name) echo ' ('.esc_html($e->parlament_name).')'; ?></p><?php endif; ?>
@@ -922,7 +922,7 @@ class Handschelle_Shortcodes {
                 <div class="hs-card-straftat"><span class="hs-label">⚖ Straftat:</span><p><?php echo nl2br(esc_html($e->straftat)); ?></p></div>
                 <?php
                 $age = handschelle_calc_age( $e->geburtsdatum ?? '' );
-                if ( ! empty( $e->geburtsort ) || ! empty( $e->geburtsdatum ) ) : ?>
+                if ( ! empty( $e->geburtsort ) || ! empty( $e->geburtsdatum ) || ! empty( $e->geburtsland ) ) : ?>
                     <div class="hs-card-row">
                         <span class="hs-label">🎂 Geburt:</span>
                         <?php
@@ -931,6 +931,7 @@ class Handschelle_Shortcodes {
                             if ( $age !== null ) echo ' (Alter: ' . $age . ')';
                         }
                         if ( ! empty( $e->geburtsort ) ) echo ' &mdash; ' . esc_html( $e->geburtsort );
+                        if ( ! empty( $e->geburtsland ) ) echo ', ' . esc_html( $e->geburtsland );
                         ?>
                     </div>
                 <?php endif; ?>
@@ -956,6 +957,10 @@ class Handschelle_Shortcodes {
             // Quelle
             if ( ! empty( $e->link_quelle ) ) {
                 $footer_links[] = '<a href="'.esc_url($e->link_quelle).'" target="_blank" rel="noopener noreferrer" class="hs-sm-link" data-sm="link" title="Quelle">'.$this->svg_link().' Quelle</a>';
+            }
+            // Öffentliche E-Mail
+            if ( ! empty( $e->oeffentliche_email ) ) {
+                $footer_links[] = '<a href="mailto:'.esc_attr($e->oeffentliche_email).'" class="hs-sm-link" data-sm="email" title="E-Mail">✉ '.esc_html($e->oeffentliche_email).'</a>';
             }
             // Suchmaschinen + Abgeordnetenwatch
             $footer_links[] = '<a href="'.esc_url( 'https://www.google.com/search?q=' . urlencode( $e->name ) ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="google" title="Google-Suche">🔍 Google</a>';
@@ -1007,8 +1012,19 @@ class Handschelle_Shortcodes {
                             </div>
                         </div>
                         <div class="hs-field"><label>Beruf <span>(max. 50)</span></label><input type="text" name="beruf" maxlength="50" value="<?php echo esc_attr($e->beruf); ?>"></div>
+                        <div class="hs-field"><label>Spitzname <span>(max. 100)</span></label><input type="text" name="spitzname" maxlength="100" value="<?php echo esc_attr($e->spitzname ?? ''); ?>"></div>
                         <div class="hs-field"><label>Geburtsort <span>(max. 100)</span></label><input type="text" name="geburtsort" maxlength="100" value="<?php echo esc_attr($e->geburtsort ?? ''); ?>"></div>
+                        <div class="hs-field">
+                            <label>Geburtsland</label>
+                            <select name="geburtsland">
+                                <?php foreach ( handschelle_laender() as $land ) : ?>
+                                    <option value="<?php echo esc_attr($land); ?>" <?php selected( $e->geburtsland ?? 'Deutschland', $land ); ?>><?php echo esc_html($land); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
                         <div class="hs-field"><label>Geburtsdatum</label><input type="date" name="geburtsdatum" value="<?php echo esc_attr( ( ! empty($e->geburtsdatum) && $e->geburtsdatum !== '0000-00-00' ) ? $e->geburtsdatum : '' ); ?>"></div>
+                        <div class="hs-field"><label>Private E-Mail</label><input type="email" name="private_email" maxlength="200" value="<?php echo esc_attr($e->private_email ?? ''); ?>" placeholder="privat@beispiel.de"></div>
+                        <div class="hs-field"><label>Öffentliche E-Mail</label><input type="email" name="oeffentliche_email" maxlength="200" value="<?php echo esc_attr($e->oeffentliche_email ?? ''); ?>" placeholder="kontakt@beispiel.de"></div>
                         <div class="hs-field">
                             <label class="hs-checkbox-label"><input type="checkbox" name="verstorben" class="hs-verstorben-cb" value="1" <?php checked( intval($e->verstorben ?? 0), 1 ); ?>> Verstorben</label>
                         </div>
