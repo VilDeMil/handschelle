@@ -916,14 +916,16 @@ class Handschelle_Shortcodes {
        KARTE – einzelner Eintrag
     ================================================================ */
     public function render_card( $e ) {
-        $img_url = handschelle_get_image_url( $e->bild );
+        $img_url      = handschelle_get_image_url( $e->bild );
+        $is_logged_in = is_user_logged_in();
+        $display_img  = $is_logged_in ? $img_url : ( get_site_icon_url( 96 ) ?: '' );
         $status_class = array(
             'Verurteilt'          => 'hs-status-verurteilt',
             'Ermittlungen laufen' => 'hs-status-ermittlung',
             'Eingestellt'         => 'hs-status-eingestellt',
         );
-        $is_logged_in = current_user_can( 'publish_posts' ); // Author or higher
-        $is_admin     = current_user_can( 'manage_options' );
+        $is_author = current_user_can( 'publish_posts' ); // Author or higher
+        $is_admin  = current_user_can( 'manage_options' );
         $edited       = isset( $_GET['hs_edited'] ) && intval( $_GET['hs_edited'] ) === intval( $e->id );
         ob_start();
         ?>
@@ -932,10 +934,10 @@ class Handschelle_Shortcodes {
                 <div class="hs-alert hs-alert-success">✅ Eintrag erfolgreich aktualisiert!</div>
             <?php endif; ?>
             <div class="hs-card-header">
-                <div class="hs-card-img-wrap <?php echo $img_url ? '' : 'hs-card-img-placeholder'; ?>">
-                    <?php if ( $img_url ) : ?>
+                <div class="hs-card-img-wrap <?php echo $display_img ? '' : 'hs-card-img-placeholder'; ?>">
+                    <?php if ( $display_img ) : ?>
                     <a href="<?php echo esc_url( add_query_arg( 'hs_name', $e->name, get_permalink() ) ); ?>" title="<?php echo esc_attr( hs_display_name( $e->name ) ); ?> – Details anzeigen" class="hs-card-img-link">
-                        <img src="<?php echo esc_url($img_url); ?>" alt="<?php echo esc_attr( hs_display_name( $e->name ) ); ?>" class="hs-card-img">
+                        <img src="<?php echo esc_url( $display_img ); ?>" alt="<?php echo esc_attr( hs_display_name( $e->name ) ); ?>" class="hs-card-img<?php echo $is_logged_in ? '' : ' hs-card-img-siteicon'; ?>">
                     </a>
                     <?php else : ?>👤<?php endif; ?>
                 </div>
@@ -945,7 +947,7 @@ class Handschelle_Shortcodes {
                     <?php if ( $e->partei ) : ?><p class="hs-card-partei">🏛 <?php echo esc_html($e->partei); ?><?php if($e->aufgabe_partei) echo ' &ndash; '.esc_html($e->aufgabe_partei); ?></p><?php endif; ?>
                     <?php if ( $e->parlament ) : ?><p class="hs-card-parlament">📜 <?php echo esc_html($e->parlament); ?><?php if($e->parlament_name) echo ' ('.esc_html($e->parlament_name).')'; ?></p><?php endif; ?>
                 </div>
-                <?php if ( $is_logged_in ) : ?>
+                <?php if ( $is_author ) : ?>
                 <button type="button"
                     class="hs-card-edit-btn"
                     onclick="hsToggleEdit(<?php echo intval($e->id); ?>)"

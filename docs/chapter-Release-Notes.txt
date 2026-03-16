@@ -1,5 +1,8 @@
 ## Release Notes
 
+### 9.0 *(2026-03-16)*
+- **Gast-Karten: Website-Icon statt Profilfoto**: Nicht eingeloggte Besucher sehen in `render_card` das WordPress-Site-Icon (`get_site_icon_url(96)`) als Kartenbild statt des echten Profilfotos. Kein Site-Icon gesetzt → Fallback auf 👤. Klasse `hs-card-img-siteicon` sorgt für `object-fit:contain` und Innenabstand. Der Bearbeiten-Button prüft jetzt korrekt `publish_posts` über `$is_author`.
+
 ### 8.9 *(2026-03-16)*
 - **Name-Datenschutz (global)**: Neue Hilfsfunktion `hs_display_name()` in `helpers.php`. Nicht eingeloggte Besucher sehen statt des Namens `████████`. Gilt für alle Shortcodes: Karten (`render_card`), alle Ticker-Varianten, Wordcloud, Statistik-Tabelle, Bilder-Galerie und Namens-Dropdowns.
 

@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 8.9 |
+| **Version** | 9.0 |
 | **Autor** | Bernd K.R. Dorfmüller |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
