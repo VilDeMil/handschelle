@@ -565,3 +565,56 @@
     color: var(--hs-gold);
 }
 .hs-ticker-empty { color: var(--hs-muted); font-style: italic; }
+
+/* ================================================================
+   Straftat-Ticker  [handschelle-straftat]
+================================================================ */
+.hs-st-wrap {
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    background: #ffffff;
+    border: 2px solid #000000;
+    border-radius: var(--hs-radius);
+    font-family: var(--hs-font);
+    font-size: .92rem;
+    box-shadow: var(--hs-shadow);
+    width: 100%;
+}
+.hs-st-viewport {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+}
+.hs-st-track {
+    display: inline-flex;
+    white-space: nowrap;
+    animation: hs-st-scroll linear infinite;
+    will-change: transform;
+}
+@keyframes hs-st-scroll {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+.hs-st-item {
+    display: inline-block;
+    padding: .55rem 2rem;
+    border-right: 1px solid #000000;
+    color: #000000;
+}
+.hs-st-partei {
+    font-weight: 700;
+    color: #cc0000;
+}
+.hs-st-name {
+    font-weight: 700;
+    color: #000000;
+}
+.hs-st-straftat {
+    color: #000000;
+}
+.hs-st-status {
+    font-weight: 700;
+    color: #cc0000;
+}
+.hs-st-empty { color: var(--hs-muted); font-style: italic; }
