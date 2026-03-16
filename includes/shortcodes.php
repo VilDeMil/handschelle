@@ -50,10 +50,12 @@ class Handschelle_Shortcodes {
         add_shortcode( 'wordcloud-urteil',             array( $this, 'sc_wordcloud_urteil' ) );
         add_shortcode( 'handschelle-ticker',           array( $this, 'sc_ticker' ) );
         add_shortcode( 'handschelle-straftat',         array( $this, 'sc_straftat_ticker' ) );
+        add_shortcode( 'handschelle-login',            array( $this, 'sc_login' ) );
 
         // Submit früh verarbeiten – BEVOR Header gesendet werden
         add_action( 'init', array( $this, 'early_frontend_submit' ) );
         add_action( 'init', array( $this, 'early_frontend_edit' ) );
+        add_action( 'init', array( $this, 'early_login_submit' ) );
     }
 
     /* ================================================================
@@ -1416,6 +1418,125 @@ class Handschelle_Shortcodes {
             </div>
         </div>
         <?php
+        return ob_get_clean();
+    }
+
+    /* ================================================================
+       [handschelle-login] – Anmelde-Formular
+       Attribute:
+         redirect  – URL nach erfolgreichem Login (Standard: aktuelle Seite)
+    ================================================================ */
+    public function early_login_submit() {
+        if ( empty( $_POST['hs_login_submit'] ) ) return;
+        if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['hs_login_nonce'] ?? '' ) ), 'hs_login' ) ) return;
+
+        $username   = sanitize_user( wp_unslash( $_POST['hs_login_user'] ?? '' ) );
+        $password   = wp_unslash( $_POST['hs_login_pass'] ?? '' );
+        $remember   = ! empty( $_POST['hs_login_remember'] );
+        $return_url = esc_url_raw( wp_unslash( $_POST['hs_login_redirect'] ?? '' ) );
+        if ( ! $return_url ) {
+            $return_url = home_url( '/' );
+        }
+
+        $user = wp_signon( array(
+            'user_login'    => $username,
+            'user_password' => $password,
+            'remember'      => $remember,
+        ), is_ssl() );
+
+        if ( is_wp_error( $user ) ) {
+            $redirect = add_query_arg( 'hs_login_error', '1', $return_url );
+        } else {
+            $redirect = $return_url;
+        }
+        wp_safe_redirect( $redirect );
+        exit;
+    }
+
+    public function sc_login( $atts ) {
+        $atts = shortcode_atts( array(
+            'redirect' => '',
+        ), $atts, 'handschelle-login' );
+
+        $redirect = $atts['redirect'] ? esc_url( $atts['redirect'] ) : esc_url( get_permalink() );
+
+        ob_start();
+
+        if ( is_user_logged_in() ) {
+            $current_user = wp_get_current_user();
+            $logout_url   = wp_logout_url( $redirect );
+            ?>
+            <div class="hs-login-wrap hs-login-loggedin">
+                <p class="hs-login-welcome">
+                    <?php echo esc_html__( 'Willkommen', 'die-handschelle' ); ?>,
+                    <strong><?php echo esc_html( $current_user->display_name ); ?></strong>!
+                </p>
+                <a href="<?php echo esc_url( $logout_url ); ?>" class="hs-btn hs-btn-logout">
+                    <?php esc_html_e( 'Abmelden', 'die-handschelle' ); ?>
+                </a>
+            </div>
+            <?php
+        } else {
+            $login_error = ! empty( $_GET['hs_login_error'] );
+            ?>
+            <div class="hs-login-wrap">
+                <h2 class="hs-section-title">🔐 Anmelden</h2>
+
+                <?php if ( $login_error ) : ?>
+                    <div class="hs-alert hs-alert-error">
+                        ⚠️ Benutzername oder Passwort ist falsch. Bitte erneut versuchen.
+                    </div>
+                <?php endif; ?>
+
+                <form method="post" class="hs-login-form" autocomplete="on">
+                    <?php wp_nonce_field( 'hs_login', 'hs_login_nonce' ); ?>
+                    <input type="hidden" name="hs_login_submit"   value="1">
+                    <input type="hidden" name="hs_login_redirect" value="<?php echo esc_attr( $redirect ); ?>">
+
+                    <div class="hs-form-group">
+                        <label for="hs-login-user" class="hs-label">Benutzername oder E-Mail</label>
+                        <input
+                            type="text"
+                            id="hs-login-user"
+                            name="hs_login_user"
+                            class="hs-input"
+                            autocomplete="username"
+                            required
+                            value="<?php echo esc_attr( sanitize_user( wp_unslash( $_POST['hs_login_user'] ?? '' ) ) ); ?>"
+                        >
+                    </div>
+
+                    <div class="hs-form-group">
+                        <label for="hs-login-pass" class="hs-label">Passwort</label>
+                        <input
+                            type="password"
+                            id="hs-login-pass"
+                            name="hs_login_pass"
+                            class="hs-input"
+                            autocomplete="current-password"
+                            required
+                        >
+                    </div>
+
+                    <div class="hs-form-group hs-login-remember">
+                        <label class="hs-checkbox-label">
+                            <input type="checkbox" name="hs_login_remember" value="1">
+                            Angemeldet bleiben
+                        </label>
+                    </div>
+
+                    <div class="hs-form-group">
+                        <button type="submit" class="hs-btn hs-btn-submit">Anmelden</button>
+                    </div>
+
+                    <p class="hs-login-links">
+                        <a href="<?php echo esc_url( wp_lostpassword_url( $redirect ) ); ?>">Passwort vergessen?</a>
+                    </p>
+                </form>
+            </div>
+            <?php
+        }
+
         return ob_get_clean();
     }
 

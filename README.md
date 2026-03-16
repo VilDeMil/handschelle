@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 7.6 |
+| **Version** | 7.7 |
 | **Autor** | Bernd K.R. Dorfmüller |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
@@ -215,6 +215,7 @@ All shortcodes output HTML and can be placed on any WordPress page or post.
 | `[wordcloud-name]` | Word cloud of person names (sized by entry count) — shows Name (Partei) |
 | `[wordcloud-urteil]` | Word cloud of verdicts (`urteil`) sized by frequency |
 | `[handschelle-straftat]` | News ticker: Partei (red) · Name · Straftat · Status Straftat — white background, black border |
+| `[handschelle-login]` | WordPress-Anmeldeformular; zeigt nach Login eine Willkommensmeldung mit Abmelden-Button |
 
 ---
 
@@ -501,6 +502,26 @@ Horizontally scrolling news ticker displaying all approved entries. Each item sh
 | Name | black |
 | Straftat | black |
 | Status Straftat | red |
+
+---
+
+### `[handschelle-login]`
+
+Zeigt ein WordPress-Anmeldeformular. Ist der Nutzer bereits eingeloggt, wird stattdessen eine Willkommensnachricht mit Abmelden-Button angezeigt.
+
+```
+[handschelle-login]
+[handschelle-login redirect="/mein-bereich/"]
+```
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `redirect` | string | aktuelle Seite | URL, zu der nach dem Login weitergeleitet wird |
+
+**Verhalten:**
+- Nicht eingeloggt → Login-Formular mit Benutzername/Passwort, „Angemeldet bleiben"-Checkbox und „Passwort vergessen"-Link
+- Eingeloggt → Willkommenstext + Abmelden-Button
+- Fehlgeschlagene Anmeldung → Fehlermeldung (`?hs_login_error=1`)
 
 ---
 
@@ -1240,6 +1261,9 @@ IMPORTANT BEHAVIOURS
 ---
 
 ## Release Notes
+
+### 7.7 *(2026-03-16)*
+- **Login-Formular** `[handschelle-login]`: Neues Anmelde-Shortcode mit Benutzername/Passwort-Eingabe, „Angemeldet bleiben"-Checkbox, „Passwort vergessen"-Link und optionalem `redirect`-Attribut; eingeloggten Nutzern wird eine Willkommensnachricht mit Abmelden-Button angezeigt.
 
 ### 7.6 *(2026-03-16)*
 - **Straftat-Ticker** `[handschelle-straftat]`: Neuer News-Ticker mit weißem Hintergrund und schwarzem Rahmen; zeigt Partei (rot), Name (schwarz), Straftat (schwarz) und Status Straftat (rot) aller freigegebenen Einträge. Geschwindigkeit über Attribut `speed` einstellbar.
