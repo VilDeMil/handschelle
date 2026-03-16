@@ -1488,14 +1488,12 @@ class Handschelle_Shortcodes {
 
         $items = '';
         foreach ( $rows as $r ) {
-            $name_url   = esc_url( add_query_arg( 'hs_name_name',   rawurlencode( $r->name ),   $base_url ) );
-            $partei_url = $r->partei ? esc_url( add_query_arg( 'hs_name_partei', rawurlencode( $r->partei ), $base_url ) ) : '';
-
-            $partei         = $r->partei   ? '<a href="' . $partei_url . '" class="hs-st-partei hs-st-link">'   . esc_html( $r->partei )         . '</a> ' : '';
-            $name           = '<a href="' . $name_url . '" class="hs-st-name hs-st-link">' . esc_html( $r->name ) . '</a>';
-            $straftat       = $r->straftat       ? ' <span class="hs-st-straftat">'       . esc_html( $r->straftat )        . '</span>' : '';
-            $status_straftat = $r->status_straftat ? ' <span class="hs-st-status">'       . esc_html( $r->status_straftat ) . '</span>' : '';
-            $items .= '<span class="hs-st-item">' . $partei . $name . $straftat . $status_straftat . '</span>';
+            $entry_url       = esc_url( add_query_arg( 'hs_name_name', rawurlencode( $r->name ), $base_url ) );
+            $partei          = $r->partei          ? '<span class="hs-st-partei">'  . esc_html( $r->partei )          . '</span> ' : '';
+            $name            = '<span class="hs-st-name">'   . esc_html( $r->name )            . '</span>';
+            $straftat        = $r->straftat        ? ' <span class="hs-st-straftat">' . esc_html( $r->straftat )        . '</span>' : '';
+            $status_straftat = $r->status_straftat ? ' <span class="hs-st-status">'  . esc_html( $r->status_straftat ) . '</span>' : '';
+            $items .= '<a href="' . $entry_url . '" class="hs-st-item hs-st-link">' . $partei . $name . $straftat . $status_straftat . '</a>';
         }
 
         ob_start();

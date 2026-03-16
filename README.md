@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 8.6 |
+| **Version** | 8.7 |
 | **Autor** | Bernd K.R. Dorfmüller |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
@@ -1370,6 +1370,9 @@ IMPORTANT BEHAVIOURS
 ---
 
 ## Release Notes
+
+### 8.7 *(2026-03-16)*
+- **`[handschelle-straftat-link]`**: Jeder Eintrag ist jetzt als Ganzes ein klickbarer Link (`<a>`) auf `?hs_name_name=<name>`; einzelne Partei- und Name-Links entfernt zugunsten des Item-Links.
 
 ### 8.6 *(2026-03-16)*
 - **`[handschelle-result]`**: Neuer Shortcode – zeigt Eintrags-Karten für `?hs_name_name=<name>`; zeigt nichts an, wenn kein Name übergeben wurde oder keine freigegebenen Einträge vorhanden sind. Gedacht als Zielseite für Links aus `[handschelle-straftat-link]`.

@@ -618,8 +618,9 @@
     color: #cc0000;
 }
 .hs-st-empty { color: var(--hs-muted); font-style: italic; }
-.hs-st-link { color: inherit; text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 2px; }
+.hs-st-link { color: inherit; text-decoration: none; }
 .hs-st-link:hover { opacity: .75; }
+a.hs-st-item { display: inline-block; }
 
 /* ================================================================
    Login-Formular  [handschelle-login]
