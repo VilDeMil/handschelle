@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 7.5 |
+| **Version** | 7.6 |
 | **Autor** | Bernd K.R. Dorfmüller |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
@@ -215,6 +215,7 @@ All shortcodes output HTML and can be placed on any WordPress page or post.
 | `[wordcloud-name]` | Word cloud of person names (sized by entry count) — shows Name (Partei) |
 | `[wordcloud-urteil]` | Word cloud of verdicts (`urteil`) sized by frequency |
 | `[handschelle-ticker]` | Horizontal scrolling newsticker showing Name – Crime for approved entries |
+| `[handschelle-straftat]` | Horizontal scrolling newsticker showing Partei · Name · Status Straftat (black background, red status) |
 
 ---
 
@@ -455,6 +456,28 @@ Horizontal scrolling newsticker that continuously displays the most recent appro
 | `speed`   | `normal` | Scroll speed: `slow` (60 s) / `normal` (40 s) / `fast` (20 s). Unknown values fall back to `normal`. |
 
 **Output:** A dark banner with a red "Aktuell" label, scrolling entries in the form `Name – Straftat [Status]`. The name is highlighted in gold; the status badge is shown in a muted pill. The track is duplicated internally so the animation loops seamlessly.
+
+---
+
+### `[handschelle-straftat]`
+
+Horizontal scrolling newsticker displaying approved entries as **Partei · Name · Status Straftat**. Uses a pure-black background with white text for Partei and Name, and red for the status. Hovering pauses the animation.
+
+```
+[handschelle-straftat]
+[handschelle-straftat limit="20" speed="fast"]
+```
+
+| Attribute | Default | Description |
+|-----------|---------|-------------|
+| `limit`   | `30`    | Number of most-recent entries to show |
+| `speed`   | `normal` | Scroll speed: `slow` (60 s) / `normal` (40 s) / `fast` (20 s) |
+
+**Color scheme:**
+- Background: `#000` (black)
+- Border: `1px solid #000` (black)
+- Partei + Name: `#fff` (white)
+- Status Straftat: `#c0392b` (red)
 
 ---
 
@@ -1232,6 +1255,9 @@ IMPORTANT BEHAVIOURS
 ---
 
 ## Release Notes
+
+### 7.6 *(2026-03-16)*
+- **New shortcode `[handschelle-straftat]`**: Horizontal scrolling newsticker showing **Partei · Name · Status Straftat** for approved entries. Black background, white Partei/Name, red status. Supports `limit` and `speed` (slow/normal/fast) attributes.
 
 ### 7.5 *(2026-03-16)*
 - **`[handschelle-ticker]` named speed levels**: `speed` attribute now accepts `slow` / `normal` / `fast` instead of raw seconds. Mapping: slow = 60 s, normal = 40 s, fast = 20 s. Unknown values fall back to `normal`.

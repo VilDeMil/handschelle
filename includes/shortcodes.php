@@ -49,6 +49,7 @@ class Handschelle_Shortcodes {
         add_shortcode( 'wordcloud-name',               array( $this, 'sc_wordcloud_name' ) );
         add_shortcode( 'wordcloud-urteil',             array( $this, 'sc_wordcloud_urteil' ) );
         add_shortcode( 'handschelle-ticker',           array( $this, 'sc_ticker' ) );
+        add_shortcode( 'handschelle-straftat',         array( $this, 'sc_straftat_ticker' ) );
 
         // Submit früh verarbeiten – BEVOR Header gesendet werden
         add_action( 'init', array( $this, 'early_frontend_submit' ) );
@@ -1294,6 +1295,61 @@ class Handschelle_Shortcodes {
             );
         }
         echo '</div>';
+        return ob_get_clean();
+    }
+
+    /* ================================================================
+       [handschelle-straftat] – Newsticker Partei · Name · Status
+    ================================================================ */
+    public function sc_straftat_ticker( $atts ) {
+        global $wpdb;
+        $atts  = shortcode_atts( array(
+            'limit' => 30,
+            'speed' => 'normal',
+        ), $atts, 'handschelle-straftat' );
+        $limit     = max( 1, intval( $atts['limit'] ) );
+        $speed_map = array( 'slow' => 60, 'normal' => 40, 'fast' => 20 );
+        $speed     = $speed_map[ $atts['speed'] ] ?? $speed_map['normal'];
+        $table     = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
+
+        $rows = $wpdb->get_results( $wpdb->prepare(
+            "SELECT name, partei, status_straftat
+             FROM `{$table}`
+             WHERE freigegeben = 1
+             ORDER BY erstellt_am DESC
+             LIMIT %d",
+            $limit
+        ) );
+
+        if ( empty( $rows ) ) {
+            return '<div class="hs-st-wrap"><span class="hs-st-empty">Keine Einträge vorhanden.</span></div>';
+        }
+
+        $items_html = '';
+        foreach ( $rows as $r ) {
+            $items_html .= sprintf(
+                '<span class="hs-st-item">'
+                . '<span class="hs-st-partei">%s</span>'
+                . '<span class="hs-st-sep">·</span>'
+                . '<span class="hs-st-name">%s</span>'
+                . '<span class="hs-st-sep">·</span>'
+                . '<span class="hs-st-status">%s</span>'
+                . '</span>',
+                esc_html( $r->partei ),
+                esc_html( $r->name ),
+                esc_html( $r->status_straftat )
+            );
+        }
+
+        ob_start();
+        ?>
+        <div class="hs-st-wrap" role="marquee" aria-live="off">
+            <span class="hs-st-label">&#x1F4F0;&nbsp;Aktuell</span>
+            <div class="hs-st-track" style="animation-duration:<?php echo esc_attr( $speed ); ?>s">
+                <?php echo $items_html . $items_html; // duplicate for seamless loop ?>
+            </div>
+        </div>
+        <?php
         return ob_get_clean();
     }
 

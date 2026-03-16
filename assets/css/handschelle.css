@@ -566,3 +566,50 @@
     opacity: .85;
 }
 .hs-ticker-empty { padding: .5rem 1rem; color: var(--hs-muted); font-style: italic; }
+
+/* ================================================================
+   Newsticker [handschelle-straftat]
+================================================================ */
+.hs-st-wrap {
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    background: #000;
+    border: 1px solid #000;
+    border-radius: var(--hs-radius);
+    color: #fff;
+    font-size: .88rem;
+    line-height: 1.4;
+    min-height: 2.6rem;
+}
+.hs-st-label {
+    flex-shrink: 0;
+    background: var(--hs-accent);
+    color: #fff;
+    font-weight: 700;
+    font-size: .8rem;
+    padding: .45rem .75rem;
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+.hs-st-track {
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    animation: hs-ticker-scroll linear infinite;
+    will-change: transform;
+    padding-left: 1.5rem;
+}
+.hs-st-wrap:hover .hs-st-track { animation-play-state: paused; }
+.hs-st-item {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    padding: 0 2rem 0 0;
+}
+.hs-st-partei { color: #fff; font-weight: 600; }
+.hs-st-name   { color: #fff; font-weight: 700; }
+.hs-st-sep    { opacity: .4; }
+.hs-st-status { color: var(--hs-accent); font-weight: 700; }
+.hs-st-empty  { padding: .5rem 1rem; color: var(--hs-muted); font-style: italic; }
