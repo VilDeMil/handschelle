@@ -37,7 +37,7 @@ class Handschelle_Database {
             `parlament`       VARCHAR(100)     NOT NULL DEFAULT '',
             `parlament_name`  VARCHAR(50)      NOT NULL DEFAULT '',
             `status_aktiv`    TINYINT(1)       NOT NULL DEFAULT 1,
-            `straftat`        VARCHAR(200)     NOT NULL DEFAULT '',
+            `straftat`        TEXT             NOT NULL DEFAULT '',
             `urteil`          VARCHAR(200)     NOT NULL DEFAULT '',
             `link_quelle`     TEXT,
             `aktenzeichen`    VARCHAR(50)      NOT NULL DEFAULT '',
@@ -206,6 +206,14 @@ class Handschelle_Database {
             return;
         }
         self::create_table(); // dbDelta inside create_table() adds missing columns
+
+        // v8.1: straftat was VARCHAR(200), must be TEXT (dbDelta cannot change column types)
+        if ( version_compare( $stored, '8.1', '<' ) ) {
+            global $wpdb;
+            $table = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
+            $wpdb->query( "ALTER TABLE `{$table}` MODIFY COLUMN `straftat` TEXT NOT NULL DEFAULT ''" );
+        }
+
         update_option( 'handschelle_db_version', HANDSCHELLE_VERSION );
     }
 }
