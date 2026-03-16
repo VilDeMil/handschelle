@@ -408,6 +408,7 @@ class Handschelle_Admin {
     public function render_form( $entry = null ) {
         $is_edit    = ! is_null( $entry );
         $parlaments = handschelle_parlaments();
+        $laender    = handschelle_laender();
         $st_opts    = handschelle_status_straftat_options();
         $sm_fields  = array(
             'sm_facebook'     => '📘 Facebook',
@@ -451,8 +452,19 @@ class Handschelle_Admin {
                         <?php endif; ?>
                     </div>
                     <div class="hs-field"><label>Beruf <span>(max. 50 Zeichen)</span></label><input type="text" name="beruf" maxlength="50" value="<?php echo $v('beruf'); ?>" placeholder="z.B. Politiker"></div>
+                    <div class="hs-field"><label>Spitzname <span>(max. 100 Zeichen)</span></label><input type="text" name="spitzname" maxlength="100" value="<?php echo $v('spitzname'); ?>" placeholder="z.B. Der Fuchs"></div>
                     <div class="hs-field"><label>Geburtsort <span>(max. 100 Zeichen)</span></label><input type="text" name="geburtsort" maxlength="100" value="<?php echo $v('geburtsort'); ?>" placeholder="z.B. Berlin"></div>
+                    <div class="hs-field">
+                        <label>Geburtsland</label>
+                        <select name="geburtsland">
+                            <?php foreach ( $laender as $land ) : ?>
+                                <option value="<?php echo esc_attr($land); ?>" <?php selected( $v('geburtsland','Deutschland'), esc_attr($land) ); ?>><?php echo esc_html($land); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
                     <div class="hs-field"><label>Geburtsdatum</label><input type="date" name="geburtsdatum" value="<?php echo esc_attr( ( ! empty($entry->geburtsdatum) && $entry->geburtsdatum !== '0000-00-00' ) ? $entry->geburtsdatum : '' ); ?>"></div>
+                    <div class="hs-field"><label>Private E-Mail</label><input type="email" name="private_email" maxlength="200" value="<?php echo $v('private_email'); ?>" placeholder="privat@beispiel.de"></div>
+                    <div class="hs-field"><label>Öffentliche E-Mail</label><input type="email" name="oeffentliche_email" maxlength="200" value="<?php echo $v('oeffentliche_email'); ?>" placeholder="kontakt@beispiel.de"></div>
                     <div class="hs-field">
                         <label class="hs-checkbox-label"><input type="checkbox" name="verstorben" id="hs-verstorben" class="hs-verstorben-cb" value="1" <?php checked( intval($entry->verstorben ?? 0), 1 ); ?>> Verstorben</label>
                     </div>
