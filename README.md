@@ -18,6 +18,8 @@
 
 - [Einleitung / Introduction](#einleitung--introduction)
 - [To Do](#to-do)
+- [Important Notes](#important-notes)
+- [Release Notes](#release-notes)
 - [Installation from GitHub](#installation-from-github)
   - [Method 1: Download ZIP](#method-1-download-zip)
   - [Method 2: Clone with Git](#method-2-clone-with-git)
@@ -32,23 +34,31 @@
   - [Overview](#overview)
   - [`[handschelle]`](#handschelle)
   - [`[handschelle-anzeige]`](#handschelle-anzeige)
-  - [`[handschelle-karte]`](#handschelle-karte)
-  - [`[handschelle-suche]`](#handschelle-suche)
-  - [`[handschelle-partei]`](#handschelle-partei)
-  - [`[handschelle-name]`](#handschelle-name)
-  - [`[handschelle-statistik]`](#handschelle-statistik)
-  - [`[handschelle-statistik-nolink]`](#handschelle-statistik-nolink)
-  - [`[handschelle-statistik-partei]`](#handschelle-statistik-partei)
-  - [`[handschelle-statistik-name]`](#handschelle-statistik-name)
-  - [`[handschelle-statistik-ol]`](#handschelle-statistik-ol)
-  - [`[handschelle-name-anzeige]`](#handschelle-name-anzeige)
-  - [`[handschelle-name-partei]`](#handschelle-name-partei)
-  - [`[handschelle-bilder]`](#handschelle-bilder)
   - [`[handschelle-asc]`](#handschelle-asc)
   - [`[handschelle-asc-link]`](#handschelle-asc-link)
+  - [`[handschelle-bilder]`](#handschelle-bilder)
   - [`[handschelle-disclaimer]`](#handschelle-disclaimer)
-  - [`[handschelle-straftat-link]`](#handschelle-straftat-link)
+  - [`[handschelle-karte]`](#handschelle-karte)
+  - [`[handschelle-login]`](#handschelle-login)
+  - [`[handschelle-name]`](#handschelle-name)
+  - [`[handschelle-name-anzeige]`](#handschelle-name-anzeige)
+  - [`[handschelle-name-partei]`](#handschelle-name-partei)
+  - [`[handschelle-partei]`](#handschelle-partei)
+  - [`[handschelle-pie-partei]`](#handschelle-pie-partei)
+  - [`[handschelle-register]`](#handschelle-register)
   - [`[handschelle-result]`](#handschelle-result)
+  - [`[handschelle-statistik]`](#handschelle-statistik)
+  - [`[handschelle-statistik-name]`](#handschelle-statistik-name)
+  - [`[handschelle-statistik-nolink]`](#handschelle-statistik-nolink)
+  - [`[handschelle-statistik-ol]`](#handschelle-statistik-ol)
+  - [`[handschelle-statistik-partei]`](#handschelle-statistik-partei)
+  - [`[handschelle-straftat]`](#handschelle-straftat)
+  - [`[handschelle-straftat-link]`](#handschelle-straftat-link)
+  - [`[handschelle-suche]`](#handschelle-suche)
+  - [`[handschelle-ticker]`](#handschelle-ticker)
+  - [`[handschelle-ticker-icons]`](#handschelle-ticker-icons)
+  - [`[wordcloud-name]`](#wordcloud-name)
+  - [`[wordcloud-urteil]`](#wordcloud-urteil)
   - [Typical Page Setup](#typical-page-setup)
 - [Fields / Database Schema](#fields--database-schema)
   - [Core Fields](#core-fields)
@@ -77,10 +87,6 @@
   - [Database / Schema Changes](#database--schema-changes)
   - [General Rules](#general-rules)
 - [Recreate from Scratch](#recreate-from-scratch)
-- [Important Notes](#important-notes)
-- [Release Notes](#release-notes)
-
----
 
 ## Einleitung / Introduction
 
@@ -114,6 +120,199 @@ Planned features for upcoming versions:
 - **Multiuser**: Role-based multi-user system with individual dashboards, personal submission histories, and per-user moderation rights.
 
 ---
+
+## Important Notes
+
+- New public submissions are **not approved by default** (`freigegeben = 0`). An admin must approve them via **Übersicht → ✅ Freigeben**.
+- Profile images are automatically resized to a maximum height of **450 px** using the GD library (required).
+- CSV export uses **UTF-8 with BOM** and **semicolons** as delimiters for Excel compatibility. The import is header-based and backward-compatible.
+- The **Edit page** is hidden from the admin sidebar but accessible via the ✏ button in the Overview table.
+- **Authors and higher** (role `Author`, `Editor`, `Administrator`) see an inline edit button on every entry card in the frontend — Subscribers and Contributors do not.
+- The inline edit panel and admin form both include **Google, Qwant, DuckDuckGo, Bing, Abgeordnetenwatch** search buttons next to the name field.
+- All forms use **WordPress nonce verification** to prevent CSRF attacks. If nonce verification fails (e.g. after a long session or cached page), the user sees a visible error message (`⚠️ Fehler beim Speichern`) instead of a silent redirect.
+- All user input is sanitized with WordPress sanitization functions before writing to the database.
+- Social media icons are rendered as **inline SVG** with brand colors and hover effects — no external icon library required.
+- **Image uploads** are automatically renamed to `name-HA.ext` (e.g. `max-mustermann-HA.jpg`) using `sanitize_title()`.
+- The **admin image field** supports two workflows: (1) pick from the WP Media Library via the `wp.media` modal, or (2) upload a new file directly.
+- **Database auto-migration:** After updating the plugin, `maybe_upgrade_table()` runs on `plugins_loaded` and adds any missing columns via `dbDelta()`. No data is ever lost.
+
+---
+
+## Release Notes
+
+### 9.2 *(2026-03-16)*
+- **Website-Icon für Gäste**: Nicht eingeloggte Besucher sehen statt des Personenfotos das Website-Icon (`get_site_icon_url`). Das Foto-Bild ist nicht verlinkt – der Klick-Link zum Detailprofil entfällt für Gäste.
+
+### 9.1 *(2026-03-16)*
+- **Karten-Footer für Gäste ausgeblendet**: Nicht eingeloggte Besucher sehen keine Links mehr in Karten (keine Quelle, keine E-Mail, keine Suchmaschinen, kein Social-Media, kein „Eintrag melden"). Der gesamte `hs-card-footer` wird nur noch gerendert, wenn `is_user_logged_in()` gilt.
+
+### 9.0 *(2026-03-16)*
+- **Gast-Karten: Website-Icon statt Profilfoto**: Nicht eingeloggte Besucher sehen in `render_card` das WordPress-Site-Icon (`get_site_icon_url(96)`) als Kartenbild statt des echten Profilfotos. Kein Site-Icon gesetzt → Fallback auf 👤. Klasse `hs-card-img-siteicon` sorgt für `object-fit:contain` und Innenabstand. Der Bearbeiten-Button prüft jetzt korrekt `publish_posts` über `$is_author`.
+
+### 8.9 *(2026-03-16)*
+- **Name-Datenschutz (global)**: Neue Hilfsfunktion `hs_display_name()` in `helpers.php`. Nicht eingeloggte Besucher sehen statt des Namens `████████`. Gilt für alle Shortcodes: Karten (`render_card`), alle Ticker-Varianten, Wordcloud, Statistik-Tabelle, Bilder-Galerie und Namens-Dropdowns.
+
+### 8.8 *(2026-03-16)*
+- **`[handschelle-ticker-icons]`**: Neuer Shortcode – identisch wie `[handschelle-straftat-link]`, aber mit kleinem rundem Profilbild (28 px) vor dem Namen; kein Bild → Initiale des Namens als Platzhalter (dunkelblauer Kreis). Attribute `speed` und `page` wie bei `[handschelle-straftat-link]`.
+
+### 8.7 *(2026-03-16)*
+- **`[handschelle-straftat-link]`**: Jeder Eintrag ist jetzt als Ganzes ein klickbarer Link (`<a>`) auf `?hs_name_name=<name>`; einzelne Partei- und Name-Links entfernt zugunsten des Item-Links.
+
+### 8.6 *(2026-03-16)*
+- **`[handschelle-result]`**: Neuer Shortcode – zeigt Eintrags-Karten für `?hs_name_name=<name>`; zeigt nichts an, wenn kein Name übergeben wurde oder keine freigegebenen Einträge vorhanden sind. Gedacht als Zielseite für Links aus `[handschelle-straftat-link]`.
+
+### 8.5 *(2026-03-16)*
+- **Straftat-Link-Ticker** `[handschelle-straftat-link]`: Neuer Shortcode – identisches Layout wie `[handschelle-straftat]`, aber Name und Partei sind klickbare Links; Name verlinkt auf `?hs_name_name=<name>`, Partei auf `?hs_name_partei=<partei>`; optionales Attribut `page` für Ziel-URL (Standard: aktuelle Seite).
+- **CSS**: `.hs-st-link` – dezenter Unterstrich-Stil (dotted) für Ticker-Links; Hover-Effekt (Opacity).
+
+### 8.4 *(2026-03-16)*
+- **Registrierungsformular erweitert**: `[handschelle-register]` hat jetzt zusätzliche optionale Felder: Vorname, Nachname, Spitzname, Webseite; Vorname/Nachname nebeneinander (2-Spalten-Grid, responsive); gespeichert via `wp_update_user()` nach Kontoerstellung.
+
+### 8.3 *(2026-03-16)*
+- **Benutzer-Freischaltung**: Neue Registrierungen erhalten den Status `pending` (User-Meta `hs_user_status`); Login ist gesperrt bis zur Freischaltung; Admin wird per E-Mail benachrichtigt.
+- **Login-Sperre**: `authenticate`-Filter blockiert `pending`- und `deactivated`-Konten mit jeweils eigenem Fehlertext.
+- **Admin-Menü: 👥 Benutzer** (`Die-Handschelle → Benutzer`): Übersicht aller Benutzer mit Status-Badge; Aktionen: Freischalten, Deaktivieren, Löschen; Pending-Zähler als Badge im Menütitel; Admins sind vor Änderungen geschützt.
+
+### 8.0 *(2026-03-16)*
+- **README**: Shortcodes overview table sorted A-Z; added missing `[handschelle-ticker]` entry; fields in Person, Crime/Legal and Social Media schema groups sorted A-Z; `straftat` type corrected to TEXT (no limit); version constant updated to 8.0; shortcodes.php count corrected to 24.
+- **To Do**: Added To Do section (after Einleitung) with planned features: Mailing-Liste, Multilanguage, Multiple Offences, Multiuser.
+
+### 7.9 *(2026-03-16)*
+- **Straftat-Feld**: Textfarbe auf Schwarz (#000000) gesetzt in allen Anzeigebereichen (Karte, Bild-Tooltip, Ticker); 200-Zeichen-Limit entfernt (kein maxlength, kein substr-Truncation); vollständiger Text wird in beiden Ticker-Shortcodes angezeigt.
+
+### 7.8 *(2026-03-16)*
+- **Registrierungs-Formular** `[handschelle-register]`: Neues Registrierungs-Shortcode mit Feldern für Benutzername, E-Mail und Passwort (mit Bestätigung); respektiert die WordPress-Einstellung „Jeder kann sich registrieren", zeigt passende Fehlermeldungen und sendet nach Erfolg E-Mails an Nutzer und Admin.
+
+### 7.7 *(2026-03-16)*
+- **Login-Formular** `[handschelle-login]`: Neues Anmelde-Shortcode mit Benutzername/Passwort-Eingabe, „Angemeldet bleiben"-Checkbox, „Passwort vergessen"-Link und optionalem `redirect`-Attribut; eingeloggten Nutzern wird eine Willkommensnachricht mit Abmelden-Button angezeigt.
+
+### 7.6 *(2026-03-16)*
+- **Straftat-Ticker** `[handschelle-straftat]`: Neuer News-Ticker mit weißem Hintergrund und schwarzem Rahmen; zeigt Partei (rot), Name (schwarz), Straftat (schwarz) und Status Straftat (rot) aller freigegebenen Einträge. Geschwindigkeit über Attribut `speed` einstellbar.
+
+### 7.5 *(2026-03-16)*
+- **News-Ticker** `[handschelle-ticker]`: Neuer Shortcode mit horizontalem CSS-Laufband; zeigt Name, Partei und Straftat aller freigegebenen Einträge. Geschwindigkeit über Attribut `speed` (Sekunden, Standard 40, Minimum 5) einstellbar.
+
+### 7.4 *(2026-03-16)*
+- **Profilfelder in Karten & Formularen**: Neue Felder `geburtsland`, `email_privat`, `email_oeffentlich` und `spitzname` werden nun in Frontend-Karten, Inline-Edit-Formular und Admin-Übersicht angezeigt.
+
+### 7.3 *(2026-03-15)*
+- **Domain & E-Mail update**: Changed all references from `www.die-handschelle.de` → `www.die-handschelle.com` and `Info@die-handschelle.de` → `info@die-handschelle.com` across shortcodes, README, and all doc files; also fixed typo `info@hanschelle.com` → `info@die-handschelle.com` in the "Eintrag melden" mailto link.
+
+### 7.2 *(2026-03-15)*
+- **Fix Backup/Restore image mapping**: Converted `restore_full()` from fixed numeric column indices to header-based mapping (same approach as CSV import); old backups created before the `verstorben`/`dod` columns were added now restore correctly instead of assigning `bild` to the wrong column.
+- **Fix Backup/Restore bild validation**: After attempting ID remapping, if the attachment ID is not found in the remap table and does not exist on the current site, `bild` is cleared instead of storing a stale/wrong ID.
+- **Fix image display after restore/import**: `handschelle_get_image_url()` now falls back from `medium` → `full` → `wp_get_attachment_url()` so images are always visible even when WP thumbnail sizes weren't regenerated.
+- **Fix image replacement on edit**: Editing an entry and uploading a new image now deletes the old attachment from the media library (admin edit and frontend inline edit), preventing orphaned files and wrong image references.
+
+### 7.1 *(2026-03-15)*
+- **Cards & Forms**: Added `verstorben`/`dod` and `bemerkung_person` to frontend cards (display), frontend submission form, and inline edit form; JS toggle converted to delegated class-based handler (`hs-verstorben-cb` / `hs-dod-row`) so it works across all form instances on the same page.
+- **CSS**: Added `.hs-badge-verstorben` (grey badge) and `.hs-card-bemerkung-person` styles.
+
+### 7.0 *(2026-03-15)*
+- **Fix Urteil maxlength in shortcodes**: Frontend submission form and frontend edit form both had `maxlength="50"` for `urteil`; corrected to `maxlength="200"` to match DB schema and admin form.
+
+### 6.9 *(2026-03-15)*
+- **DoD / Verstorben**: Added `verstorben` checkbox and `dod` (date of death) date field to Eintragsdetails; DoD field is shown/hidden via JS when checkbox is toggled.
+- **Bemerkung zur Person**: New `bemerkung_person` text field (max. 500 chars) added to Eintragsdetails section for person-level remarks.
+- **Urteil erweitert**: `urteil` field expanded from 50 to 200 characters in DB schema, form, sanitizer, and CSV import/export.
+
+### 6.8 *(2026-03-15)*
+- **Table of Contents**: Added TOC after the header metadata block with links to all `##` and `###` sections
+
+### 6.7 *(2026-03-15)*
+- **Restore .txt content to README**: All documentation sections (Installation, Build, Shortcodes, Fields/Schema, Code Reference, Plugin Structure, AI Instructions, Recreate from Scratch) merged back inline into README.md; Dokumentation link section removed
+
+### 6.6 *(2026-03-15)*
+- **Important Notes in README**: Moved "Important Notes" section back into README.md (was extracted to important-notes.txt in 6.5)
+
+### 6.5 *(2026-03-15)*
+- **Dokumentation aufgeteilt**: Alle Themen-Abschnitte aus README.md in separate `.txt`-Dateien ausgelagert; README.md enthält nur noch Projektinfo, Einleitung und Release Notes
+
+### 6.4 *(2026-03-15)*
+- **Complete README update**: Fixed `HANDSCHELLE_VERSION` constant example (`6.2`→`6.3`); corrected field/column count from 32 to 31 everywhere (Fields section, CSV section, Recreate prompt); fixed shortcode count from 16 to 19 in Plugin Structure; added missing `[handschelle-asc-link]` to Shortcodes overview table, detailed section, and Recreate prompt; updated AI-instructions version examples from `6.2` to `6.3`
+
+### 6.3 *(2026-03-15)*
+- **Build / Package**: Added `## Build / Package` section with `zip` commands to create a distributable ZIP, a quick one-liner variant, and a GD verification command
+
+### 6.2 *(2026-03-14)*
+- **Recreate from Scratch**: Added `## Recreate from Scratch` section to README — a complete, self-contained prompt for rebuilding the entire plugin with an AI assistant from a blank slate
+- **ToC**: Added entry for new section; fixed stale `HANDSCHELLE_VERSION // '6.0'` reference in Code Reference
+
+### 6.1 *(2026-03-14)*
+- **Version policy**: Version is now bumped by `0.1` per commit (was `0.01`); old comment in `die-handschelle.php` corrected accordingly
+- **LLM Instructions**: Added `## Instructions for AI / LLM` section to README with version-bump rules, shortcode checklist, schema rules, and general coding standards
+
+### 6.0 *(2026-03-14)*
+- **`[wordcloud-name]`**: Word cloud of all approved person names — font size proportional to entry count, shows Name (Partei), tooltip shows exact count; pure CSS/HTML, no external library
+- **`[wordcloud-urteil]`**: Word cloud of all distinct verdicts (`urteil`) — font size proportional to frequency; only entries with a non-empty verdict are included
+- **Dropdown styling**: Text color set to black (`#000`), background set to white (`#fff`), transparency removed — applies to all select elements (`.hs-select`, `.hs-field select`, `.hs-edit-form select`, `.hs-bulk-select`)
+- **Eintrag melden**: Every card now has a `⚠️ Eintrag melden!` mailto link in the footer — opens a pre-addressed e-mail to `info@die-handschelle.com` with subject `Meldung - <Name> - <Partei>`
+- **Bilder-Galerie**: Hover tooltip and click-link removed from gallery images — images display as plain `<img>` tags with name/crime captions only
+- **Edit-Button Sichtbarkeit**: Inline-edit button and panel on frontend cards are now visible only to users with role **Author or higher** (`publish_posts` capability) — Subscribers and Contributors no longer see the edit controls
+
+### 3.09 *(2026-03-14)*
+- **Hintergrundfarbe**: `--hs-bg` auf `#f0f0f0` (neutrales Hellgrau) geändert; alle Eingabefelder und Dropdowns nutzen `var(--hs-bg)` statt #fafafa
+- **Bugfix – Neue Einträge nicht gespeichert**: Bei Nonce-Fehler (z. B. Cache) erhält der Nutzer jetzt eine sichtbare Fehlermeldung (`⚠️ Fehler beim Speichern. Bitte Seite neu laden…`) statt stiller Weiterleitung; `$wpdb->insert()`-Ergebnis wird geprüft — Erfolgsmeldung erscheint nur bei tatsächlich gespeichertem Eintrag; `datum_eintrag` fällt jetzt auch bei leerem String auf das aktuelle Datum zurück (`?:` statt `??`)
+- **Bugfix – Backup/Restore Feldzuordnung**: Im Restore-Code waren alle CSV-Spalten ab Index 4 um 2 Positionen verschoben (`geburtsort` und `geburtsdatum` wurden übersprungen); `bild`-ID wurde aus Spalte 4 (`geburtsort`) statt aus Spalte 6 gelesen → falsche Bildzuordnung; `geburtsort`, `geburtsdatum`, `sm_linkedin`, `sm_xing`, `sm_truth_social` wurden nie wiederhergestellt; `freigegeben` wurde aus Spalte 23 (`sm_wikipedia`) statt aus Spalte 28 gelesen — alles korrigiert
+
+### 3.08 *(2026-03-14)*
+- **`[handschelle-asc]`**: Output is now horizontally centered (`justify-content: center`)
+
+### 3.07 *(2026-03-14)*
+- **`[handschelle-disclaimer]`**: E-Mail → `info@die-handschelle.com`, Website → `www.die-handschelle.com`, Buy-Me-A-Coffee → `buymeacoffee.com/dorfmuellersak47`, tagline in quotation marks
+- **Neuer Shortcode `[handschelle-asc]`**: Horizontale zentrierte Liste aller Parteien mit Eintragsanzahl (A→Z, ohne Header, kleiner Font)
+- **Neue Felder**: `geburtsort` (VARCHAR 100), `geburtsdatum` (DATE), `sm_linkedin`, `sm_xing`, `sm_truth_social` — in allen Formularen, Karten, CSV
+- **Alter**: Admin-Übersicht zeigt berechnetes Alter; Karte zeigt Geburtsdatum + Alter
+- **Suchmaschinen**: Qwant, DuckDuckGo und Bing überall, wo bisher nur Google stand (Karten-Footer, Name-Dropdown, Name-Anzeige, Admin-Formular, Inline-Edit-Panel)
+- **`[handschelle-bilder]` klickbar**: Klick auf Bild öffnet Personendetails via `?hs_name=<Name>`; neues Attribut `link=""` für die Zielseite
+- **CSV Import**: Komplett auf header-basiertes Mapping umgestellt (rückwärtskompatibel mit alten CSVs); CSV-Export enthält alle 32 Spalten
+
+### 3.06 *(2026-03-14)*
+- **`[handschelle-bilder]`**: Name und Straftat als Beschriftung unter jedem Bild
+- **`[handschelle-bilder]`**: Reiner CSS-Tooltip beim Hover mit allen Personendaten
+- **`[handschelle-anzeige]`**: Standard `limit` auf 0 gesetzt (keine Paginierung)
+- **DB-Migration**: `maybe_upgrade_table()` — fehlende Spalten werden via `dbDelta()` beim Plugin-Update automatisch ergänzt, kein Datenverlust
+
+### 3.05 *(2026-03-13)*
+- **Keine Hintergrundfarben**: Hintergrundfarben von Frontend-Containern entfernt — Plugin integriert sich neutral ins Theme
+- **Volle Breite**: Alle Shortcode-Wrapper verwenden `hs-full-width` (100 % Breite)
+- **Alle Links im Karten-Footer**: Google- und Abgeordnetenwatch-Links aus dem Karten-Header entfernt; alle Links jetzt im `.hs-card-footer`
+- **Neuer Shortcode `[handschelle-statistik-nolink]`**
+- **MediaID-Remapping beim Backup/Restore**: `bild-map.json` in ZIP; automatisches ID-Remapping beim Restore
+
+### 3.04 *(2026-03-13)*
+- **Such-Buttons überall**: Google und Abgeordnetenwatch in Admin-Formular, Frontend-Inline-Edit und Name-Anzeige
+- **Karten-Bild klickbar**: Profilfoto verlinkt auf `?hs_name=<name>` der gleichen Seite
+- **Vollbreite Name-Ergebnisse**: `.hs-cards-single` für Personenansicht
+
+### 3.03 *(2026-03-13)*
+- **Bild-Umbenennung**: Schema geändert auf `<Name>-HA.<ext>` (z. B. `max-mustermann-HA.jpg`)
+- **Neuer Shortcode `[handschelle-statistik-ol]`**
+- **Admin: Backup & Restore**: Vollständiges Backup als ZIP (CSV + Bilder); Restore importiert beides
+
+### 3.02 *(2026-03-13)*
+- **WP Media Manager** als primäre Bildauswahl; „Bild entfernen"-Button im Bearbeiten-Modus
+
+### 3.00 *(2026-03-13)*
+- **Paginierung** für `[handschelle-anzeige]` (`limit`-Attribut, `hs_paged`-Parameter)
+- **Volltext-Suche** in `[handschelle-suche]` (`hs_search`-Parameter)
+- **`[handschelle-karte id="X"]`**: Einzelkarte per Datenbank-ID
+- **Admin-Filter-Tabs**: Alle / Ausstehend / Freigegeben mit Anzahl-Badges
+- **Admin-Bulk-Aktionen**: Mehrere Einträge gleichzeitig freigeben, sperren oder löschen
+- **WP-Medienbibliothek-Picker** im Admin-Formular
+
+### 2.07 – 2.09 *(2026-03-13)*
+- Shortcode `[handschelle-bilder]` (Bildergalerie)
+- Admin-Seite **Bilder**: ZIP-Export & ZIP-Import von Anhängen
+- Shortcodes `[handschelle-statistik-partei]`, `[handschelle-statistik-name]`, `[handschelle-name-anzeige]`, `[handschelle-name-partei]`
+- Buy-Me-A-Coffee-Link, Einleitung in README
+
+### Alpha-2 / 2.0 A *(initial)*
+- Initial release: Frontend-Formular, Eintrags-Karten, Partei-/Personen-Dropdowns, Statistiktabelle, CSV-Import/Export, Datenbankverwaltung, Bild-Upload & GD-Resize (max. 450 px)
+
+---
+
+*Erstellt mit Vibe-Coding — KI-gestützte Entwicklung mit Claude (Anthropic)*
 
 ## Installation from GitHub
 
@@ -222,6 +421,7 @@ All shortcodes output HTML and can be placed on any WordPress page or post.
 | `[handschelle-name-partei]` | Party dropdown – shows cards for selected party |
 | `[handschelle-partei]` | Party search dropdown only |
 | `[handschelle-result]` | Zeigt Eintrags-Karten für `?hs_name_name=<name>`; zeigt nichts, wenn kein Name bekannt |
+| `[handschelle-pie-partei]` | Pie chart: approved entries per party (Anzahl Partei) — uses Chart.js 4 |
 | `[handschelle-register]` | Registrierungsformular: Benutzername, Vorname, Nachname, Spitzname, E-Mail, Webseite, Passwort; neues Konto erhält Status `pending` – Login erst nach Admin-Freischaltung |
 | `[handschelle-statistik]` | Statistics table with bar chart per party (party names are links) |
 | `[handschelle-statistik-name]` | Table: person name / entry count |
@@ -286,153 +486,6 @@ Displays all approved entries (`freigegeben = 1`) as responsive cards. Supports 
 
 ---
 
-### `[handschelle-karte]`
-
-Displays a single entry card by database ID. Only shows approved entries.
-
-```
-[handschelle-karte id="5"]
-```
-
-| Attribute | Type | Description |
-|---|---|---|
-| `id` | int | Database ID of the entry to display |
-
-**Card contents:**
-- Profile photo — **clickable**, links to `?hs_name=` on the same page
-- Name, profession, birth date + age, birth place
-- Party, position, parliament
-- Crime description & status badge
-- Verdict, case number
-- Footer: source link · Google · Qwant · DuckDuckGo · Bing · Abgeordnetenwatch · social media icons
-
----
-
-### `[handschelle-suche]`
-
-Renders a **full-text search field** and two auto-submitting dropdowns (Party and Person name). Combine with `[handschelle-anzeige]` on the same page.
-
-```
-[handschelle-suche]
-```
-
----
-
-### `[handschelle-partei]`
-
-Renders only the Party search dropdown. After selection shows all cards for that party.
-
-```
-[handschelle-partei]
-```
-
----
-
-### `[handschelle-name]`
-
-Renders only the Person name search dropdown. After selection shows all cards for that person plus **Google, Qwant, DuckDuckGo, Bing, Abgeordnetenwatch** search buttons.
-
-```
-[handschelle-name]
-```
-
----
-
-### `[handschelle-statistik]`
-
-Statistics table: entries per party with bar chart. Party names link to `?hs_partei=`.
-
-```
-[handschelle-statistik]
-```
-
----
-
-### `[handschelle-statistik-nolink]`
-
-Same as `[handschelle-statistik]` but party names are plain text (no links).
-
-```
-[handschelle-statistik-nolink]
-```
-
----
-
-### `[handschelle-statistik-partei]`
-
-Table: Party → entry count. Party names link to `?hs_name_partei=`.
-
-```
-[handschelle-statistik-partei]
-```
-
----
-
-### `[handschelle-statistik-name]`
-
-Table: Person name → entry count.
-
-```
-[handschelle-statistik-name]
-```
-
----
-
-### `[handschelle-statistik-ol]`
-
-Numbered list: party — count of distinct person names, sorted descending.
-
-```
-[handschelle-statistik-ol]
-```
-
-**Example:**
-1. CDU – 5 Namen
-2. SPD – 3 Namen
-3. AfD – 2 Namen
-
----
-
-### `[handschelle-name-anzeige]`
-
-Name dropdown + result cards for the selected person. Includes Google, Qwant, DuckDuckGo, Bing, Abgeordnetenwatch buttons.
-
-```
-[handschelle-name-anzeige]
-```
-
----
-
-### `[handschelle-name-partei]`
-
-Party dropdown + result cards for the selected party.
-
-```
-[handschelle-name-partei]
-```
-
----
-
-### `[handschelle-bilder]`
-
-Responsive image gallery of all approved entries that have a photo.
-
-- Images are displayed at max 300×300 px (aspect ratio preserved)
-- **Name** and **Straftat** shown as caption below each image
-- **Hover tooltip** shows all available person data (party, profession, parliament, crime, status, verdict, case number)
-- **Clicking an image** navigates to `?hs_name=<name>` — shows the person's detail cards
-
-```
-[handschelle-bilder]
-[handschelle-bilder link="/personen/"]
-```
-
-| Attribute | Type | Default | Description |
-|---|---|---|---|
-| `link` | string | current page | Base URL of the target page with `[handschelle-name]`. If empty, uses the current page. |
-
----
-
 ### `[handschelle-asc]`
 
 Compact horizontal centered list of all parties with entry count, sorted A→Z. No header, small font. Ideal for sidebars or page footers.
@@ -460,6 +513,26 @@ Same as `[handschelle-asc]` but with two enhancements:
 
 ---
 
+### `[handschelle-bilder]`
+
+Responsive image gallery of all approved entries that have a photo.
+
+- Images are displayed at max 300×300 px (aspect ratio preserved)
+- **Name** and **Straftat** shown as caption below each image
+- **Hover tooltip** shows all available person data (party, profession, parliament, crime, status, verdict, case number)
+- **Clicking an image** navigates to `?hs_name=<name>` — shows the person's detail cards
+
+```
+[handschelle-bilder]
+[handschelle-bilder link="/personen/"]
+```
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `link` | string | current page | Base URL of the target page with `[handschelle-name]`. If empty, uses the current page. |
+
+---
+
 ### `[handschelle-disclaimer]`
 
 Copyright / contact block.
@@ -475,104 +548,25 @@ Copyright / contact block.
 
 ---
 
-### Typical Page Setup
+### `[handschelle-karte]`
+
+Displays a single entry card by database ID. Only shows approved entries.
 
 ```
-<!-- Main display page -->
-[handschelle-suche]
-[handschelle-anzeige]
-
-<!-- Gallery page -->
-[handschelle-bilder link="/person/"]
-
-<!-- Statistics page -->
-[handschelle-statistik]
-[handschelle-asc]
-
-<!-- Submit page -->
-[handschelle]
-
-<!-- Person detail page (target for bilder links) -->
-[handschelle-name]
+[handschelle-karte id="5"]
 ```
 
----
-
-### `[handschelle-straftat]`
-
-Horizontally scrolling news ticker displaying all approved entries. Each item shows **Partei**, **Name**, **Straftat** and **Status Straftat** with a white background and black border.
-
-```
-[handschelle-straftat]
-[handschelle-straftat speed="60"]
-```
-
-| Attribute | Type | Default | Description |
-|---|---|---|---|
-| `speed` | int | `40` | Scroll duration in seconds (lower = faster, minimum 5) |
-
-**Color scheme:**
-
-| Element | Color |
-|---|---|
-| Background | white |
-| Border | black |
-| Partei | red |
-| Name | black |
-| Straftat | black |
-| Status Straftat | red |
-
----
-
-### `[handschelle-result]`
-
-Zeigt Eintrags-Karten für die über den URL-Parameter `hs_name_name` übergebene Person. Zeigt **nichts** an, wenn kein Name übergeben wurde oder keine freigegebenen Einträge vorhanden sind.
-
-Gedacht als Zielseite für Links aus `[handschelle-straftat-link]`.
-
-```
-[handschelle-result]
-```
-
-**Kein Attribut erforderlich.** Der Name kommt ausschließlich aus dem URL-Parameter.
-
-| URL-Parameter | Quelle | Beschreibung |
+| Attribute | Type | Description |
 |---|---|---|
-| `?hs_name_name=<name>` | `[handschelle-straftat-link]` | Name der anzuzeigenden Person |
+| `id` | int | Database ID of the entry to display |
 
-**Typische Kombination:**
-
-```
-<!-- Ticker-Seite -->
-[handschelle-straftat-link page="/person/"]
-
-<!-- Zielseite /person/ -->
-[handschelle-result]
-```
-
----
-
-### `[handschelle-straftat-link]`
-
-Same as `[handschelle-straftat]` but **Name** and **Partei** are clickable links.
-
-```
-[handschelle-straftat-link]
-[handschelle-straftat-link speed="60"]
-[handschelle-straftat-link page="/straftaten/"]
-```
-
-| Attribute | Type | Default | Description |
-|---|---|---|---|
-| `speed` | int | `40` | Scroll duration in seconds (lower = faster, minimum 5) |
-| `page` | string | aktuelle Seite | Target URL for all links |
-
-**Link targets:**
-
-| Click on | URL parameter added |
-|---|---|
-| Name | `?hs_name_name=<name>` (read by `[handschelle-name-anzeige]`) |
-| Partei | `?hs_name_partei=<partei>` (read by `[handschelle-name-partei]`) |
+**Card contents:**
+- Profile photo — **clickable**, links to `?hs_name=` on the same page
+- Name, profession, birth date + age, birth place
+- Party, position, parliament
+- Crime description & status badge
+- Verdict, case number
+- Footer: source link · Google · Qwant · DuckDuckGo · Bing · Abgeordnetenwatch · social media icons
 
 ---
 
@@ -593,6 +587,57 @@ Zeigt ein WordPress-Anmeldeformular. Ist der Nutzer bereits eingeloggt, wird sta
 - Nicht eingeloggt → Login-Formular mit Benutzername/Passwort, „Angemeldet bleiben"-Checkbox und „Passwort vergessen"-Link
 - Eingeloggt → Willkommenstext + Abmelden-Button
 - Fehlgeschlagene Anmeldung → Fehlermeldung (`?hs_login_error=1`)
+
+---
+
+### `[handschelle-name]`
+
+Renders only the Person name search dropdown. After selection shows all cards for that person plus **Google, Qwant, DuckDuckGo, Bing, Abgeordnetenwatch** search buttons.
+
+```
+[handschelle-name]
+```
+
+---
+
+### `[handschelle-name-anzeige]`
+
+Name dropdown + result cards for the selected person. Includes Google, Qwant, DuckDuckGo, Bing, Abgeordnetenwatch buttons.
+
+```
+[handschelle-name-anzeige]
+```
+
+---
+
+### `[handschelle-name-partei]`
+
+Party dropdown + result cards for the selected party.
+
+```
+[handschelle-name-partei]
+```
+
+---
+
+### `[handschelle-partei]`
+
+Renders only the Party search dropdown. After selection shows all cards for that party.
+
+```
+[handschelle-partei]
+```
+
+---
+
+### `[handschelle-pie-partei]`
+
+Pie chart showing the number of approved entries per party (Anzahl Partei).
+Uses **Chart.js 4** (loaded from CDN, footer). Tooltip shows name, count, and percentage; legend on the right.
+
+```
+[handschelle-pie-partei]
+```
 
 ---
 
@@ -631,6 +676,221 @@ Neue Konten erhalten den Status **`pending`** und können sich nicht einloggen, 
 - Fehler (doppelter Name, E-Mail vergeben, Passwörter ungleich) → jeweils passende Fehlermeldung
 - Pending-Konten → Login gesperrt mit Hinweis
 - Deaktivierte Konten → Login gesperrt mit Hinweis
+
+---
+
+### `[handschelle-result]`
+
+Zeigt Eintrags-Karten für die über den URL-Parameter `hs_name_name` übergebene Person. Zeigt **nichts** an, wenn kein Name übergeben wurde oder keine freigegebenen Einträge vorhanden sind.
+
+Gedacht als Zielseite für Links aus `[handschelle-straftat-link]`.
+
+```
+[handschelle-result]
+```
+
+**Kein Attribut erforderlich.** Der Name kommt ausschließlich aus dem URL-Parameter.
+
+| URL-Parameter | Quelle | Beschreibung |
+|---|---|---|
+| `?hs_name_name=<name>` | `[handschelle-straftat-link]` | Name der anzuzeigenden Person |
+
+**Typische Kombination:**
+
+```
+<!-- Ticker-Seite -->
+[handschelle-straftat-link page="/person/"]
+
+<!-- Zielseite /person/ -->
+[handschelle-result]
+```
+
+---
+
+### `[handschelle-statistik]`
+
+Statistics table: entries per party with bar chart. Party names link to `?hs_partei=`.
+
+```
+[handschelle-statistik]
+```
+
+---
+
+### `[handschelle-statistik-name]`
+
+Table: Person name → entry count.
+
+```
+[handschelle-statistik-name]
+```
+
+---
+
+### `[handschelle-statistik-nolink]`
+
+Same as `[handschelle-statistik]` but party names are plain text (no links).
+
+```
+[handschelle-statistik-nolink]
+```
+
+---
+
+### `[handschelle-statistik-ol]`
+
+Numbered list: party — count of distinct person names, sorted descending.
+
+```
+[handschelle-statistik-ol]
+```
+
+**Example:**
+1. CDU – 5 Namen
+2. SPD – 3 Namen
+3. AfD – 2 Namen
+
+---
+
+### `[handschelle-statistik-partei]`
+
+Table: Party → entry count. Party names link to `?hs_name_partei=`.
+
+```
+[handschelle-statistik-partei]
+```
+
+---
+
+### `[handschelle-straftat]`
+
+Horizontally scrolling news ticker displaying all approved entries. Each item shows **Partei**, **Name**, **Straftat** and **Status Straftat** with a white background and black border.
+
+```
+[handschelle-straftat]
+[handschelle-straftat speed="60"]
+```
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `speed` | int | `40` | Scroll duration in seconds (lower = faster, minimum 5) |
+
+**Color scheme:**
+
+| Element | Color |
+|---|---|
+| Background | white |
+| Border | black |
+| Partei | red |
+| Name | black |
+| Straftat | black |
+| Status Straftat | red |
+
+---
+
+### `[handschelle-straftat-link]`
+
+Same as `[handschelle-straftat]` but **Name** and **Partei** are clickable links.
+
+```
+[handschelle-straftat-link]
+[handschelle-straftat-link speed="60"]
+[handschelle-straftat-link page="/straftaten/"]
+```
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `speed` | int | `40` | Scroll duration in seconds (lower = faster, minimum 5) |
+| `page` | string | aktuelle Seite | Target URL for all links |
+
+**Link targets:**
+
+| Click on | URL parameter added |
+|---|---|
+| Name | `?hs_name_name=<name>` (read by `[handschelle-name-anzeige]`) |
+| Partei | `?hs_name_partei=<partei>` (read by `[handschelle-name-partei]`) |
+
+---
+
+### `[handschelle-suche]`
+
+Renders a **full-text search field** and two auto-submitting dropdowns (Party and Person name). Combine with `[handschelle-anzeige]` on the same page.
+
+```
+[handschelle-suche]
+```
+
+---
+
+### `[handschelle-ticker]`
+
+Horizontally scrolling news ticker showing all approved entries. Each item displays **Name**, **Partei**, and full **Straftat** text.
+
+```
+[handschelle-ticker]
+[handschelle-ticker speed="60"]
+```
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `speed` | int | `40` | Scroll duration in seconds (lower = faster, minimum 5) |
+
+---
+
+### `[handschelle-ticker-icons]`
+
+Same as `[handschelle-straftat-link]` but each entry is prefixed with a small round profile photo (28 px). If no image is available, the first initial of the name is shown as a placeholder (dark-blue circle). Supports `speed` and `page` attributes.
+
+```
+[handschelle-ticker-icons]
+[handschelle-ticker-icons speed="60" page="/person/"]
+```
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `speed` | int | `40` | Scroll duration in seconds (lower = faster, minimum 5) |
+| `page` | string | current page | Target URL for name / party links |
+
+---
+
+### `[wordcloud-name]`
+
+Word cloud of all approved person names. Font size is proportional to the number of entries. Each word shows `Name (Partei)`; tooltip shows the exact count. Pure CSS/HTML, no external library.
+
+```
+[wordcloud-name]
+```
+
+---
+
+### `[wordcloud-urteil]`
+
+Word cloud of all distinct verdicts (`urteil`). Font size is proportional to frequency. Only entries with a non-empty verdict are included.
+
+```
+[wordcloud-urteil]
+```
+
+### Typical Page Setup
+
+```
+<!-- Main display page -->
+[handschelle-suche]
+[handschelle-anzeige]
+
+<!-- Gallery page -->
+[handschelle-bilder link="/person/"]
+
+<!-- Statistics page -->
+[handschelle-statistik]
+[handschelle-asc]
+
+<!-- Submit page -->
+[handschelle]
+
+<!-- Person detail page (target for bilder links) -->
+[handschelle-name]
+```
 
 ---
 
@@ -1353,195 +1613,4 @@ IMPORTANT BEHAVIOURS
 
 ---
 
-## Important Notes
 
-- New public submissions are **not approved by default** (`freigegeben = 0`). An admin must approve them via **Übersicht → ✅ Freigeben**.
-- Profile images are automatically resized to a maximum height of **450 px** using the GD library (required).
-- CSV export uses **UTF-8 with BOM** and **semicolons** as delimiters for Excel compatibility. The import is header-based and backward-compatible.
-- The **Edit page** is hidden from the admin sidebar but accessible via the ✏ button in the Overview table.
-- **Authors and higher** (role `Author`, `Editor`, `Administrator`) see an inline edit button on every entry card in the frontend — Subscribers and Contributors do not.
-- The inline edit panel and admin form both include **Google, Qwant, DuckDuckGo, Bing, Abgeordnetenwatch** search buttons next to the name field.
-- All forms use **WordPress nonce verification** to prevent CSRF attacks. If nonce verification fails (e.g. after a long session or cached page), the user sees a visible error message (`⚠️ Fehler beim Speichern`) instead of a silent redirect.
-- All user input is sanitized with WordPress sanitization functions before writing to the database.
-- Social media icons are rendered as **inline SVG** with brand colors and hover effects — no external icon library required.
-- **Image uploads** are automatically renamed to `name-HA.ext` (e.g. `max-mustermann-HA.jpg`) using `sanitize_title()`.
-- The **admin image field** supports two workflows: (1) pick from the WP Media Library via the `wp.media` modal, or (2) upload a new file directly.
-- **Database auto-migration:** After updating the plugin, `maybe_upgrade_table()` runs on `plugins_loaded` and adds any missing columns via `dbDelta()`. No data is ever lost.
-
----
-
-## Release Notes
-
-### 9.2 *(2026-03-16)*
-- **Website-Icon für Gäste**: Nicht eingeloggte Besucher sehen statt des Personenfotos das Website-Icon (`get_site_icon_url`). Das Foto-Bild ist nicht verlinkt – der Klick-Link zum Detailprofil entfällt für Gäste.
-
-### 9.1 *(2026-03-16)*
-- **Karten-Footer für Gäste ausgeblendet**: Nicht eingeloggte Besucher sehen keine Links mehr in Karten (keine Quelle, keine E-Mail, keine Suchmaschinen, kein Social-Media, kein „Eintrag melden"). Der gesamte `hs-card-footer` wird nur noch gerendert, wenn `is_user_logged_in()` gilt.
-
-### 9.0 *(2026-03-16)*
-- **Gast-Karten: Website-Icon statt Profilfoto**: Nicht eingeloggte Besucher sehen in `render_card` das WordPress-Site-Icon (`get_site_icon_url(96)`) als Kartenbild statt des echten Profilfotos. Kein Site-Icon gesetzt → Fallback auf 👤. Klasse `hs-card-img-siteicon` sorgt für `object-fit:contain` und Innenabstand. Der Bearbeiten-Button prüft jetzt korrekt `publish_posts` über `$is_author`.
-
-### 8.9 *(2026-03-16)*
-- **Name-Datenschutz (global)**: Neue Hilfsfunktion `hs_display_name()` in `helpers.php`. Nicht eingeloggte Besucher sehen statt des Namens `████████`. Gilt für alle Shortcodes: Karten (`render_card`), alle Ticker-Varianten, Wordcloud, Statistik-Tabelle, Bilder-Galerie und Namens-Dropdowns.
-
-### 8.8 *(2026-03-16)*
-- **`[handschelle-ticker-icons]`**: Neuer Shortcode – identisch wie `[handschelle-straftat-link]`, aber mit kleinem rundem Profilbild (28 px) vor dem Namen; kein Bild → Initiale des Namens als Platzhalter (dunkelblauer Kreis). Attribute `speed` und `page` wie bei `[handschelle-straftat-link]`.
-
-### 8.7 *(2026-03-16)*
-- **`[handschelle-straftat-link]`**: Jeder Eintrag ist jetzt als Ganzes ein klickbarer Link (`<a>`) auf `?hs_name_name=<name>`; einzelne Partei- und Name-Links entfernt zugunsten des Item-Links.
-
-### 8.6 *(2026-03-16)*
-- **`[handschelle-result]`**: Neuer Shortcode – zeigt Eintrags-Karten für `?hs_name_name=<name>`; zeigt nichts an, wenn kein Name übergeben wurde oder keine freigegebenen Einträge vorhanden sind. Gedacht als Zielseite für Links aus `[handschelle-straftat-link]`.
-
-### 8.5 *(2026-03-16)*
-- **Straftat-Link-Ticker** `[handschelle-straftat-link]`: Neuer Shortcode – identisches Layout wie `[handschelle-straftat]`, aber Name und Partei sind klickbare Links; Name verlinkt auf `?hs_name_name=<name>`, Partei auf `?hs_name_partei=<partei>`; optionales Attribut `page` für Ziel-URL (Standard: aktuelle Seite).
-- **CSS**: `.hs-st-link` – dezenter Unterstrich-Stil (dotted) für Ticker-Links; Hover-Effekt (Opacity).
-
-### 8.4 *(2026-03-16)*
-- **Registrierungsformular erweitert**: `[handschelle-register]` hat jetzt zusätzliche optionale Felder: Vorname, Nachname, Spitzname, Webseite; Vorname/Nachname nebeneinander (2-Spalten-Grid, responsive); gespeichert via `wp_update_user()` nach Kontoerstellung.
-
-### 8.3 *(2026-03-16)*
-- **Benutzer-Freischaltung**: Neue Registrierungen erhalten den Status `pending` (User-Meta `hs_user_status`); Login ist gesperrt bis zur Freischaltung; Admin wird per E-Mail benachrichtigt.
-- **Login-Sperre**: `authenticate`-Filter blockiert `pending`- und `deactivated`-Konten mit jeweils eigenem Fehlertext.
-- **Admin-Menü: 👥 Benutzer** (`Die-Handschelle → Benutzer`): Übersicht aller Benutzer mit Status-Badge; Aktionen: Freischalten, Deaktivieren, Löschen; Pending-Zähler als Badge im Menütitel; Admins sind vor Änderungen geschützt.
-
-### 8.0 *(2026-03-16)*
-- **README**: Shortcodes overview table sorted A-Z; added missing `[handschelle-ticker]` entry; fields in Person, Crime/Legal and Social Media schema groups sorted A-Z; `straftat` type corrected to TEXT (no limit); version constant updated to 8.0; shortcodes.php count corrected to 24.
-- **To Do**: Added To Do section (after Einleitung) with planned features: Mailing-Liste, Multilanguage, Multiple Offences, Multiuser.
-
-### 7.9 *(2026-03-16)*
-- **Straftat-Feld**: Textfarbe auf Schwarz (#000000) gesetzt in allen Anzeigebereichen (Karte, Bild-Tooltip, Ticker); 200-Zeichen-Limit entfernt (kein maxlength, kein substr-Truncation); vollständiger Text wird in beiden Ticker-Shortcodes angezeigt.
-
-### 7.8 *(2026-03-16)*
-- **Registrierungs-Formular** `[handschelle-register]`: Neues Registrierungs-Shortcode mit Feldern für Benutzername, E-Mail und Passwort (mit Bestätigung); respektiert die WordPress-Einstellung „Jeder kann sich registrieren", zeigt passende Fehlermeldungen und sendet nach Erfolg E-Mails an Nutzer und Admin.
-
-### 7.7 *(2026-03-16)*
-- **Login-Formular** `[handschelle-login]`: Neues Anmelde-Shortcode mit Benutzername/Passwort-Eingabe, „Angemeldet bleiben"-Checkbox, „Passwort vergessen"-Link und optionalem `redirect`-Attribut; eingeloggten Nutzern wird eine Willkommensnachricht mit Abmelden-Button angezeigt.
-
-### 7.6 *(2026-03-16)*
-- **Straftat-Ticker** `[handschelle-straftat]`: Neuer News-Ticker mit weißem Hintergrund und schwarzem Rahmen; zeigt Partei (rot), Name (schwarz), Straftat (schwarz) und Status Straftat (rot) aller freigegebenen Einträge. Geschwindigkeit über Attribut `speed` einstellbar.
-
-### 7.5 *(2026-03-16)*
-- **News-Ticker** `[handschelle-ticker]`: Neuer Shortcode mit horizontalem CSS-Laufband; zeigt Name, Partei und Straftat aller freigegebenen Einträge. Geschwindigkeit über Attribut `speed` (Sekunden, Standard 40, Minimum 5) einstellbar.
-
-### 7.4 *(2026-03-16)*
-- **Profilfelder in Karten & Formularen**: Neue Felder `geburtsland`, `email_privat`, `email_oeffentlich` und `spitzname` werden nun in Frontend-Karten, Inline-Edit-Formular und Admin-Übersicht angezeigt.
-
-### 7.3 *(2026-03-15)*
-- **Domain & E-Mail update**: Changed all references from `www.die-handschelle.de` → `www.die-handschelle.com` and `Info@die-handschelle.de` → `info@die-handschelle.com` across shortcodes, README, and all doc files; also fixed typo `info@hanschelle.com` → `info@die-handschelle.com` in the "Eintrag melden" mailto link.
-
-### 7.2 *(2026-03-15)*
-- **Fix Backup/Restore image mapping**: Converted `restore_full()` from fixed numeric column indices to header-based mapping (same approach as CSV import); old backups created before the `verstorben`/`dod` columns were added now restore correctly instead of assigning `bild` to the wrong column.
-- **Fix Backup/Restore bild validation**: After attempting ID remapping, if the attachment ID is not found in the remap table and does not exist on the current site, `bild` is cleared instead of storing a stale/wrong ID.
-- **Fix image display after restore/import**: `handschelle_get_image_url()` now falls back from `medium` → `full` → `wp_get_attachment_url()` so images are always visible even when WP thumbnail sizes weren't regenerated.
-- **Fix image replacement on edit**: Editing an entry and uploading a new image now deletes the old attachment from the media library (admin edit and frontend inline edit), preventing orphaned files and wrong image references.
-
-### 7.1 *(2026-03-15)*
-- **Cards & Forms**: Added `verstorben`/`dod` and `bemerkung_person` to frontend cards (display), frontend submission form, and inline edit form; JS toggle converted to delegated class-based handler (`hs-verstorben-cb` / `hs-dod-row`) so it works across all form instances on the same page.
-- **CSS**: Added `.hs-badge-verstorben` (grey badge) and `.hs-card-bemerkung-person` styles.
-
-### 7.0 *(2026-03-15)*
-- **Fix Urteil maxlength in shortcodes**: Frontend submission form and frontend edit form both had `maxlength="50"` for `urteil`; corrected to `maxlength="200"` to match DB schema and admin form.
-
-### 6.9 *(2026-03-15)*
-- **DoD / Verstorben**: Added `verstorben` checkbox and `dod` (date of death) date field to Eintragsdetails; DoD field is shown/hidden via JS when checkbox is toggled.
-- **Bemerkung zur Person**: New `bemerkung_person` text field (max. 500 chars) added to Eintragsdetails section for person-level remarks.
-- **Urteil erweitert**: `urteil` field expanded from 50 to 200 characters in DB schema, form, sanitizer, and CSV import/export.
-
-### 6.8 *(2026-03-15)*
-- **Table of Contents**: Added TOC after the header metadata block with links to all `##` and `###` sections
-
-### 6.7 *(2026-03-15)*
-- **Restore .txt content to README**: All documentation sections (Installation, Build, Shortcodes, Fields/Schema, Code Reference, Plugin Structure, AI Instructions, Recreate from Scratch) merged back inline into README.md; Dokumentation link section removed
-
-### 6.6 *(2026-03-15)*
-- **Important Notes in README**: Moved "Important Notes" section back into README.md (was extracted to important-notes.txt in 6.5)
-
-### 6.5 *(2026-03-15)*
-- **Dokumentation aufgeteilt**: Alle Themen-Abschnitte aus README.md in separate `.txt`-Dateien ausgelagert; README.md enthält nur noch Projektinfo, Einleitung und Release Notes
-
-### 6.4 *(2026-03-15)*
-- **Complete README update**: Fixed `HANDSCHELLE_VERSION` constant example (`6.2`→`6.3`); corrected field/column count from 32 to 31 everywhere (Fields section, CSV section, Recreate prompt); fixed shortcode count from 16 to 19 in Plugin Structure; added missing `[handschelle-asc-link]` to Shortcodes overview table, detailed section, and Recreate prompt; updated AI-instructions version examples from `6.2` to `6.3`
-
-### 6.3 *(2026-03-15)*
-- **Build / Package**: Added `## Build / Package` section with `zip` commands to create a distributable ZIP, a quick one-liner variant, and a GD verification command
-
-### 6.2 *(2026-03-14)*
-- **Recreate from Scratch**: Added `## Recreate from Scratch` section to README — a complete, self-contained prompt for rebuilding the entire plugin with an AI assistant from a blank slate
-- **ToC**: Added entry for new section; fixed stale `HANDSCHELLE_VERSION // '6.0'` reference in Code Reference
-
-### 6.1 *(2026-03-14)*
-- **Version policy**: Version is now bumped by `0.1` per commit (was `0.01`); old comment in `die-handschelle.php` corrected accordingly
-- **LLM Instructions**: Added `## Instructions for AI / LLM` section to README with version-bump rules, shortcode checklist, schema rules, and general coding standards
-
-### 6.0 *(2026-03-14)*
-- **`[wordcloud-name]`**: Word cloud of all approved person names — font size proportional to entry count, shows Name (Partei), tooltip shows exact count; pure CSS/HTML, no external library
-- **`[wordcloud-urteil]`**: Word cloud of all distinct verdicts (`urteil`) — font size proportional to frequency; only entries with a non-empty verdict are included
-- **Dropdown styling**: Text color set to black (`#000`), background set to white (`#fff`), transparency removed — applies to all select elements (`.hs-select`, `.hs-field select`, `.hs-edit-form select`, `.hs-bulk-select`)
-- **Eintrag melden**: Every card now has a `⚠️ Eintrag melden!` mailto link in the footer — opens a pre-addressed e-mail to `info@die-handschelle.com` with subject `Meldung - <Name> - <Partei>`
-- **Bilder-Galerie**: Hover tooltip and click-link removed from gallery images — images display as plain `<img>` tags with name/crime captions only
-- **Edit-Button Sichtbarkeit**: Inline-edit button and panel on frontend cards are now visible only to users with role **Author or higher** (`publish_posts` capability) — Subscribers and Contributors no longer see the edit controls
-
-### 3.09 *(2026-03-14)*
-- **Hintergrundfarbe**: `--hs-bg` auf `#f0f0f0` (neutrales Hellgrau) geändert; alle Eingabefelder und Dropdowns nutzen `var(--hs-bg)` statt #fafafa
-- **Bugfix – Neue Einträge nicht gespeichert**: Bei Nonce-Fehler (z. B. Cache) erhält der Nutzer jetzt eine sichtbare Fehlermeldung (`⚠️ Fehler beim Speichern. Bitte Seite neu laden…`) statt stiller Weiterleitung; `$wpdb->insert()`-Ergebnis wird geprüft — Erfolgsmeldung erscheint nur bei tatsächlich gespeichertem Eintrag; `datum_eintrag` fällt jetzt auch bei leerem String auf das aktuelle Datum zurück (`?:` statt `??`)
-- **Bugfix – Backup/Restore Feldzuordnung**: Im Restore-Code waren alle CSV-Spalten ab Index 4 um 2 Positionen verschoben (`geburtsort` und `geburtsdatum` wurden übersprungen); `bild`-ID wurde aus Spalte 4 (`geburtsort`) statt aus Spalte 6 gelesen → falsche Bildzuordnung; `geburtsort`, `geburtsdatum`, `sm_linkedin`, `sm_xing`, `sm_truth_social` wurden nie wiederhergestellt; `freigegeben` wurde aus Spalte 23 (`sm_wikipedia`) statt aus Spalte 28 gelesen — alles korrigiert
-
-### 3.08 *(2026-03-14)*
-- **`[handschelle-asc]`**: Output is now horizontally centered (`justify-content: center`)
-
-### 3.07 *(2026-03-14)*
-- **`[handschelle-disclaimer]`**: E-Mail → `info@die-handschelle.com`, Website → `www.die-handschelle.com`, Buy-Me-A-Coffee → `buymeacoffee.com/dorfmuellersak47`, tagline in quotation marks
-- **Neuer Shortcode `[handschelle-asc]`**: Horizontale zentrierte Liste aller Parteien mit Eintragsanzahl (A→Z, ohne Header, kleiner Font)
-- **Neue Felder**: `geburtsort` (VARCHAR 100), `geburtsdatum` (DATE), `sm_linkedin`, `sm_xing`, `sm_truth_social` — in allen Formularen, Karten, CSV
-- **Alter**: Admin-Übersicht zeigt berechnetes Alter; Karte zeigt Geburtsdatum + Alter
-- **Suchmaschinen**: Qwant, DuckDuckGo und Bing überall, wo bisher nur Google stand (Karten-Footer, Name-Dropdown, Name-Anzeige, Admin-Formular, Inline-Edit-Panel)
-- **`[handschelle-bilder]` klickbar**: Klick auf Bild öffnet Personendetails via `?hs_name=<Name>`; neues Attribut `link=""` für die Zielseite
-- **CSV Import**: Komplett auf header-basiertes Mapping umgestellt (rückwärtskompatibel mit alten CSVs); CSV-Export enthält alle 32 Spalten
-
-### 3.06 *(2026-03-14)*
-- **`[handschelle-bilder]`**: Name und Straftat als Beschriftung unter jedem Bild
-- **`[handschelle-bilder]`**: Reiner CSS-Tooltip beim Hover mit allen Personendaten
-- **`[handschelle-anzeige]`**: Standard `limit` auf 0 gesetzt (keine Paginierung)
-- **DB-Migration**: `maybe_upgrade_table()` — fehlende Spalten werden via `dbDelta()` beim Plugin-Update automatisch ergänzt, kein Datenverlust
-
-### 3.05 *(2026-03-13)*
-- **Keine Hintergrundfarben**: Hintergrundfarben von Frontend-Containern entfernt — Plugin integriert sich neutral ins Theme
-- **Volle Breite**: Alle Shortcode-Wrapper verwenden `hs-full-width` (100 % Breite)
-- **Alle Links im Karten-Footer**: Google- und Abgeordnetenwatch-Links aus dem Karten-Header entfernt; alle Links jetzt im `.hs-card-footer`
-- **Neuer Shortcode `[handschelle-statistik-nolink]`**
-- **MediaID-Remapping beim Backup/Restore**: `bild-map.json` in ZIP; automatisches ID-Remapping beim Restore
-
-### 3.04 *(2026-03-13)*
-- **Such-Buttons überall**: Google und Abgeordnetenwatch in Admin-Formular, Frontend-Inline-Edit und Name-Anzeige
-- **Karten-Bild klickbar**: Profilfoto verlinkt auf `?hs_name=<name>` der gleichen Seite
-- **Vollbreite Name-Ergebnisse**: `.hs-cards-single` für Personenansicht
-
-### 3.03 *(2026-03-13)*
-- **Bild-Umbenennung**: Schema geändert auf `<Name>-HA.<ext>` (z. B. `max-mustermann-HA.jpg`)
-- **Neuer Shortcode `[handschelle-statistik-ol]`**
-- **Admin: Backup & Restore**: Vollständiges Backup als ZIP (CSV + Bilder); Restore importiert beides
-
-### 3.02 *(2026-03-13)*
-- **WP Media Manager** als primäre Bildauswahl; „Bild entfernen"-Button im Bearbeiten-Modus
-
-### 3.00 *(2026-03-13)*
-- **Paginierung** für `[handschelle-anzeige]` (`limit`-Attribut, `hs_paged`-Parameter)
-- **Volltext-Suche** in `[handschelle-suche]` (`hs_search`-Parameter)
-- **`[handschelle-karte id="X"]`**: Einzelkarte per Datenbank-ID
-- **Admin-Filter-Tabs**: Alle / Ausstehend / Freigegeben mit Anzahl-Badges
-- **Admin-Bulk-Aktionen**: Mehrere Einträge gleichzeitig freigeben, sperren oder löschen
-- **WP-Medienbibliothek-Picker** im Admin-Formular
-
-### 2.07 – 2.09 *(2026-03-13)*
-- Shortcode `[handschelle-bilder]` (Bildergalerie)
-- Admin-Seite **Bilder**: ZIP-Export & ZIP-Import von Anhängen
-- Shortcodes `[handschelle-statistik-partei]`, `[handschelle-statistik-name]`, `[handschelle-name-anzeige]`, `[handschelle-name-partei]`
-- Buy-Me-A-Coffee-Link, Einleitung in README
-
-### Alpha-2 / 2.0 A *(initial)*
-- Initial release: Frontend-Formular, Eintrags-Karten, Partei-/Personen-Dropdowns, Statistiktabelle, CSV-Import/Export, Datenbankverwaltung, Bild-Upload & GD-Resize (max. 450 px)
-
----
-
-*Erstellt mit Vibe-Coding — KI-gestützte Entwicklung mit Claude (Anthropic)*
