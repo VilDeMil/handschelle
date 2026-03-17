@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 8.9 |
+| **Version** | 9.2 |
 | **Autor** | Bernd K.R. Dorfmüller |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
@@ -1371,6 +1371,15 @@ IMPORTANT BEHAVIOURS
 ---
 
 ## Release Notes
+
+### 9.2 *(2026-03-16)*
+- **Website-Icon für Gäste**: Nicht eingeloggte Besucher sehen statt des Personenfotos das Website-Icon (`get_site_icon_url`). Das Foto-Bild ist nicht verlinkt – der Klick-Link zum Detailprofil entfällt für Gäste.
+
+### 9.1 *(2026-03-16)*
+- **Karten-Footer für Gäste ausgeblendet**: Nicht eingeloggte Besucher sehen keine Links mehr in Karten (keine Quelle, keine E-Mail, keine Suchmaschinen, kein Social-Media, kein „Eintrag melden"). Der gesamte `hs-card-footer` wird nur noch gerendert, wenn `is_user_logged_in()` gilt.
+
+### 9.0 *(2026-03-16)*
+- **Gast-Karten: Website-Icon statt Profilfoto**: Nicht eingeloggte Besucher sehen in `render_card` das WordPress-Site-Icon (`get_site_icon_url(96)`) als Kartenbild statt des echten Profilfotos. Kein Site-Icon gesetzt → Fallback auf 👤. Klasse `hs-card-img-siteicon` sorgt für `object-fit:contain` und Innenabstand. Der Bearbeiten-Button prüft jetzt korrekt `publish_posts` über `$is_author`.
 
 ### 8.9 *(2026-03-16)*
 - **Name-Datenschutz (global)**: Neue Hilfsfunktion `hs_display_name()` in `helpers.php`. Nicht eingeloggte Besucher sehen statt des Namens `████████`. Gilt für alle Shortcodes: Karten (`render_card`), alle Ticker-Varianten, Wordcloud, Statistik-Tabelle, Bilder-Galerie und Namens-Dropdowns.
