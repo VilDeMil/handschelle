@@ -118,7 +118,7 @@ Planned features for upcoming versions:
 - **Multilanguage**: Full multilingual support (DE / EN and more) via the WordPress language system.
 - **Multiple Offences**: Support for recording multiple separate crimes per person, each with its own status, verdict, and source link.
 - **Multiuser**: Role-based multi-user system with individual dashboards, personal submission histories, and per-user moderation rights.
-- **International Versio**
+- **International Version**
 
 ---
 
