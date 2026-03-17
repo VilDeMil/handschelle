@@ -274,3 +274,6 @@ IMPORTANT BEHAVIOURS
 - German UI labels everywhere; English variable names and code comments
 - Plugin integrates neutrally into any theme (no forced background colours
   on frontend wrappers)
+---
+
+(c) 2026 - "Die-Handschelle" 9.2 - www.die-handschelle.com

@@ -17,3 +17,6 @@ die-handschelle/
     ├── css/handschelle.css       ← Full stylesheet with CSS custom properties
     └── js/handschelle.js         ← Frontend and admin JS
 ```
+---
+
+(c) 2026 - "Die-Handschelle" 9.2 - www.die-handschelle.com

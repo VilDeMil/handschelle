@@ -113,3 +113,6 @@
 *(Full list defined in `includes/helpers.php` → `handschelle_parlaments()`)*
 
 ---
+---
+
+(c) 2026 - "Die-Handschelle" 9.2 - www.die-handschelle.com

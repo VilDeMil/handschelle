@@ -291,3 +291,6 @@ Copyright / contact block.
 ```
 
 ---
+---
+
+(c) 2026 - "Die-Handschelle" 9.2 - www.die-handschelle.com
