@@ -58,3 +58,6 @@ When adding a new column:
 - Keep German labels in UI, English in code (variable names, comments, README).
 
 ---
+---
+
+(c) 2026 - "Die-Handschelle" 9.2 - www.die-handschelle.com

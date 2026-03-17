@@ -49,3 +49,6 @@ To verify GD is available on your server:
 <?php
 var_dump(extension_loaded('gd')); // should print: bool(true)
 ```
+---
+
+(c) 2026 - "Die-Handschelle" 9.2 - www.die-handschelle.com

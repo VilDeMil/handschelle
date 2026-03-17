@@ -249,3 +249,6 @@ To export: **Admin → Import / Export → CSV herunterladen**
 To import: **Admin → Import / Export → CSV-Datei hochladen → Importieren**
 
 ---
+---
+
+(c) 2026 - "Die-Handschelle" 9.2 - www.die-handschelle.com
