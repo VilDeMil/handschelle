@@ -55,6 +55,7 @@ class Handschelle_Shortcodes {
         add_shortcode( 'handschelle-ticker-icons',     array( $this, 'sc_ticker_icons' ) );
         add_shortcode( 'handschelle-login',            array( $this, 'sc_login' ) );
         add_shortcode( 'handschelle-register',         array( $this, 'sc_register' ) );
+        add_shortcode( 'handschelle-pie-partei',       array( $this, 'sc_pie_partei' ) );
 
         // Submit früh verarbeiten – BEVOR Header gesendet werden
         add_action( 'init', array( $this, 'early_frontend_submit' ) );
@@ -1938,6 +1939,93 @@ class Handschelle_Shortcodes {
             <?php
         }
 
+        return ob_get_clean();
+    }
+
+    /* ================================================================
+       [handschelle-pie-partei] – Pie-Chart: Anzahl Einträge je Partei
+    ================================================================ */
+    public function sc_pie_partei( $atts ) {
+        global $wpdb;
+        $table = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
+        $rows  = $wpdb->get_results(
+            "SELECT partei, COUNT(*) AS anzahl FROM `{$table}`
+             WHERE freigegeben = 1 AND partei != ''
+             GROUP BY partei ORDER BY anzahl DESC, partei ASC"
+        );
+
+        if ( empty( $rows ) ) {
+            return '<p class="hs-empty">Noch keine freigegebenen Einträge vorhanden.</p>';
+        }
+
+        $id      = 'hs-pie-partei-' . wp_unique_id();
+        $labels  = array();
+        $data    = array();
+        foreach ( $rows as $r ) {
+            $labels[] = $r->partei;
+            $data[]   = (int) $r->anzahl;
+        }
+
+        ob_start();
+        ?>
+        <div class="hs-frontend hs-pie-wrap">
+            <canvas id="<?php echo esc_attr( $id ); ?>" style="max-width:520px;width:100%;"></canvas>
+        </div>
+        <script>
+        (function(){
+            var colours = [
+                '#e63946','#457b9d','#2a9d8f','#e9c46a','#f4a261',
+                '#264653','#8338ec','#06d6a0','#fb5607','#3a86ff',
+                '#ffbe0b','#8ecae6','#219ebc','#023047','#ff006e'
+            ];
+            function loadPie() {
+                if ( typeof Chart === 'undefined' ) {
+                    setTimeout( loadPie, 100 );
+                    return;
+                }
+                var ctx = document.getElementById( <?php echo wp_json_encode( $id ); ?> );
+                if ( ! ctx ) return;
+                new Chart( ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: <?php echo wp_json_encode( $labels ); ?>,
+                        datasets: [{
+                            data: <?php echo wp_json_encode( $data ); ?>,
+                            backgroundColor: colours.slice( 0, <?php echo count( $data ); ?> )
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { position: 'right' },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(ctx) {
+                                        var total = ctx.dataset.data.reduce(function(a,b){return a+b;},0);
+                                        var pct   = total ? Math.round( ctx.parsed / total * 1000 ) / 10 : 0;
+                                        return ' ' + ctx.label + ': ' + ctx.parsed + ' (' + pct + '%)';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            if ( document.readyState === 'loading' ) {
+                document.addEventListener( 'DOMContentLoaded', loadPie );
+            } else {
+                loadPie();
+            }
+        })();
+        </script>
+        <?php
+        wp_enqueue_script(
+            'chartjs',
+            'https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js',
+            array(),
+            '4',
+            true
+        );
         return ob_get_clean();
     }
 
