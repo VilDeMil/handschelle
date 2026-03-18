@@ -5,7 +5,7 @@
 Defined in `die-handschelle.php`:
 
 ```php
-HANDSCHELLE_VERSION     // '7.9'
+HANDSCHELLE_VERSION     // '10.0'
 HANDSCHELLE_PLUGIN_DIR  // Absolute path to plugin directory
 HANDSCHELLE_PLUGIN_URL  // URL to plugin directory
 HANDSCHELLE_DB_TABLE    // Table name suffix, e.g. 'die_handschelle'
@@ -70,9 +70,24 @@ $parties = Handschelle_Database::get_distinct_parteien();
 $names = Handschelle_Database::get_distinct_namen();
 
 // Database maintenance (use with caution)
-Handschelle_Database::truncate_table();   // empty table
+Handschelle_Database::truncate_table();   // empty table (also empties offences table)
 Handschelle_Database::drop_table();       // delete table
-Handschelle_Database::recreate_table();   // drop + re-create
+Handschelle_Database::recreate_table();   // drop + re-create (also recreates offences table)
+
+// Additional offences (one-to-many: entry → offences)
+$offences = Handschelle_Database::get_offences( $entry_id );
+Handschelle_Database::insert_offence( $entry_id, [
+    'straftat'        => 'Betrug',
+    'urteil'          => '2 Jahre auf Bewährung',
+    'status_straftat' => 'Verurteilt',
+    'link_quelle'     => 'https://...',
+    'aktenzeichen'    => '1 StR 123/24',
+    'bemerkung'       => 'Weiterer Hinweis',
+]);
+Handschelle_Database::update_offence( $offence_id, $data );
+Handschelle_Database::delete_offence( $offence_id );
+Handschelle_Database::delete_offences_for_entry( $entry_id );
+// Note: delete($id) automatically cascades to delete all offences for that entry
 ```
 
 ---
@@ -197,6 +212,15 @@ File: `assets/css/handschelle.css`
 | `.hs-media-picker` | Admin image-field wrapper |
 | `.hs-media-btn` | Opens the WP Media Library modal |
 | `.hs-media-preview` | Thumbnail preview area |
+| `.hs-card-extra-offence` | Additional offence block on a card (border-left accent) |
+| `.hs-offence-row` | Editable offence row in admin/inline-edit form |
+| `.hs-offence-header` | Header row of an offence row (flex, space-between) |
+| `.hs-offence-remove-btn` | Delete button inside admin offence row |
+| `.hs-offence-inline-remove` | Delete button inside frontend inline-edit offence row |
+| `.hs-add-offence-inline-btn` | "Add offence" button in frontend inline-edit |
+| `.hs-privacy` | `[handschelle-privacy]` outer wrapper |
+| `.hs-privacy-section` | DE or EN card inside the privacy block |
+| `.hs-privacy-heading` | Section heading with accent underline |
 | `.hs-asc-list` | `[handschelle-asc]` horizontal party list |
 | `.hs-bild-item` | `[handschelle-bilder]` single image card |
 | `.hs-bild-img-wrap` | Image wrapper (hover target for tooltip) |
@@ -251,4 +275,4 @@ To import: **Admin → Import / Export → CSV-Datei hochladen → Importieren**
 ---
 ---
 
-(c) 2026 - "Die-Handschelle" 9.2 - www.die-handschelle.com
+(c) 2026 - "Die-Handschelle" 10.0 - www.die-handschelle.com
