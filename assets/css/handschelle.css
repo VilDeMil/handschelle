@@ -808,3 +808,15 @@ a.hs-st-item { display: inline-block; }
     text-align: center;
 }
 .hs-register-info { margin: 0; font-size: 1rem; color: #333; }
+
+/* ================================================================
+   [handschelle-privacy] – Datenschutz / Privacy
+================================================================ */
+.hs-privacy { font-family:var(--hs-font); color:#222; display:flex; flex-direction:column; gap:1.2rem; }
+.hs-privacy-section { padding:1.4rem 1.6rem; background:var(--hs-card-bg); border:1px solid var(--hs-border); border-radius:var(--hs-radius); box-shadow:var(--hs-shadow); }
+.hs-privacy-heading { font-size:1.1rem; font-weight:700; color:var(--hs-primary); margin:0 0 1rem; padding-bottom:.5rem; border-bottom:2px solid var(--hs-accent); }
+.hs-privacy-section p { font-size:.9rem; line-height:1.65; margin:.6rem 0; color:#333; }
+.hs-privacy-section ul { margin:.3rem 0 .6rem 1.4rem; padding:0; }
+.hs-privacy-section ul li { font-size:.88rem; line-height:1.6; color:#444; margin-bottom:.2rem; }
+.hs-privacy-section code { background:#f0f0f0; padding:.1rem .35rem; border-radius:3px; font-family:monospace; font-size:.9em; color:#333; letter-spacing:.02em; }
+.hs-privacy-divider { border:none; border-top:1px solid var(--hs-border); margin:0; }
