@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 9.4 |
+| **Version** | 10.0 |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
 | **Lizenz** | GPL-2.0+ |
@@ -44,6 +44,7 @@
   - [`[handschelle-name-partei]`](#handschelle-name-partei)
   - [`[handschelle-partei]`](#handschelle-partei)
   - [`[handschelle-pie-partei]`](#handschelle-pie-partei)
+  - [`[handschelle-privacy]`](#handschelle-privacy)
   - [`[handschelle-register]`](#handschelle-register)
   - [`[handschelle-result]`](#handschelle-result)
   - [`[handschelle-statistik]`](#handschelle-statistik)
@@ -140,6 +141,15 @@ Planned features for upcoming versions:
 ---
 
 ## Release Notes
+
+### 10.0 *(2026-03-18)*
+- **Version milestone**: Consolidated all changes from 9.3–9.6 into stable release 10.0. No functional changes; version bumped to mark the multiple-offences feature set as production-ready.
+
+### 9.6 *(2026-03-18)*
+- **`[handschelle-privacy]` shortcode**: New shortcode renders the bilingual Datenschutz / Privacy chapter as styled HTML (two cards, DE + EN). Covers GDPR legal basis, stored / not-stored data, guest anonymisation, and deletion-request contact. CSS classes: `.hs-privacy`, `.hs-privacy-section`, `.hs-privacy-heading`, `.hs-privacy-divider`.
+
+### 9.5 *(2026-03-18)*
+- **CSS – offence buttons**: Added `.hs-offence-remove-btn` / `.hs-offence-inline-remove` styles (red delete button; WP's `.button` class is admin-only and not available on the frontend). Added `.hs-add-offence-inline-btn` for the frontend inline-edit panel. Added `.hs-card-extra-offence p` paragraph style to match `.hs-card-straftat p`.
 
 ### 9.4 *(2026-03-18)*
 - **Backup & Restore: Offences included**: `backup_full()` now exports a second file `handschelle-offences.csv` inside the ZIP (columns: `entry_id`, `straftat`, `urteil`, `status_straftat`, `link_quelle`, `aktenzeichen`, `bemerkung`). `restore_full()` now reads this file and re-inserts all additional offences after the main entries are restored, mapping old entry IDs to newly-assigned IDs via an `$entry_id_map`. The success message now reports offence count separately. Backward-compatible: old backups without `handschelle-offences.csv` restore main entries normally with zero offences.
@@ -434,6 +444,7 @@ All shortcodes output HTML and can be placed on any WordPress page or post.
 | `[handschelle-partei]` | Party search dropdown only |
 | `[handschelle-result]` | Zeigt Eintrags-Karten für `?hs_name_name=<name>`; zeigt nichts, wenn kein Name bekannt |
 | `[handschelle-pie-partei]` | Pie chart: approved entries per party (Anzahl Partei) — uses Chart.js 4 |
+| `[handschelle-privacy]` | Renders the bilingual Datenschutz / Privacy section (DE + EN) |
 | `[handschelle-register]` | Registrierungsformular: Benutzername, Vorname, Nachname, Spitzname, E-Mail, Webseite, Passwort; neues Konto erhält Status `pending` – Login erst nach Admin-Freischaltung |
 | `[handschelle-statistik]` | Statistics table with bar chart per party (party names are links) |
 | `[handschelle-statistik-name]` | Table: person name / entry count |
@@ -688,6 +699,22 @@ Neue Konten erhalten den Status **`pending`** und können sich nicht einloggen, 
 - Fehler (doppelter Name, E-Mail vergeben, Passwörter ungleich) → jeweils passende Fehlermeldung
 - Pending-Konten → Login gesperrt mit Hinweis
 - Deaktivierte Konten → Login gesperrt mit Hinweis
+
+---
+
+### `[handschelle-privacy]`
+
+Renders the bilingual **Datenschutz / Privacy** chapter as styled HTML. Displays two cards — one German, one English — covering legal basis, data stored, data not stored, guest anonymisation, and contact for corrections / deletion requests.
+
+```
+[handschelle-privacy]
+```
+
+**Displayed content:**
+- 🇩🇪 Legal basis (Art. 6(1)(f) DSGVO), stored / not-stored data lists, guest anonymisation (`████████`), deletion request contact
+- 🇬🇧 Same content in English
+
+No attributes.
 
 ---
 
@@ -1285,7 +1312,7 @@ die-handschelle/
 │   ├── image-handler.php         ← Handschelle_Image_Handler (upload + GD resize 450px)
 │   ├── admin.php                 ← Handschelle_Admin class (admin menus, forms,
 │   │                                CSV import/export, backup/restore)
-│   └── shortcodes.php            ← Handschelle_Shortcodes class (25 shortcodes,
+│   └── shortcodes.php            ← Handschelle_Shortcodes class (26 shortcodes,
 │                                    PRG submit handlers, inline SVG icons)
 └── assets/
     ├── css/handschelle.css       ← Full stylesheet with CSS custom properties
