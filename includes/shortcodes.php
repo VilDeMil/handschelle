@@ -56,6 +56,7 @@ class Handschelle_Shortcodes {
         add_shortcode( 'handschelle-login',            array( $this, 'sc_login' ) );
         add_shortcode( 'handschelle-register',         array( $this, 'sc_register' ) );
         add_shortcode( 'handschelle-pie-partei',       array( $this, 'sc_pie_partei' ) );
+        add_shortcode( 'handschelle-privacy',          array( $this, 'sc_privacy' ) );
 
         // Submit früh verarbeiten – BEVOR Header gesendet werden
         add_action( 'init', array( $this, 'early_frontend_submit' ) );
@@ -2105,6 +2106,59 @@ class Handschelle_Shortcodes {
             '4',
             true
         );
+        return ob_get_clean();
+    }
+
+    /* ================================================================
+       [handschelle-privacy] – Datenschutz / Privacy Abschnitt
+    ================================================================ */
+    public function sc_privacy( $atts ) {
+        ob_start();
+        ?>
+        <div class="hs-privacy hs-frontend">
+            <div class="hs-privacy-section">
+                <h3 class="hs-privacy-heading">&#127465;&#127466; Datenschutz</h3>
+                <p>Das Plugin speichert ausschlie&szlig;lich Informationen &uuml;ber <strong>&ouml;ffentliche Mandatstr&auml;ger</strong> (z.&nbsp;B. Abgeordnete, B&uuml;rgermeister, Minister), die im Zusammenhang mit rechtskr&auml;ftig verurteilten Straftaten oder laufenden Strafverfahren stehen. Die Verarbeitung erfolgt auf Grundlage des <strong>berechtigten &ouml;ffentlichen Interesses</strong> gem&auml;&szlig; Art.&nbsp;6 Abs.&nbsp;1 lit.&nbsp;f DSGVO sowie der Informationsfreiheit.</p>
+                <p><strong>Gespeicherte Daten:</strong></p>
+                <ul>
+                    <li>Name und Funktion der Person (&ouml;ffentliches Amt)</li>
+                    <li>Partei und Parlament</li>
+                    <li>Art und Status der Straftat (nur gerichtlich relevante Informationen)</li>
+                    <li>Quellen-URL (&ouml;ffentlich zug&auml;ngliche Nachrichtenartikel, Gerichtsurteile o.&nbsp;&auml;.)</li>
+                    <li>Optional: Profilfoto (nur &ouml;ffentlich verf&uuml;gbare Bilder)</li>
+                </ul>
+                <p><strong>Nicht gespeicherte Daten:</strong></p>
+                <ul>
+                    <li>Private Adressen, Telefonnummern oder E-Mail-Adressen</li>
+                    <li>Informationen &uuml;ber Privatpersonen ohne &ouml;ffentliches Mandat</li>
+                    <li>Gesundheitsdaten oder andere besonders schutzw&uuml;rdige Kategorien (Art.&nbsp;9 DSGVO)</li>
+                </ul>
+                <p><strong>Gastbesucher:</strong> Nicht eingeloggte Besucher sehen Namen als <code>&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;</code> (anonymisiert) und erhalten kein Profilfoto der eingetragenen Person &mdash; stattdessen wird das Website-Icon angezeigt.</p>
+                <p><strong>Datenmeldungen&nbsp;/ L&ouml;schanfragen:</strong> Fehleintr&auml;ge oder L&ouml;schanfragen k&ouml;nnen per E-Mail an <a href="mailto:info@die-handschelle.com" class="hs-link">info@die-handschelle.com</a> gemeldet werden. Jeder Eintrag wird vor Ver&ouml;ffentlichung manuell gepr&uuml;ft.</p>
+            </div>
+            <hr class="hs-privacy-divider">
+            <div class="hs-privacy-section">
+                <h3 class="hs-privacy-heading">&#127468;&#127463; Privacy</h3>
+                <p>This plugin stores information exclusively about <strong>public officeholders</strong> (e.g. members of parliament, mayors, ministers) in connection with criminal convictions or ongoing criminal proceedings. Processing is based on <strong>legitimate public interest</strong> pursuant to Art.&nbsp;6(1)(f) GDPR and the principle of freedom of information.</p>
+                <p><strong>Data stored:</strong></p>
+                <ul>
+                    <li>Name and role of the person (public office)</li>
+                    <li>Party and parliament</li>
+                    <li>Type and status of the offence (court-relevant information only)</li>
+                    <li>Source URL (publicly accessible news articles, court rulings, etc.)</li>
+                    <li>Optionally: profile photo (publicly available images only)</li>
+                </ul>
+                <p><strong>Data not stored:</strong></p>
+                <ul>
+                    <li>Private addresses, phone numbers, or email addresses</li>
+                    <li>Information about private individuals without a public mandate</li>
+                    <li>Health data or other special categories under Art.&nbsp;9 GDPR</li>
+                </ul>
+                <p><strong>Guest visitors:</strong> Non-logged-in visitors see names replaced with <code>&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;</code> (anonymised) and do not see the person&rsquo;s profile photo &mdash; the site icon is shown instead.</p>
+                <p><strong>Corrections&nbsp;/ Deletion requests:</strong> Incorrect entries or deletion requests can be reported by email to <a href="mailto:info@die-handschelle.com" class="hs-link">info@die-handschelle.com</a>. Every entry is manually reviewed before publication.</p>
+            </div>
+        </div>
+        <?php
         return ob_get_clean();
     }
 
