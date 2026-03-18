@@ -85,6 +85,7 @@
   - [Shortcode Checklist](#shortcode-checklist)
   - [Database / Schema Changes](#database--schema-changes)
   - [General Rules](#general-rules)
+- [Datenschutz / Privacy](#datenschutz--privacy)
 - [Recreate from Scratch](#recreate-from-scratch)
 
 ## Einleitung / Introduction
@@ -1340,6 +1341,52 @@ When adding a new column:
 - All output uses `esc_html()` / `esc_url()` / `esc_attr()` — never echo raw data.
 - New admin pages must be added to the **Admin Menu Structure** table in `README.md`.
 - Keep German labels in UI, English in code (variable names, comments, README).
+
+---
+
+## Datenschutz / Privacy
+
+### Datenschutz (Deutsch)
+
+Das Plugin speichert ausschließlich Informationen über **öffentliche Mandatsträger** (z. B. Abgeordnete, Bürgermeister, Minister), die im Zusammenhang mit rechtskräftig verurteilten Straftaten oder laufenden Strafverfahren stehen. Die Verarbeitung erfolgt auf Grundlage des **berechtigten öffentlichen Interesses** gemäß Art. 6 Abs. 1 lit. f DSGVO sowie der Informationsfreiheit.
+
+**Gespeicherte Daten:**
+- Name und Funktion der Person (öffentliches Amt)
+- Partei und Parlament
+- Art und Status der Straftat (nur gerichtlich relevante Informationen)
+- Quellen-URL (öffentlich zugängliche Nachrichtenartikel, Gerichtsurteile o. ä.)
+- Optional: Profilfoto (nur öffentlich verfügbare Bilder)
+
+**Nicht gespeicherte Daten:**
+- Private Adressen, Telefonnummern oder E-Mail-Adressen
+- Informationen über Privatpersonen ohne öffentliches Mandat
+- Gesundheitsdaten oder andere besonders schutzwürdige Kategorien (Art. 9 DSGVO)
+
+**Gastbesucher:** Nicht eingeloggte Besucher sehen Namen als `████████` (anonymisiert) und erhalten kein Profilfoto der eingetragenen Person — stattdessen wird das Website-Icon angezeigt.
+
+**Datenmeldungen / Löschanfragen:** Fehleinträge oder Löschanfragen können per E-Mail an [info@die-handschelle.com](mailto:info@die-handschelle.com) gemeldet werden. Jeder Eintrag wird vor Veröffentlichung manuell geprüft (`freigegeben = 0` bis zur Freigabe durch einen Administrator).
+
+---
+
+### Privacy (English)
+
+This plugin stores information exclusively about **public officeholders** (e.g. members of parliament, mayors, ministers) in connection with criminal convictions or ongoing criminal proceedings. Processing is based on **legitimate public interest** pursuant to Art. 6(1)(f) GDPR and the principle of freedom of information.
+
+**Data stored:**
+- Name and role of the person (public office)
+- Party and parliament
+- Type and status of the offence (court-relevant information only)
+- Source URL (publicly accessible news articles, court rulings, etc.)
+- Optionally: profile photo (publicly available images only)
+
+**Data not stored:**
+- Private addresses, phone numbers, or email addresses
+- Information about private individuals without a public mandate
+- Health data or other special categories under Art. 9 GDPR
+
+**Guest visitors:** Non-logged-in visitors see names replaced with `████████` (anonymised) and do not see the person's profile photo — the site icon is shown instead.
+
+**Corrections / Deletion requests:** Incorrect entries or deletion requests can be reported by email to [info@die-handschelle.com](mailto:info@die-handschelle.com). Every entry is manually reviewed before publication (`freigegeben = 0` until approved by an administrator).
 
 ---
 
