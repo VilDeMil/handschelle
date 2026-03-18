@@ -4,8 +4,8 @@
  * Plugin URI:  https://github.com/VilDeMil/handschelle
  * Description: Dokumentation von Straftaten politischer Personen. Neue Einträge müssen im Admin-Bereich freigegeben werden.
  * Version:     10.1
- * Author:      Bernd K.R. Dorfmüller
- * Author URI:  mailto:bernd@xn--dorfmller-u9a.com
+ * Author:      Die-Handschelle
+ * Author URI:  mailto:info@die-handschelle.com
  * Text Domain: die-handschelle
  * License:     GPL-2.0+
  *
