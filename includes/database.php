@@ -74,6 +74,7 @@ class Handschelle_Database {
     public static function truncate_table() {
         global $wpdb;
         $wpdb->query( "TRUNCATE TABLE `" . $wpdb->prefix . HANDSCHELLE_DB_TABLE . "`" );
+        $wpdb->query( "TRUNCATE TABLE `" . $wpdb->prefix . HANDSCHELLE_DB_TABLE . "_offences`" );
     }
 
     public static function get_all( $args = array() ) {
@@ -142,11 +143,6 @@ class Handschelle_Database {
         return $wpdb->update( $wpdb->prefix . HANDSCHELLE_DB_TABLE, $data, array( 'id' => intval( $id ) ) );
     }
 
-    public static function delete( $id ) {
-        global $wpdb;
-        return $wpdb->delete( $wpdb->prefix . HANDSCHELLE_DB_TABLE, array( 'id' => intval( $id ) ) );
-    }
-
     public static function get_distinct_parteien() {
         global $wpdb;
         $table = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
@@ -191,8 +187,11 @@ class Handschelle_Database {
     }
 
     public static function recreate_table() {
+        global $wpdb;
+        $wpdb->query( "DROP TABLE IF EXISTS `" . $wpdb->prefix . HANDSCHELLE_DB_TABLE . "_offences`" );
         self::drop_table();
         self::create_table();
+        self::create_offences_table();
     }
 
     /**
@@ -206,6 +205,7 @@ class Handschelle_Database {
             return;
         }
         self::create_table(); // dbDelta inside create_table() adds missing columns
+        self::create_offences_table();
 
         // v8.1: straftat was VARCHAR(200), must be TEXT (dbDelta cannot change column types)
         if ( version_compare( $stored, '8.1', '<' ) ) {
@@ -215,5 +215,80 @@ class Handschelle_Database {
         }
 
         update_option( 'handschelle_db_version', HANDSCHELLE_VERSION );
+    }
+
+    /* ================================================================
+       STRAFTATEN-TABELLE (multiple offences per person)
+    ================================================================ */
+
+    public static function create_offences_table() {
+        global $wpdb;
+        $table           = $wpdb->prefix . HANDSCHELLE_DB_TABLE . '_offences';
+        $charset_collate = $wpdb->get_charset_collate();
+        $sql = "CREATE TABLE IF NOT EXISTS `{$table}` (
+            `id`              INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+            `entry_id`        INT(11) UNSIGNED NOT NULL,
+            `straftat`        TEXT             NOT NULL DEFAULT '',
+            `urteil`          VARCHAR(200)     NOT NULL DEFAULT '',
+            `link_quelle`     TEXT,
+            `aktenzeichen`    VARCHAR(50)      NOT NULL DEFAULT '',
+            `bemerkung`       TEXT,
+            `status_straftat` VARCHAR(50)      NOT NULL DEFAULT 'Ermittlungen laufen',
+            `datum_eintrag`   DATE             NULL DEFAULT NULL,
+            `erstellt_am`     DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`),
+            KEY `idx_entry_id` (`entry_id`)
+        ) {$charset_collate};";
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        dbDelta( $sql );
+    }
+
+    public static function get_offences( $entry_id ) {
+        global $wpdb;
+        $table = $wpdb->prefix . HANDSCHELLE_DB_TABLE . '_offences';
+        return $wpdb->get_results( $wpdb->prepare(
+            "SELECT * FROM `{$table}` WHERE entry_id = %d ORDER BY id ASC",
+            intval( $entry_id )
+        ) );
+    }
+
+    public static function insert_offence( $entry_id, $data ) {
+        global $wpdb;
+        $table               = $wpdb->prefix . HANDSCHELLE_DB_TABLE . '_offences';
+        $data['entry_id']    = intval( $entry_id );
+        $data['erstellt_am'] = current_time( 'mysql' );
+        $wpdb->insert( $table, $data );
+        return $wpdb->insert_id;
+    }
+
+    public static function update_offence( $id, $data ) {
+        global $wpdb;
+        return $wpdb->update(
+            $wpdb->prefix . HANDSCHELLE_DB_TABLE . '_offences',
+            $data,
+            array( 'id' => intval( $id ) )
+        );
+    }
+
+    public static function delete_offence( $id ) {
+        global $wpdb;
+        return $wpdb->delete(
+            $wpdb->prefix . HANDSCHELLE_DB_TABLE . '_offences',
+            array( 'id' => intval( $id ) )
+        );
+    }
+
+    public static function delete_offences_for_entry( $entry_id ) {
+        global $wpdb;
+        return $wpdb->delete(
+            $wpdb->prefix . HANDSCHELLE_DB_TABLE . '_offences',
+            array( 'entry_id' => intval( $entry_id ) )
+        );
+    }
+
+    public static function delete( $id ) {
+        global $wpdb;
+        self::delete_offences_for_entry( $id );
+        return $wpdb->delete( $wpdb->prefix . HANDSCHELLE_DB_TABLE, array( 'id' => intval( $id ) ) );
     }
 }

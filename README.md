@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 9.2 |
+| **Version** | 9.3 |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
 | **Lizenz** | GPL-2.0+ |
@@ -140,6 +140,14 @@ Planned features for upcoming versions:
 ---
 
 ## Release Notes
+
+### 9.3 *(2026-03-18)*
+- **Multiple Offences per Person**: Each person entry can now have any number of additional offences. A new table `wp_die_handschelle_offences` stores the extra offences (fields: `straftat`, `urteil`, `status_straftat`, `link_quelle`, `aktenzeichen`, `bemerkung`). The primary offence remains in the main table for full backward compatibility.
+- **Admin form**: New "⚖ Weitere Straftaten" section with existing offences shown as editable rows, a delete button per row, and an "Add further offence" button (JS-based cloning of a template row). Works for both "New Entry" and "Edit Entry" pages.
+- **Frontend inline-edit**: Same add/remove functionality available in the per-card inline edit panel.
+- **Card display**: `render_card()` fetches and renders all additional offences below the primary offence, each with its own status badge, source link (logged-in users only), and optional remarks. Each is labelled "Straftat 2", "Straftat 3", etc.
+- **Cascade delete**: Deleting a main entry also deletes all its associated offences.
+- **DB migration**: `maybe_upgrade_table()` now creates the offences table if missing. Existing data is untouched.
 
 ### 9.2 *(2026-03-16)*
 - **Website-Icon für Gäste**: Nicht eingeloggte Besucher sehen statt des Personenfotos das Website-Icon (`get_site_icon_url`). Das Foto-Bild ist nicht verlinkt – der Klick-Link zum Detailprofil entfällt für Gäste.
