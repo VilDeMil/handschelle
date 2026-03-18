@@ -1023,6 +1023,26 @@ class Handschelle_Admin {
             }
         }
         $zip->addFromString( 'bild-map.json', wp_json_encode( $bild_map ) );
+
+        // Build offences CSV (entry_id references main table id)
+        $off_cols = array( 'entry_id', 'straftat', 'urteil', 'status_straftat', 'link_quelle', 'aktenzeichen', 'bemerkung' );
+        $off_csv  = "\xEF\xBB\xBF" . implode( ';', $off_cols ) . "\r\n";
+        foreach ( $entries as $e ) {
+            $offences = Handschelle_Database::get_offences( $e->id );
+            foreach ( $offences as $off ) {
+                $row = array();
+                foreach ( $off_cols as $c ) {
+                    $val = $c === 'entry_id' ? $e->id : ( $off->$c ?? '' );
+                    if ( strpbrk( (string) $val, ";\"\r\n" ) !== false ) {
+                        $val = '"' . str_replace( '"', '""', $val ) . '"';
+                    }
+                    $row[] = $val;
+                }
+                $off_csv .= implode( ';', $row ) . "\r\n";
+            }
+        }
+        $zip->addFromString( 'handschelle-offences.csv', $off_csv );
+
         $zip->close();
 
         if ( ! file_exists( $zip_path ) ) {
@@ -1138,6 +1158,8 @@ class Handschelle_Admin {
                 return ( isset( $restore_col_map[ $field ] ) && isset( $row[ $restore_col_map[ $field ] ] ) )
                     ? $row[ $restore_col_map[ $field ] ] : '';
             };
+            // entry_id_map: old CSV id → new DB id (needed for offences restore)
+            $entry_id_map = array();
             while ( ( $row = fgetcsv( $fh, 0, ';' ) ) !== false ) {
                 if ( count( $row ) < 10 ) continue;
                 // Remap bild attachment ID via bild-map.json; validate result exists locally
@@ -1145,23 +1167,21 @@ class Handschelle_Admin {
                 if ( is_numeric( $bild_raw ) && intval( $bild_raw ) > 0 ) {
                     $old_bild_id = intval( $bild_raw );
                     if ( isset( $old_id_to_new_id[ $old_bild_id ] ) ) {
-                        // Successfully remapped to new attachment ID
                         $bild_val = $old_id_to_new_id[ $old_bild_id ];
                     } elseif ( get_attached_file( $old_bild_id ) ) {
-                        // Same site restore: attachment still valid at original ID
                         $bild_val = $old_bild_id;
                     } else {
-                        // ID not remapped and not found locally — clear to avoid wrong assignment
                         $bild_val = '';
                     }
                 } else {
-                    $bild_val = $bild_raw; // URL or empty
+                    $bild_val = $bild_raw;
                 }
                 $geburtsdatum_raw = sanitize_text_field( $g( 'geburtsdatum' ) );
                 $geburtsdatum_val = ( $geburtsdatum_raw && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $geburtsdatum_raw ) ) ? $geburtsdatum_raw : null;
                 $dod_raw          = sanitize_text_field( $g( 'dod' ) );
                 $dod_val          = ( $dod_raw && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $dod_raw ) ) ? $dod_raw : null;
-                Handschelle_Database::insert( array(
+                $old_entry_id     = intval( $g( 'id' ) );
+                $new_entry_id     = Handschelle_Database::insert( array(
                     'datum_eintrag'   => sanitize_text_field( $g( 'datum_eintrag' ) ) ?: date( 'Y-m-d' ),
                     'name'            => substr( sanitize_text_field( $g( 'name' ) ), 0, 50 ),
                     'beruf'           => substr( sanitize_text_field( $g( 'beruf' ) ), 0, 50 ),
@@ -1194,22 +1214,59 @@ class Handschelle_Admin {
                     'sm_truth_social' => esc_url_raw( $g( 'sm_truth_social' ) ),
                     'freigegeben'     => intval( $g( 'freigegeben' ) ),
                 ) );
+                if ( $new_entry_id && $old_entry_id ) {
+                    $entry_id_map[ $old_entry_id ] = $new_entry_id;
+                }
                 $entry_count++;
             }
             fclose( $fh );
             } // end header check
         }
 
+        // ── 2b. Weitere Straftaten (offences) wiederherstellen ───
+        $off_csv_file  = $temp_dir . 'handschelle-offences.csv';
+        $offence_count = 0;
+        if ( file_exists( $off_csv_file ) ) {
+            $ofh = fopen( $off_csv_file, 'r' );
+            $obom = fread( $ofh, 3 );
+            if ( $obom !== "\xEF\xBB\xBF" ) rewind( $ofh );
+            $off_headers = fgetcsv( $ofh, 0, ';' );
+            if ( ! empty( $off_headers ) ) {
+                $off_col_map = array_flip( array_map( 'trim', $off_headers ) );
+                $og = function( $field ) use ( &$off_row, $off_col_map ) {
+                    return ( isset( $off_col_map[ $field ] ) && isset( $off_row[ $off_col_map[ $field ] ] ) )
+                        ? $off_row[ $off_col_map[ $field ] ] : '';
+                };
+                while ( ( $off_row = fgetcsv( $ofh, 0, ';' ) ) !== false ) {
+                    $old_entry_id = intval( $og( 'entry_id' ) );
+                    if ( ! $old_entry_id || ! isset( $entry_id_map[ $old_entry_id ] ) ) continue;
+                    $straftat = sanitize_textarea_field( $og( 'straftat' ) );
+                    if ( empty( $straftat ) ) continue;
+                    Handschelle_Database::insert_offence( $entry_id_map[ $old_entry_id ], array(
+                        'straftat'        => $straftat,
+                        'urteil'          => substr( sanitize_text_field( $og( 'urteil' ) ), 0, 200 ),
+                        'status_straftat' => sanitize_text_field( $og( 'status_straftat' ) ) ?: 'Ermittlungen laufen',
+                        'link_quelle'     => esc_url_raw( $og( 'link_quelle' ) ),
+                        'aktenzeichen'    => substr( sanitize_text_field( $og( 'aktenzeichen' ) ), 0, 50 ),
+                        'bemerkung'       => sanitize_textarea_field( $og( 'bemerkung' ) ),
+                    ) );
+                    $offence_count++;
+                }
+            }
+            fclose( $ofh );
+        }
+
         // ── 3. Temp cleanup ──────────────────────────────────────
         foreach ( glob( $temp_dir . 'images/*' ) as $f ) @unlink( $f );
         @rmdir( $temp_dir . 'images' );
         @unlink( $temp_dir . 'handschelle-data.csv' );
+        @unlink( $temp_dir . 'handschelle-offences.csv' );
         @unlink( $temp_dir . 'bild-map.json' );
         @rmdir( $temp_dir );
 
         $this->redirect(
             admin_url( 'admin.php?page=handschelle-backup' ),
-            "Wiederherstellung abgeschlossen: {$entry_count} Einträge importiert, {$img_count} Bilder importiert."
+            "Wiederherstellung abgeschlossen: {$entry_count} Einträge, {$offence_count} Weitere Straftaten, {$img_count} Bilder importiert."
         );
     }
 

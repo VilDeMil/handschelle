@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 9.3 |
+| **Version** | 9.4 |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
 | **Lizenz** | GPL-2.0+ |
@@ -140,6 +140,9 @@ Planned features for upcoming versions:
 ---
 
 ## Release Notes
+
+### 9.4 *(2026-03-18)*
+- **Backup & Restore: Offences included**: `backup_full()` now exports a second file `handschelle-offences.csv` inside the ZIP (columns: `entry_id`, `straftat`, `urteil`, `status_straftat`, `link_quelle`, `aktenzeichen`, `bemerkung`). `restore_full()` now reads this file and re-inserts all additional offences after the main entries are restored, mapping old entry IDs to newly-assigned IDs via an `$entry_id_map`. The success message now reports offence count separately. Backward-compatible: old backups without `handschelle-offences.csv` restore main entries normally with zero offences.
 
 ### 9.3 *(2026-03-18)*
 - **Multiple Offences per Person**: Each person entry can now have any number of additional offences. A new table `wp_die_handschelle_offences` stores the extra offences (fields: `straftat`, `urteil`, `status_straftat`, `link_quelle`, `aktenzeichen`, `bemerkung`). The primary offence remains in the main table for full backward compatibility.
