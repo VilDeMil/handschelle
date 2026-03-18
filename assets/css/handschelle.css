@@ -113,6 +113,9 @@
 .hs-link { color:var(--hs-accent); font-size:.85rem; font-weight:600; text-decoration:none; transition:color .2s; }
 .hs-link:hover { color:var(--hs-accent-h); text-decoration:underline; }
 .hs-card-footer { padding:.75rem 1rem; border-top:1px solid var(--hs-border); display:flex; flex-wrap:wrap; gap:.45rem; }
+.hs-card-melden { padding:.4rem 1rem; border-top:1px solid var(--hs-border); text-align:right; }
+.hs-melden-link { font-size:.75rem; font-weight:700; color:var(--hs-accent); text-decoration:none; letter-spacing:.02em; transition:color .2s,opacity .2s; }
+.hs-melden-link:hover { color:var(--hs-accent-h); text-decoration:underline; }
 .hs-card-date { padding:.4rem 1rem; font-size:.72rem; color:var(--hs-muted); text-align:right; border-top:1px solid var(--hs-border); }
 
 /* ── Social Media Links ─────────────────────────────────────── */

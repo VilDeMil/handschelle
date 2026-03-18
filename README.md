@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 10.0 |
+| **Version** | 10.1 |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
 | **Lizenz** | GPL-2.0+ |
@@ -141,6 +141,9 @@ Planned features for upcoming versions:
 ---
 
 ## Release Notes
+
+### 10.1 *(2026-03-18)*
+- **"Straftat melden!" link on every card**: All cards now show a permanent `⚠ Straftat melden!` mailto link (`info@die-handschelle.com`) with a pre-filled subject line (`Straftat melden - <Name> - <Partei>`). Visible to all visitors including guests (previously "Eintrag melden!" was logged-in only). Added `.hs-card-melden` and `.hs-melden-link` CSS classes.
 
 ### 10.0 *(2026-03-18)*
 - **Version milestone**: Consolidated all changes from 9.3–9.6 into stable release 10.0. No functional changes; version bumped to mark the multiple-offences feature set as production-ready.
