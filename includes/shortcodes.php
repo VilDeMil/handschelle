@@ -262,6 +262,36 @@ class Handschelle_Shortcodes {
 
         Handschelle_Database::update( $id, $data );
 
+        // Process additional offences
+        $offences_input = isset( $_POST['hs_offences'] ) ? (array) $_POST['hs_offences'] : array();
+        foreach ( $offences_input as $off_data ) {
+            $off_id     = intval( $off_data['id'] ?? 0 );
+            $off_delete = intval( $off_data['delete'] ?? 0 );
+            $off_text   = sanitize_textarea_field( $off_data['straftat'] ?? '' );
+
+            if ( $off_id && $off_delete ) {
+                Handschelle_Database::delete_offence( $off_id );
+            } elseif ( $off_id && ! $off_delete && ! empty( $off_text ) ) {
+                Handschelle_Database::update_offence( $off_id, array(
+                    'straftat'        => $off_text,
+                    'urteil'          => substr( sanitize_text_field( $off_data['urteil'] ?? '' ), 0, 200 ),
+                    'status_straftat' => sanitize_text_field( $off_data['status_straftat'] ?? 'Ermittlungen laufen' ),
+                    'link_quelle'     => esc_url_raw( $off_data['link_quelle'] ?? '' ),
+                    'aktenzeichen'    => substr( sanitize_text_field( $off_data['aktenzeichen'] ?? '' ), 0, 50 ),
+                    'bemerkung'       => sanitize_textarea_field( $off_data['bemerkung'] ?? '' ),
+                ) );
+            } elseif ( ! $off_id && ! $off_delete && ! empty( $off_text ) ) {
+                Handschelle_Database::insert_offence( $id, array(
+                    'straftat'        => $off_text,
+                    'urteil'          => substr( sanitize_text_field( $off_data['urteil'] ?? '' ), 0, 200 ),
+                    'status_straftat' => sanitize_text_field( $off_data['status_straftat'] ?? 'Ermittlungen laufen' ),
+                    'link_quelle'     => esc_url_raw( $off_data['link_quelle'] ?? '' ),
+                    'aktenzeichen'    => substr( sanitize_text_field( $off_data['aktenzeichen'] ?? '' ), 0, 50 ),
+                    'bemerkung'       => sanitize_textarea_field( $off_data['bemerkung'] ?? '' ),
+                ) );
+            }
+        }
+
         wp_safe_redirect( add_query_arg( 'hs_edited', $id, $this->return_url() ) );
         exit;
     }
@@ -995,6 +1025,25 @@ class Handschelle_Shortcodes {
                     <?php echo $e->status_aktiv ? '<span class="hs-badge hs-badge-aktiv">Aktiv</span>' : '<span class="hs-badge hs-badge-inaktiv">Inaktiv</span>'; ?>
                 </div>
                 <?php if ( $e->bemerkung ) : ?><div class="hs-card-bemerkung"><span class="hs-label">💬 Bemerkung:</span><p><?php echo nl2br(esc_html($e->bemerkung)); ?></p></div><?php endif; ?>
+
+                <?php
+                // Additional offences
+                $extra_offences = Handschelle_Database::get_offences( $e->id );
+                foreach ( $extra_offences as $oi => $off ) :
+                ?>
+                <div class="hs-card-extra-offence">
+                    <div class="hs-card-straftat"><span class="hs-label">⚖ Straftat <?php echo $oi + 2; ?>:</span><p><?php echo nl2br(esc_html($off->straftat)); ?></p></div>
+                    <?php if ( $off->urteil ) : ?><div class="hs-card-row"><span class="hs-label">📋 Urteil:</span> <?php echo esc_html($off->urteil); ?></div><?php endif; ?>
+                    <?php if ( $off->aktenzeichen ) : ?><div class="hs-card-row"><span class="hs-label">📁 Aktenzeichen:</span> <?php echo esc_html($off->aktenzeichen); ?></div><?php endif; ?>
+                    <div class="hs-card-row">
+                        <span class="hs-badge <?php echo esc_attr($status_class[$off->status_straftat] ?? 'hs-status-ermittlung'); ?>"><?php echo esc_html($off->status_straftat); ?></span>
+                    </div>
+                    <?php if ( ! empty( $off->link_quelle ) && $is_logged_in ) : ?>
+                    <div class="hs-card-row"><a href="<?php echo esc_url($off->link_quelle); ?>" target="_blank" rel="noopener noreferrer" class="hs-sm-link">🔗 Quelle</a></div>
+                    <?php endif; ?>
+                    <?php if ( $off->bemerkung ) : ?><div class="hs-card-bemerkung"><span class="hs-label">💬 Bemerkung:</span><p><?php echo nl2br(esc_html($off->bemerkung)); ?></p></div><?php endif; ?>
+                </div>
+                <?php endforeach; ?>
             </div>
             <?php if ( $is_logged_in ) :
             $footer_links = array();
@@ -1132,6 +1181,36 @@ class Handschelle_Shortcodes {
                                     <option value="<?php echo esc_attr($st); ?>" <?php selected($e->status_straftat, $st); ?>><?php echo esc_html($st); ?></option>
                                 <?php endforeach; ?>
                             </select>
+                        </div>
+
+                        <!-- Weitere Straftaten -->
+                        <div class="hs-edit-section-title">⚖ Weitere Straftaten</div>
+                        <div class="hs-field hs-field-full">
+                            <div id="hs-offences-container-<?php echo intval($e->id); ?>">
+                            <?php
+                            $inline_offences = Handschelle_Database::get_offences( $e->id );
+                            foreach ( $inline_offences as $oi => $off ) :
+                            ?>
+                            <div class="hs-offence-row" data-index="<?php echo $oi; ?>">
+                                <div class="hs-offence-header">
+                                    <strong>Straftat <?php echo $oi + 2; ?></strong>
+                                    <button type="button" class="button hs-offence-remove-btn" data-container="hs-offences-container-<?php echo intval($e->id); ?>" data-index="<?php echo $oi; ?>">🗑</button>
+                                </div>
+                                <input type="hidden" name="hs_offences[<?php echo $oi; ?>][id]"     value="<?php echo intval($off->id); ?>">
+                                <input type="hidden" name="hs_offences[<?php echo $oi; ?>][delete]" value="0" class="hs-offence-delete-flag">
+                                <div class="hs-field hs-field-full"><label>Straftat <?php echo $oi + 2; ?></label><textarea name="hs_offences[<?php echo $oi; ?>][straftat]" rows="3"><?php echo esc_textarea($off->straftat); ?></textarea></div>
+                                <div class="hs-field"><label>Urteil</label><input type="text" name="hs_offences[<?php echo $oi; ?>][urteil]" maxlength="200" value="<?php echo esc_attr($off->urteil); ?>"></div>
+                                <div class="hs-field"><label>Link zur Quelle</label><input type="url" name="hs_offences[<?php echo $oi; ?>][link_quelle]" value="<?php echo esc_attr($off->link_quelle ?? ''); ?>"></div>
+                                <div class="hs-field"><label>Aktenzeichen</label><input type="text" name="hs_offences[<?php echo $oi; ?>][aktenzeichen]" maxlength="50" value="<?php echo esc_attr($off->aktenzeichen); ?>"></div>
+                                <div class="hs-field"><label>Status</label>
+                                    <select name="hs_offences[<?php echo $oi; ?>][status_straftat]">
+                                        <?php foreach ( handschelle_status_straftat_options() as $s ) : ?><option value="<?php echo esc_attr($s); ?>" <?php selected($off->status_straftat, $s); ?>><?php echo esc_html($s); ?></option><?php endforeach; ?>
+                                    </select>
+                                </div>
+                            </div>
+                            <?php endforeach; ?>
+                            </div>
+                            <button type="button" class="button hs-add-offence-inline-btn" data-entry-id="<?php echo intval($e->id); ?>" data-container="hs-offences-container-<?php echo intval($e->id); ?>" data-count="<?php echo count($inline_offences); ?>">+ Weitere Straftat</button>
                         </div>
 
                         <!-- Social Media -->

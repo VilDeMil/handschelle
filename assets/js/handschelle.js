@@ -145,7 +145,69 @@
             }
         });
 
-        // ── 11. WP Media Library Picker (Admin) ─────────────────
+        // ── 11. Weitere Straftaten – Admin (Haupt-Formular) ──────
+        var $offenceContainer = $('#hs-offences-container');
+        var offenceCount = $offenceContainer.children('.hs-offence-row').length;
+
+        $('#hs-add-offence-btn').on('click', function () {
+            var tpl  = document.getElementById('hs-offence-template');
+            if ( !tpl ) return;
+            var html = tpl.innerHTML
+                .replace(/__IDX__/g,  offenceCount)
+                .replace(/__NUM__/g,  offenceCount + 2);
+            $offenceContainer.append(html);
+            offenceCount++;
+        });
+
+        $(document).on('click', '#hs-extra-offences-section .hs-offence-remove-btn', function () {
+            var $row = $(this).closest('.hs-offence-row');
+            var $flag = $row.find('.hs-offence-delete-flag');
+            if ( $flag.val() !== undefined ) {
+                $flag.val('1');
+                $row.hide();
+            } else {
+                $row.remove();
+            }
+        });
+
+        // ── 11b. Weitere Straftaten – Frontend Inline-Edit ───────
+        $(document).on('click', '.hs-add-offence-inline-btn', function () {
+            var containerId = $(this).data('container');
+            var entryId     = $(this).data('entry-id');
+            var count       = parseInt($(this).data('count'), 10) || 0;
+            var $c          = $('#' + containerId);
+            var html = '<div class="hs-offence-row">' +
+                '<div class="hs-offence-header">' +
+                    '<strong>Straftat ' + (count + 2) + '</strong>' +
+                    '<button type="button" class="button hs-offence-inline-remove">🗑</button>' +
+                '</div>' +
+                '<input type="hidden" name="hs_offences[' + count + '][id]"     value="">' +
+                '<input type="hidden" name="hs_offences[' + count + '][delete]" value="0" class="hs-offence-delete-flag">' +
+                '<div class="hs-field hs-field-full"><label>Straftat ' + (count + 2) + '</label>' +
+                    '<textarea name="hs_offences[' + count + '][straftat]" rows="3"></textarea></div>' +
+                '<div class="hs-field"><label>Urteil</label>' +
+                    '<input type="text" name="hs_offences[' + count + '][urteil]" maxlength="200" value=""></div>' +
+                '<div class="hs-field"><label>Link zur Quelle</label>' +
+                    '<input type="url" name="hs_offences[' + count + '][link_quelle]" value=""></div>' +
+                '<div class="hs-field"><label>Aktenzeichen</label>' +
+                    '<input type="text" name="hs_offences[' + count + '][aktenzeichen]" maxlength="50" value=""></div>' +
+                '</div>';
+            $c.append(html);
+            $(this).data('count', count + 1);
+        });
+
+        $(document).on('click', '.hs-offence-inline-remove', function () {
+            var $row  = $(this).closest('.hs-offence-row');
+            var $flag = $row.find('.hs-offence-delete-flag');
+            if ( $flag.length ) {
+                $flag.val('1');
+                $row.hide();
+            } else {
+                $row.remove();
+            }
+        });
+
+        // ── 12. WP Media Library Picker (Admin) ─────────────────
         if ( typeof wp !== 'undefined' && wp.media ) {
             $(document).on('click', '.hs-media-btn', function (e) {
                 e.preventDefault();
@@ -187,7 +249,7 @@
                 frame.open();
             });
 
-            // ── 12. Bild aus Medienbibliothek entfernen ──────────
+            // ── 13. Bild aus Medienbibliothek entfernen ──────────
             $(document).on('click', '.hs-media-remove-btn', function (e) {
                 e.preventDefault();
                 var $btn      = $(this);
