@@ -1069,13 +1069,17 @@ class Handschelle_Shortcodes {
                     $footer_links[] = '<a href="'.esc_url($e->$field).'" target="_blank" rel="noopener noreferrer" class="hs-sm-link" data-sm="'.esc_attr($key).'" title="'.esc_attr($label).'">'.$icon.' '.esc_html($label).'</a>';
                 }
             }
-            // Eintrag melden
-            $melden_subject = 'Meldung - ' . $e->name . ' - ' . $e->partei;
-            $melden_href = 'mailto:info@die-handschelle.com?subject=' . rawurlencode( $melden_subject );
-            $footer_links[] = '<a href="' . esc_attr( $melden_href ) . '" class="hs-sm-link hs-melden-link" data-sm="melden" title="Eintrag melden">⚠️ Eintrag melden!</a>';
+            // Eintrag melden — removed from logged-in footer (now shown for all visitors below)
             ?>
             <div class="hs-card-footer"><?php echo implode( '', $footer_links ); ?></div>
             <?php endif; ?>
+            <?php
+            $melden_subject = 'Straftat melden - ' . $e->name . ' - ' . $e->partei;
+            $melden_href    = 'mailto:info@die-handschelle.com?subject=' . rawurlencode( $melden_subject );
+            ?>
+            <div class="hs-card-melden">
+                <a href="<?php echo esc_attr( $melden_href ); ?>" class="hs-melden-link">⚠ Straftat melden!</a>
+            </div>
             <div class="hs-card-date">
                 Eingetragen am <?php echo esc_html( date_i18n('d.m.Y', strtotime($e->datum_eintrag)) ); ?>
                 <?php if ( ! empty( $e->erstellt_am ) ) : ?> &middot; Erstellt: <?php echo esc_html( date_i18n('d.m.Y H:i', strtotime($e->erstellt_am)) ); ?><?php endif; ?>
