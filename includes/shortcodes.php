@@ -42,6 +42,7 @@ class Handschelle_Shortcodes {
         add_shortcode( 'handschelle-name-anzeige',     array( $this, 'sc_name_anzeige' ) );
         add_shortcode( 'handschelle-name-partei',      array( $this, 'sc_name_partei' ) );
         add_shortcode( 'handschelle-disclaimer',       array( $this, 'sc_disclaimer' ) );
+        add_shortcode( 'handschelle-donate',           array( $this, 'sc_donate' ) );
         add_shortcode( 'handschelle-bilder',           array( $this, 'sc_bilder' ) );
         add_shortcode( 'handschelle-karte',            array( $this, 'sc_karte' ) );
         add_shortcode( 'handschelle-asc',              array( $this, 'sc_asc' ) );
@@ -858,6 +859,29 @@ class Handschelle_Shortcodes {
                 <a href="mailto:info@die-handschelle.com" class="hs-disclaimer-link">info@die-handschelle.com</a>
 
             </p>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /* ================================================================
+       [handschelle-donate] – Spendenaufruf / Gift-Link
+    ================================================================ */
+    public function sc_donate( $atts ) {
+        ob_start();
+        ?>
+        <div class="hs-donate">
+            <div class="hs-donate-inner">
+                <p class="hs-donate-heading">🎁 Diese Datenbank unterstützen</p>
+                <p class="hs-donate-text">
+                    Die-Handschelle ist ein unabhängiges, ehrenamtliches Projekt.<br>
+                    Wer die Arbeit schätzt, kann uns mit einem Geschenk helfen, den Betrieb zu sichern.
+                </p>
+                <a href="https://claude.ai/gift" target="_blank" rel="noopener noreferrer" class="hs-btn hs-donate-btn">
+                    🎁 Geschenk senden
+                </a>
+            </div>
+            <?php echo $this->sc_disclaimer( array() ); ?>
         </div>
         <?php
         return ob_get_clean();
