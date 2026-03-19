@@ -313,7 +313,7 @@ class Handschelle_Shortcodes {
         $filter_partei = sanitize_text_field( wp_unslash( $_GET['hs_partei']  ?? '' ) );
         $filter_name   = sanitize_text_field( wp_unslash( $_GET['hs_name']    ?? '' ) );
 
-        $args = array( 'freigegeben' => 1 );
+        $args = array( 'freigegeben' => 1, 'orderby' => 'datum_eintrag', 'order' => 'DESC' );
         if ( ! empty( $atts['partei'] ) ) $args['partei'] = sanitize_text_field( $atts['partei'] );
         if ( ! empty( $atts['name'] ) )   $args['name']   = sanitize_text_field( $atts['name'] );
         if ( ! empty( $search ) )         $args['search'] = $search;
@@ -572,7 +572,7 @@ class Handschelle_Shortcodes {
                     <noscript><button type="submit" class="hs-btn">Suchen</button></noscript>
                 </form>
                 <?php if ( ! empty( $selected ) ) :
-                    $entries = Handschelle_Database::get_all( array( 'freigegeben' => 1, 'name' => $selected ) );
+                    $entries = Handschelle_Database::get_all( array( 'freigegeben' => 1, 'name' => $selected, 'orderby' => 'datum_eintrag', 'order' => 'DESC' ) );
                 ?>
                     <div class="hs-search-results">
                         <div class="hs-search-buttons">
@@ -606,7 +606,7 @@ class Handschelle_Shortcodes {
             return '';
         }
 
-        $entries = Handschelle_Database::get_all( array( 'freigegeben' => 1, 'name' => $name ) );
+        $entries = Handschelle_Database::get_all( array( 'freigegeben' => 1, 'name' => $name, 'orderby' => 'datum_eintrag', 'order' => 'DESC' ) );
 
         if ( empty( $entries ) ) {
             return '';
@@ -643,7 +643,7 @@ class Handschelle_Shortcodes {
                     <noscript><button type="submit" class="hs-btn">Suchen</button></noscript>
                 </form>
                 <?php if ( ! empty( $selected ) ) :
-                    $entries = Handschelle_Database::get_all( array( 'freigegeben' => 1, 'partei' => $selected ) );
+                    $entries = Handschelle_Database::get_all( array( 'freigegeben' => 1, 'partei' => $selected, 'orderby' => 'datum_eintrag', 'order' => 'DESC' ) );
                 ?>
                     <div class="hs-search-results">
                         <?php if ( empty($entries) ) : ?>
@@ -882,7 +882,7 @@ class Handschelle_Shortcodes {
                 <noscript><button type="submit" class="hs-btn">Suchen</button></noscript>
             </form>
             <?php if ( ! empty( $selected ) ) :
-                $entries = Handschelle_Database::get_all( array( 'partei' => $selected ) );
+                $entries = Handschelle_Database::get_all( array( 'partei' => $selected, 'orderby' => 'datum_eintrag', 'order' => 'DESC' ) );
             ?>
                 <div class="hs-search-results">
                     <h4>Einträge für Partei: <em><?php echo esc_html($selected); ?></em> <span class="hs-count">(<?php echo count($entries); ?>)</span></h4>
@@ -921,7 +921,7 @@ class Handschelle_Shortcodes {
                 <noscript><button type="submit" class="hs-btn">Suchen</button></noscript>
             </form>
             <?php if ( ! empty( $selected ) ) :
-                $entries = Handschelle_Database::get_all( array( 'name' => $selected ) );
+                $entries = Handschelle_Database::get_all( array( 'name' => $selected, 'orderby' => 'datum_eintrag', 'order' => 'DESC' ) );
             ?>
                 <div class="hs-search-results">
                     <h4>Einträge für: <em><?php echo esc_html( hs_display_name( $selected ) ); ?></em> <span class="hs-count">(<?php echo count($entries); ?>)</span></h4>
@@ -949,16 +949,15 @@ class Handschelle_Shortcodes {
     ================================================================ */
     public function render_card( $e ) {
         $img_url      = handschelle_get_image_url( $e->bild );
-        $is_logged_in = is_user_logged_in();
-        $display_img  = $is_logged_in ? $img_url : ( get_site_icon_url( 96 ) ?: '' );
         $status_class = array(
             'Verurteilt'          => 'hs-status-verurteilt',
             'Ermittlungen laufen' => 'hs-status-ermittlung',
             'Eingestellt'         => 'hs-status-eingestellt',
         );
-        $is_author = current_user_can( 'publish_posts' ); // Author or higher
+        $is_logged_in = is_user_logged_in();
+        $is_author = current_user_can( 'publish_posts' );
         $is_admin  = current_user_can( 'manage_options' );
-        $edited       = isset( $_GET['hs_edited'] ) && intval( $_GET['hs_edited'] ) === intval( $e->id );
+        $edited    = isset( $_GET['hs_edited'] ) && intval( $_GET['hs_edited'] ) === intval( $e->id );
         ob_start();
         ?>
         <div class="hs-card" id="hs-card-<?php echo intval($e->id); ?>">
@@ -966,22 +965,19 @@ class Handschelle_Shortcodes {
                 <div class="hs-alert hs-alert-success">✅ Eintrag erfolgreich aktualisiert!</div>
             <?php endif; ?>
             <div class="hs-card-header">
+                <?php $display_img = $is_logged_in ? $img_url : ( get_site_icon_url( 96 ) ?: '' ); ?>
                 <div class="hs-card-img-wrap <?php echo $display_img ? '' : 'hs-card-img-placeholder'; ?>">
-                    <?php if ( $display_img ) : ?>
-                    <?php if ( $is_logged_in ) : ?>
+                    <?php if ( $display_img && $is_logged_in ) : ?>
                     <a href="<?php echo esc_url( add_query_arg( 'hs_name', $e->name, get_permalink() ) ); ?>" title="<?php echo esc_attr( hs_display_name( $e->name ) ); ?> – Details anzeigen" class="hs-card-img-link">
                         <img src="<?php echo esc_url( $display_img ); ?>" alt="<?php echo esc_attr( hs_display_name( $e->name ) ); ?>" class="hs-card-img">
                     </a>
-                    <?php else : ?>
+                    <?php elseif ( $display_img ) : ?>
                         <img src="<?php echo esc_url( $display_img ); ?>" alt="Website-Icon" class="hs-card-img hs-card-img-siteicon">
-                    <?php endif; ?>
                     <?php else : ?>👤<?php endif; ?>
                 </div>
                 <div class="hs-card-meta">
                     <h3 class="hs-card-name"><?php echo esc_html( hs_display_name( $e->name ) ); ?><?php if ( ! empty( $e->spitzname ) ) : ?> <span class="hs-card-spitzname">(„<?php echo esc_html($e->spitzname); ?>")</span><?php endif; ?></h3>
                     <?php if ( $e->beruf ) : ?><p class="hs-card-beruf"><?php echo esc_html($e->beruf); ?></p><?php endif; ?>
-                    <?php if ( $e->partei ) : ?><p class="hs-card-partei">🏛 <?php echo esc_html($e->partei); ?><?php if($e->aufgabe_partei) echo ' &ndash; '.esc_html($e->aufgabe_partei); ?></p><?php endif; ?>
-                    <?php if ( $e->parlament ) : ?><p class="hs-card-parlament">📜 <?php echo esc_html($e->parlament); ?><?php if($e->parlament_name) echo ' ('.esc_html($e->parlament_name).')'; ?></p><?php endif; ?>
                 </div>
                 <?php if ( $is_author ) : ?>
                 <button type="button"
@@ -993,37 +989,92 @@ class Handschelle_Shortcodes {
                 <?php endif; ?>
             </div>
             <div class="hs-card-body">
-                <div class="hs-card-straftat"><span class="hs-label">⚖ Straftat:</span><p><?php echo nl2br(esc_html($e->straftat)); ?></p></div>
-                <?php
-                $age = handschelle_calc_age( $e->geburtsdatum ?? '' );
-                if ( ! empty( $e->geburtsort ) || ! empty( $e->geburtsdatum ) || ! empty( $e->geburtsland ) ) : ?>
+            <?php if ( $is_logged_in ) : ?>
+
+                <!-- ── Persönlich ──────────────────────────────── -->
+                <div class="hs-card-section">
+                    <div class="hs-card-section-title">👤 Persönlich</div>
+                    <?php
+                    $age = handschelle_calc_age( $e->geburtsdatum ?? '' );
+                    if ( ! empty( $e->geburtsort ) || ! empty( $e->geburtsdatum ) || ! empty( $e->geburtsland ) ) : ?>
+                        <div class="hs-card-row">
+                            <span class="hs-label">🎂 Geburt:</span>
+                            <?php
+                            if ( ! empty( $e->geburtsdatum ) && $e->geburtsdatum !== '0000-00-00' ) {
+                                echo esc_html( date_i18n( 'd.m.Y', strtotime( $e->geburtsdatum ) ) );
+                                if ( $age !== null ) echo ' (Alter: ' . $age . ')';
+                            }
+                            if ( ! empty( $e->geburtsort ) ) echo ' &mdash; ' . esc_html( $e->geburtsort );
+                            if ( ! empty( $e->geburtsland ) ) echo ', ' . esc_html( $e->geburtsland );
+                            ?>
+                        </div>
+                    <?php endif; ?>
+                    <?php if ( ! empty( $e->verstorben ) ) : ?>
+                        <div class="hs-card-row">
+                            <span class="hs-badge hs-badge-verstorben">✝ Verstorben</span>
+                            <?php if ( ! empty( $e->dod ) && $e->dod !== '0000-00-00' ) : ?>
+                                <span class="hs-label"> <?php echo esc_html( date_i18n( 'd.m.Y', strtotime( $e->dod ) ) ); ?></span>
+                            <?php endif; ?>
+                        </div>
+                    <?php endif; ?>
+                    <?php if ( ! empty( $e->bemerkung_person ) ) : ?><div class="hs-card-bemerkung-person"><span class="hs-label">📝 Bemerkung zur Person:</span><p><?php echo nl2br(esc_html($e->bemerkung_person)); ?></p></div><?php endif; ?>
+                    <?php if ( $is_admin && ! empty( $e->private_email ) ) : ?><div class="hs-card-row"><span class="hs-label">🔒 Private E-Mail:</span> <?php echo esc_html($e->private_email); ?></div><?php endif; ?>
+                </div>
+
+                <!-- ── Politisch ───────────────────────────────── -->
+                <div class="hs-card-section">
+                    <div class="hs-card-section-title">🏛 Politisch</div>
+                    <?php if ( $e->partei ) : ?><div class="hs-card-row"><span class="hs-label">🏛 Partei:</span> <?php echo esc_html($e->partei); ?><?php if($e->aufgabe_partei) echo ' &ndash; '.esc_html($e->aufgabe_partei); ?></div><?php endif; ?>
+                    <?php if ( $e->parlament ) : ?><div class="hs-card-row"><span class="hs-label">📜 Parlament:</span> <?php echo esc_html($e->parlament); ?><?php if($e->parlament_name) echo ' ('.esc_html($e->parlament_name).')'; ?></div><?php endif; ?>
                     <div class="hs-card-row">
-                        <span class="hs-label">🎂 Geburt:</span>
-                        <?php
-                        if ( ! empty( $e->geburtsdatum ) && $e->geburtsdatum !== '0000-00-00' ) {
-                            echo esc_html( date_i18n( 'd.m.Y', strtotime( $e->geburtsdatum ) ) );
-                            if ( $age !== null ) echo ' (Alter: ' . $age . ')';
+                        <?php echo $e->status_aktiv ? '<span class="hs-badge hs-badge-aktiv">Aktiv</span>' : '<span class="hs-badge hs-badge-inaktiv">Inaktiv</span>'; ?>
+                    </div>
+                </div>
+
+                <!-- ── Social ──────────────────────────────────── -->
+                <div class="hs-card-section">
+                    <div class="hs-card-section-title">📱 Social</div>
+                    <?php
+                    $social_links = array();
+                    if ( ! empty( $e->link_quelle ) ) {
+                        $social_links[] = '<a href="'.esc_url($e->link_quelle).'" target="_blank" rel="noopener noreferrer" class="hs-sm-link" data-sm="link" title="Quelle">'.$this->svg_link().' Quelle</a>';
+                    }
+                    if ( ! empty( $e->oeffentliche_email ) ) {
+                        $social_links[] = '<a href="mailto:'.esc_attr($e->oeffentliche_email).'" class="hs-sm-link" data-sm="email" title="E-Mail">✉ '.esc_html($e->oeffentliche_email).'</a>';
+                    }
+                    foreach ( $this->sm_fields() as $field => list( $icon, $label ) ) {
+                        if ( ! empty( $e->$field ) ) {
+                            $key = str_replace( 'sm_', '', $field );
+                            $social_links[] = '<a href="'.esc_url($e->$field).'" target="_blank" rel="noopener noreferrer" class="hs-sm-link" data-sm="'.esc_attr($key).'" title="'.esc_attr($label).'">'.$icon.' '.esc_html($label).'</a>';
                         }
-                        if ( ! empty( $e->geburtsort ) ) echo ' &mdash; ' . esc_html( $e->geburtsort );
-                        if ( ! empty( $e->geburtsland ) ) echo ', ' . esc_html( $e->geburtsland );
-                        ?>
-                    </div>
-                <?php endif; ?>
-                <?php if ( ! empty( $e->verstorben ) ) : ?>
+                    }
+                    $social_links[] = '<a href="'.esc_url( 'https://www.google.com/search?q=' . urlencode( $e->name ) ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="google" title="Google-Suche">🔍 Google</a>';
+                    $social_links[] = '<a href="'.esc_url( 'https://www.qwant.com/?l=de&q=' . urlencode( $e->name ) ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="qwant" title="Qwant-Suche">🔍 Qwant</a>';
+                    $social_links[] = '<a href="'.esc_url( 'https://duckduckgo.com/?q=' . urlencode( $e->name ) ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="duckduckgo" title="DuckDuckGo-Suche">🔍 DuckDuckGo</a>';
+                    $social_links[] = '<a href="'.esc_url( 'https://www.bing.com/search?q=' . urlencode( $e->name ) ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="bing" title="Bing-Suche">🔍 Bing</a>';
+                    $social_links[] = '<a href="'.esc_url( 'https://www.abgeordnetenwatch.de/profile?politician_search_keys=' . urlencode( $e->name ) ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="abgeordnetenwatch" title="Abgeordnetenwatch">🏛 Abgeordnetenwatch</a>';
+                    $melden_subject = 'Meldung - ' . $e->name . ' - ' . $e->partei;
+                    $melden_href    = 'mailto:info@die-handschelle.com?subject=' . rawurlencode( $melden_subject );
+                    $social_links[] = '<a href="' . esc_attr( $melden_href ) . '" class="hs-sm-link hs-melden-link" data-sm="melden" title="Eintrag melden">⚠️ Eintrag melden!</a>';
+                    ?>
+                    <div class="hs-card-footer"><?php echo implode( '', $social_links ); ?></div>
+                </div>
+
+            <?php endif; // is_logged_in ?>
+
+                <!-- ── Straftat (public) ───────────────────────── -->
+                <div class="hs-card-section">
+                    <div class="hs-card-section-title">⚖ Straftat</div>
+                    <?php if ( $e->partei ) : ?><div class="hs-card-row"><span class="hs-label">🏛 Partei:</span> <?php echo esc_html($e->partei); ?><?php if($e->aufgabe_partei) echo ' &ndash; '.esc_html($e->aufgabe_partei); ?></div><?php endif; ?>
+                    <div class="hs-card-straftat"><p><?php echo nl2br(esc_html($e->straftat)); ?></p></div>
                     <div class="hs-card-row">
-                        <span class="hs-badge hs-badge-verstorben">✝ Verstorben</span>
-                        <?php if ( ! empty( $e->dod ) && $e->dod !== '0000-00-00' ) : ?>
-                            <span class="hs-label"> <?php echo esc_html( date_i18n( 'd.m.Y', strtotime( $e->dod ) ) ); ?></span>
-                        <?php endif; ?>
+                        <span class="hs-badge <?php echo esc_attr($status_class[$e->status_straftat] ?? 'hs-status-ermittlung'); ?>"><?php echo esc_html($e->status_straftat); ?></span>
                     </div>
-                <?php endif; ?>
-                <?php if ( ! empty( $e->bemerkung_person ) ) : ?><div class="hs-card-bemerkung-person"><span class="hs-label">👤 Bemerkung zur Person:</span><p><?php echo nl2br(esc_html($e->bemerkung_person)); ?></p></div><?php endif; ?>
-                <?php if ( $is_admin && ! empty( $e->private_email ) ) : ?><div class="hs-card-row"><span class="hs-label">🔒 Private E-Mail:</span> <?php echo esc_html($e->private_email); ?></div><?php endif; ?>
-                <?php if ( $e->urteil ) : ?><div class="hs-card-row"><span class="hs-label">📋 Urteil:</span> <?php echo esc_html($e->urteil); ?></div><?php endif; ?>
-                <?php if ( $e->aktenzeichen ) : ?><div class="hs-card-row"><span class="hs-label">📁 Aktenzeichen:</span> <?php echo esc_html($e->aktenzeichen); ?></div><?php endif; ?>
-                <div class="hs-card-row">
-                    <span class="hs-badge <?php echo esc_attr($status_class[$e->status_straftat] ?? 'hs-status-ermittlung'); ?>"><?php echo esc_html($e->status_straftat); ?></span>
-                    <?php echo $e->status_aktiv ? '<span class="hs-badge hs-badge-aktiv">Aktiv</span>' : '<span class="hs-badge hs-badge-inaktiv">Inaktiv</span>'; ?>
+                    <?php if ( $e->urteil ) : ?><div class="hs-card-row"><span class="hs-label">📋 Urteil:</span> <?php echo esc_html($e->urteil); ?></div><?php endif; ?>
+                    <?php if ( $is_logged_in ) : ?>
+                        <?php if ( $e->aktenzeichen ) : ?><div class="hs-card-row"><span class="hs-label">📁 Aktenzeichen:</span> <?php echo esc_html($e->aktenzeichen); ?></div><?php endif; ?>
+                        <?php if ( $e->bemerkung ) : ?><div class="hs-card-bemerkung"><span class="hs-label">💬 Bemerkung:</span><p><?php echo nl2br(esc_html($e->bemerkung)); ?></p></div><?php endif; ?>
+                    <?php endif; ?>
                 </div>
                 <?php if ( $e->bemerkung ) : ?><div class="hs-card-bemerkung"><span class="hs-label">💬 Bemerkung:</span><p><?php echo nl2br(esc_html($e->bemerkung)); ?></p></div><?php endif; ?>
 
