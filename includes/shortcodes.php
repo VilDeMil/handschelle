@@ -957,8 +957,8 @@ class Handschelle_Shortcodes {
                 </button>
                 <?php endif; ?>
             </div>
-            <?php if ( $is_logged_in ) : ?>
             <div class="hs-card-body">
+            <?php if ( $is_logged_in ) : ?>
 
                 <!-- ── Persönlich ──────────────────────────────── -->
                 <div class="hs-card-section">
@@ -1029,20 +1029,24 @@ class Handschelle_Shortcodes {
                     <div class="hs-card-footer"><?php echo implode( '', $social_links ); ?></div>
                 </div>
 
-                <!-- ── Straftat ────────────────────────────────── -->
+            <?php endif; // is_logged_in ?>
+
+                <!-- ── Straftat (public) ───────────────────────── -->
                 <div class="hs-card-section">
                     <div class="hs-card-section-title">⚖ Straftat</div>
+                    <?php if ( $e->partei ) : ?><div class="hs-card-row"><span class="hs-label">🏛 Partei:</span> <?php echo esc_html($e->partei); ?><?php if($e->aufgabe_partei) echo ' &ndash; '.esc_html($e->aufgabe_partei); ?></div><?php endif; ?>
                     <div class="hs-card-straftat"><p><?php echo nl2br(esc_html($e->straftat)); ?></p></div>
                     <div class="hs-card-row">
                         <span class="hs-badge <?php echo esc_attr($status_class[$e->status_straftat] ?? 'hs-status-ermittlung'); ?>"><?php echo esc_html($e->status_straftat); ?></span>
                     </div>
                     <?php if ( $e->urteil ) : ?><div class="hs-card-row"><span class="hs-label">📋 Urteil:</span> <?php echo esc_html($e->urteil); ?></div><?php endif; ?>
-                    <?php if ( $e->aktenzeichen ) : ?><div class="hs-card-row"><span class="hs-label">📁 Aktenzeichen:</span> <?php echo esc_html($e->aktenzeichen); ?></div><?php endif; ?>
-                    <?php if ( $e->bemerkung ) : ?><div class="hs-card-bemerkung"><span class="hs-label">💬 Bemerkung:</span><p><?php echo nl2br(esc_html($e->bemerkung)); ?></p></div><?php endif; ?>
+                    <?php if ( $is_logged_in ) : ?>
+                        <?php if ( $e->aktenzeichen ) : ?><div class="hs-card-row"><span class="hs-label">📁 Aktenzeichen:</span> <?php echo esc_html($e->aktenzeichen); ?></div><?php endif; ?>
+                        <?php if ( $e->bemerkung ) : ?><div class="hs-card-bemerkung"><span class="hs-label">💬 Bemerkung:</span><p><?php echo nl2br(esc_html($e->bemerkung)); ?></p></div><?php endif; ?>
+                    <?php endif; ?>
                 </div>
 
             </div><!-- .hs-card-body -->
-            <?php endif; // is_logged_in ?>
             <div class="hs-card-date">
                 Eingetragen am <?php echo esc_html( date_i18n('d.m.Y', strtotime($e->datum_eintrag)) ); ?>
                 <?php if ( ! empty( $e->erstellt_am ) ) : ?> &middot; Erstellt: <?php echo esc_html( date_i18n('d.m.Y H:i', strtotime($e->erstellt_am)) ); ?><?php endif; ?>
