@@ -88,6 +88,24 @@ function hs_display_name( $name ) {
     return is_user_logged_in() ? $name : '████████';
 }
 
+/**
+ * Encode a person name for use in URL parameters.
+ * Prefixes with 'n:' so the decoder can distinguish encoded from plain values.
+ */
+function hs_encode_url_name( $name ) {
+    return 'n:' . base64_encode( $name );
+}
+
+/**
+ * Decode a URL name parameter — handles both encoded ('n:…') and plain values.
+ */
+function hs_decode_url_name( $value ) {
+    if ( substr( $value, 0, 2 ) === 'n:' ) {
+        return base64_decode( substr( $value, 2 ) );
+    }
+    return $value;
+}
+
 function handschelle_get_image_url( $bild ) {
     if ( empty( $bild ) ) return '';
     if ( is_numeric( $bild ) && intval( $bild ) > 0 ) {
