@@ -48,6 +48,7 @@ class Handschelle_Shortcodes {
         add_shortcode( 'handschelle-asc-link',         array( $this, 'sc_asc_link' ) );
         add_shortcode( 'wordcloud-name',               array( $this, 'sc_wordcloud_name' ) );
         add_shortcode( 'wordcloud-urteil',             array( $this, 'sc_wordcloud_urteil' ) );
+        add_shortcode( 'wordcloud-straftat',           array( $this, 'sc_wordcloud_straftat' ) );
         add_shortcode( 'handschelle-ticker',           array( $this, 'sc_ticker' ) );
         add_shortcode( 'handschelle-straftat',         array( $this, 'sc_straftat_ticker' ) );
         add_shortcode( 'handschelle-straftat-link',    array( $this, 'sc_straftat_ticker_link' ) );
@@ -576,6 +577,7 @@ class Handschelle_Shortcodes {
                     $entries = Handschelle_Database::get_all( array( 'freigegeben' => 1, 'name' => $selected, 'orderby' => 'datum_eintrag', 'order' => 'DESC' ) );
                 ?>
                     <div class="hs-search-results">
+                        <?php if ( is_user_logged_in() ) : ?>
                         <div class="hs-search-buttons">
                             <a href="<?php echo esc_url( 'https://www.google.com/search?q=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 GOOGLE</a>
                             <a href="<?php echo esc_url( 'https://www.qwant.com/?l=de&q=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 Qwant</a>
@@ -583,6 +585,7 @@ class Handschelle_Shortcodes {
                             <a href="<?php echo esc_url( 'https://www.bing.com/search?q=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 Bing</a>
                             <a href="<?php echo esc_url( 'https://www.abgeordnetenwatch.de/profile?politician_search_keys=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🏛 Abgeordnetenwatch</a>
                         </div>
+                        <?php endif; ?>
                         <?php if ( empty($entries) ) : ?>
                             <p class="hs-empty">Keine Einträge für diese Person.</p>
                         <?php else : ?>
@@ -927,6 +930,7 @@ class Handschelle_Shortcodes {
             ?>
                 <div class="hs-search-results">
                     <h4>Einträge für: <em><?php echo esc_html( hs_display_name( $selected ) ); ?></em> <span class="hs-count">(<?php echo count($entries); ?>)</span></h4>
+                    <?php if ( is_user_logged_in() ) : ?>
                     <div class="hs-search-buttons">
                         <a href="<?php echo esc_url( 'https://www.google.com/search?q=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 GOOGLE</a>
                         <a href="<?php echo esc_url( 'https://www.qwant.com/?l=de&q=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 Qwant</a>
@@ -934,6 +938,7 @@ class Handschelle_Shortcodes {
                         <a href="<?php echo esc_url( 'https://www.bing.com/search?q=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 Bing</a>
                         <a href="<?php echo esc_url( 'https://www.abgeordnetenwatch.de/profile?politician_search_keys=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🏛 Abgeordnetenwatch</a>
                     </div>
+                    <?php endif; ?>
                     <?php if ( empty($entries) ) : ?>
                         <p class="hs-empty">Keine Einträge für diese Person.</p>
                     <?php else : ?>
@@ -976,7 +981,7 @@ class Handschelle_Shortcodes {
                     <?php else : ?>👤<?php endif; ?>
                 </div>
                 <div class="hs-card-meta">
-                    <h3 class="hs-card-name"><?php echo esc_html( hs_display_name( $e->name ) ); ?><?php if ( ! empty( $e->spitzname ) ) : ?> <span class="hs-card-spitzname">(„<?php echo esc_html($e->spitzname); ?>")</span><?php endif; ?></h3>
+                    <h3 class="hs-card-name"><?php if ( $is_logged_in ) : ?><a href="<?php echo esc_url( add_query_arg( 'hs_name', $e->name, get_permalink() ) ); ?>" class="hs-card-name-link"><?php echo esc_html( $e->name ); ?></a><?php else : ?><?php echo esc_html( hs_display_name( $e->name ) ); ?><?php endif; ?><?php if ( ! empty( $e->spitzname ) ) : ?> <span class="hs-card-spitzname">(„<?php echo esc_html($e->spitzname); ?>")</span><?php endif; ?></h3>
                     <?php if ( $e->beruf ) : ?><p class="hs-card-beruf"><?php echo esc_html($e->beruf); ?></p><?php endif; ?>
                     <?php if ( $e->partei ) : ?><p class="hs-card-partei"><?php echo esc_html($e->partei); ?><?php if ( $e->aufgabe_partei ) echo ' &ndash; ' . esc_html($e->aufgabe_partei); ?></p><?php endif; ?>
                     <?php if ( $e->parlament ) : ?><p class="hs-card-parlament"><?php echo esc_html($e->parlament); ?><?php if ( $e->parlament_name ) echo ' (' . esc_html($e->parlament_name) . ')'; ?></p><?php endif; ?>
@@ -1462,6 +1467,47 @@ class Handschelle_Shortcodes {
         echo '</div>';
         return ob_get_clean();
     }
+    /* ================================================================
+       [wordcloud-straftat] – Wordcloud der Straftaten
+    ================================================================ */
+    public function sc_wordcloud_straftat( $atts ) {
+        global $wpdb;
+        $table = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
+        $rows  = $wpdb->get_results(
+            "SELECT straftat, COUNT(*) AS cnt
+             FROM `{$table}`
+             WHERE freigegeben = 1 AND straftat != ''
+             GROUP BY straftat
+             ORDER BY cnt DESC"
+        );
+        if ( empty( $rows ) ) return '<p class="hs-wordcloud-empty">Keine Straftaten vorhanden.</p>';
+
+        $counts  = array_column( (array) $rows, 'cnt' );
+        $max     = max( $counts );
+        $min_em  = 0.85;
+        $max_em  = 2.8;
+        $colors  = array( '#1a1a2e', '#c0392b', '#e74c3c', '#f39c12', '#2980b9', '#27ae60', '#8e44ad' );
+
+        ob_start();
+        echo '<div class="hs-wordcloud">';
+        foreach ( $rows as $i => $r ) {
+            $size  = $max > 1
+                ? $min_em + ( $r->cnt / $max ) * ( $max_em - $min_em )
+                : ( $min_em + $max_em ) / 2;
+            $color = $colors[ $i % count( $colors ) ];
+            printf(
+                '<span class="hs-wordcloud-item" style="font-size:%.2fem;color:%s;" title="%s (%d×)">%s</span>',
+                $size,
+                esc_attr( $color ),
+                esc_attr( $r->straftat ),
+                intval( $r->cnt ),
+                esc_html( $r->straftat )
+            );
+        }
+        echo '</div>';
+        return ob_get_clean();
+    }
+
     /* ================================================================
        [handschelle-ticker] – News-Ticker mit Name & Straftat
        Attribute:
