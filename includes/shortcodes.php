@@ -576,6 +576,7 @@ class Handschelle_Shortcodes {
                     $entries = Handschelle_Database::get_all( array( 'freigegeben' => 1, 'name' => $selected, 'orderby' => 'datum_eintrag', 'order' => 'DESC' ) );
                 ?>
                     <div class="hs-search-results">
+                        <?php if ( is_user_logged_in() ) : ?>
                         <div class="hs-search-buttons">
                             <a href="<?php echo esc_url( 'https://www.google.com/search?q=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 GOOGLE</a>
                             <a href="<?php echo esc_url( 'https://www.qwant.com/?l=de&q=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 Qwant</a>
@@ -583,6 +584,7 @@ class Handschelle_Shortcodes {
                             <a href="<?php echo esc_url( 'https://www.bing.com/search?q=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 Bing</a>
                             <a href="<?php echo esc_url( 'https://www.abgeordnetenwatch.de/profile?politician_search_keys=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🏛 Abgeordnetenwatch</a>
                         </div>
+                        <?php endif; ?>
                         <?php if ( empty($entries) ) : ?>
                             <p class="hs-empty">Keine Einträge für diese Person.</p>
                         <?php else : ?>
@@ -927,6 +929,7 @@ class Handschelle_Shortcodes {
             ?>
                 <div class="hs-search-results">
                     <h4>Einträge für: <em><?php echo esc_html( hs_display_name( $selected ) ); ?></em> <span class="hs-count">(<?php echo count($entries); ?>)</span></h4>
+                    <?php if ( is_user_logged_in() ) : ?>
                     <div class="hs-search-buttons">
                         <a href="<?php echo esc_url( 'https://www.google.com/search?q=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 GOOGLE</a>
                         <a href="<?php echo esc_url( 'https://www.qwant.com/?l=de&q=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 Qwant</a>
@@ -934,6 +937,7 @@ class Handschelle_Shortcodes {
                         <a href="<?php echo esc_url( 'https://www.bing.com/search?q=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 Bing</a>
                         <a href="<?php echo esc_url( 'https://www.abgeordnetenwatch.de/profile?politician_search_keys=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🏛 Abgeordnetenwatch</a>
                     </div>
+                    <?php endif; ?>
                     <?php if ( empty($entries) ) : ?>
                         <p class="hs-empty">Keine Einträge für diese Person.</p>
                     <?php else : ?>
