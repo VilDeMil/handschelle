@@ -923,6 +923,7 @@ class Handschelle_Shortcodes {
             'Ermittlungen laufen' => 'hs-status-ermittlung',
             'Eingestellt'         => 'hs-status-eingestellt',
         );
+        $is_logged_in = is_user_logged_in();
         $is_author = current_user_can( 'publish_posts' );
         $is_admin  = current_user_can( 'manage_options' );
         $edited    = isset( $_GET['hs_edited'] ) && intval( $_GET['hs_edited'] ) === intval( $e->id );
@@ -935,13 +936,17 @@ class Handschelle_Shortcodes {
             <div class="hs-card-header">
                 <div class="hs-card-img-wrap <?php echo $img_url ? '' : 'hs-card-img-placeholder'; ?>">
                     <?php if ( $img_url ) : ?>
-                    <a href="<?php echo esc_url( add_query_arg( 'hs_name', $e->name, get_permalink() ) ); ?>" title="<?php echo esc_attr( $e->name ); ?> – Details anzeigen" class="hs-card-img-link">
-                        <img src="<?php echo esc_url( $img_url ); ?>" alt="<?php echo esc_attr( $e->name ); ?>" class="hs-card-img">
+                    <?php if ( $is_logged_in ) : ?>
+                    <a href="<?php echo esc_url( add_query_arg( 'hs_name', $e->name, get_permalink() ) ); ?>" title="<?php echo esc_attr( hs_display_name( $e->name ) ); ?> – Details anzeigen" class="hs-card-img-link">
+                        <img src="<?php echo esc_url( $img_url ); ?>" alt="<?php echo esc_attr( hs_display_name( $e->name ) ); ?>" class="hs-card-img">
                     </a>
+                    <?php else : ?>
+                        <img src="<?php echo esc_url( $img_url ); ?>" alt="<?php echo esc_attr( hs_display_name( $e->name ) ); ?>" class="hs-card-img">
+                    <?php endif; ?>
                     <?php else : ?>👤<?php endif; ?>
                 </div>
                 <div class="hs-card-meta">
-                    <h3 class="hs-card-name"><?php echo esc_html( $e->name ); ?><?php if ( ! empty( $e->spitzname ) ) : ?> <span class="hs-card-spitzname">(„<?php echo esc_html($e->spitzname); ?>")</span><?php endif; ?></h3>
+                    <h3 class="hs-card-name"><?php echo esc_html( hs_display_name( $e->name ) ); ?><?php if ( ! empty( $e->spitzname ) ) : ?> <span class="hs-card-spitzname">(„<?php echo esc_html($e->spitzname); ?>")</span><?php endif; ?></h3>
                     <?php if ( $e->beruf ) : ?><p class="hs-card-beruf"><?php echo esc_html($e->beruf); ?></p><?php endif; ?>
                 </div>
                 <?php if ( $is_author ) : ?>
