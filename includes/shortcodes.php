@@ -978,6 +978,9 @@ class Handschelle_Shortcodes {
                 <div class="hs-card-meta">
                     <h3 class="hs-card-name"><?php echo esc_html( hs_display_name( $e->name ) ); ?><?php if ( ! empty( $e->spitzname ) ) : ?> <span class="hs-card-spitzname">(„<?php echo esc_html($e->spitzname); ?>")</span><?php endif; ?></h3>
                     <?php if ( $e->beruf ) : ?><p class="hs-card-beruf"><?php echo esc_html($e->beruf); ?></p><?php endif; ?>
+                    <?php if ( $e->partei ) : ?><p class="hs-card-partei"><?php echo esc_html($e->partei); ?><?php if ( $e->aufgabe_partei ) echo ' &ndash; ' . esc_html($e->aufgabe_partei); ?></p><?php endif; ?>
+                    <?php if ( $e->parlament ) : ?><p class="hs-card-parlament"><?php echo esc_html($e->parlament); ?><?php if ( $e->parlament_name ) echo ' (' . esc_html($e->parlament_name) . ')'; ?></p><?php endif; ?>
+                    <p class="hs-card-status"><?php echo $e->status_aktiv ? '<span class="hs-badge hs-badge-aktiv">Aktiv</span>' : '<span class="hs-badge hs-badge-inaktiv">Inaktiv</span>'; ?></p>
                 </div>
                 <?php if ( $is_author ) : ?>
                 <button type="button"
@@ -1021,16 +1024,6 @@ class Handschelle_Shortcodes {
                     <?php if ( $is_admin && ! empty( $e->private_email ) ) : ?><div class="hs-card-row"><span class="hs-label">🔒 Private E-Mail:</span> <?php echo esc_html($e->private_email); ?></div><?php endif; ?>
                 </div>
 
-                <!-- ── Politisch ───────────────────────────────── -->
-                <div class="hs-card-section">
-                    <div class="hs-card-section-title">🏛 Politisch</div>
-                    <?php if ( $e->partei ) : ?><div class="hs-card-row"><span class="hs-label">🏛 Partei:</span> <?php echo esc_html($e->partei); ?><?php if($e->aufgabe_partei) echo ' &ndash; '.esc_html($e->aufgabe_partei); ?></div><?php endif; ?>
-                    <?php if ( $e->parlament ) : ?><div class="hs-card-row"><span class="hs-label">📜 Parlament:</span> <?php echo esc_html($e->parlament); ?><?php if($e->parlament_name) echo ' ('.esc_html($e->parlament_name).')'; ?></div><?php endif; ?>
-                    <div class="hs-card-row">
-                        <?php echo $e->status_aktiv ? '<span class="hs-badge hs-badge-aktiv">Aktiv</span>' : '<span class="hs-badge hs-badge-inaktiv">Inaktiv</span>'; ?>
-                    </div>
-                </div>
-
                 <!-- ── Social ──────────────────────────────────── -->
                 <div class="hs-card-section">
                     <div class="hs-card-section-title">📱 Social</div>
@@ -1065,7 +1058,6 @@ class Handschelle_Shortcodes {
                 <!-- ── Straftat (public) ───────────────────────── -->
                 <div class="hs-card-section">
                     <div class="hs-card-section-title">⚖ Straftat</div>
-                    <?php if ( $e->partei ) : ?><div class="hs-card-row"><span class="hs-label">🏛 Partei:</span> <?php echo esc_html($e->partei); ?><?php if($e->aufgabe_partei) echo ' &ndash; '.esc_html($e->aufgabe_partei); ?></div><?php endif; ?>
                     <div class="hs-card-straftat"><p><?php echo nl2br(esc_html($e->straftat)); ?></p></div>
                     <div class="hs-card-row">
                         <span class="hs-badge <?php echo esc_attr($status_class[$e->status_straftat] ?? 'hs-status-ermittlung'); ?>"><?php echo esc_html($e->status_straftat); ?></span>
