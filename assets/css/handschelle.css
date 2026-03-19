@@ -90,6 +90,8 @@
 .hs-card-img-placeholder { font-size:2.5rem; }
 .hs-card-meta { flex:1; min-width:0; }
 .hs-card-name { font-size:1.05rem; font-weight:700; margin:0 0 .25rem; color:#fff; }
+.hs-card-name-link { color:inherit; text-decoration:none; }
+.hs-card-name-link:hover { text-decoration:underline; }
 .hs-card-beruf, .hs-card-partei, .hs-card-parlament { font-size:.8rem; margin:.15rem 0; color:rgba(255,255,255,.8); word-break:break-word; }
 .hs-card-body { padding:1rem; flex:1; display:flex; flex-direction:column; gap:.5rem; }
 .hs-card-section { border:1px solid var(--hs-border); border-radius:var(--hs-radius); padding:.6rem .8rem; display:flex; flex-direction:column; gap:.45rem; }

@@ -976,7 +976,7 @@ class Handschelle_Shortcodes {
                     <?php else : ?>👤<?php endif; ?>
                 </div>
                 <div class="hs-card-meta">
-                    <h3 class="hs-card-name"><?php echo esc_html( hs_display_name( $e->name ) ); ?><?php if ( ! empty( $e->spitzname ) ) : ?> <span class="hs-card-spitzname">(„<?php echo esc_html($e->spitzname); ?>")</span><?php endif; ?></h3>
+                    <h3 class="hs-card-name"><?php if ( $is_logged_in ) : ?><a href="<?php echo esc_url( add_query_arg( 'hs_name', $e->name, get_permalink() ) ); ?>" class="hs-card-name-link"><?php echo esc_html( $e->name ); ?></a><?php else : ?><?php echo esc_html( hs_display_name( $e->name ) ); ?><?php endif; ?><?php if ( ! empty( $e->spitzname ) ) : ?> <span class="hs-card-spitzname">(„<?php echo esc_html($e->spitzname); ?>")</span><?php endif; ?></h3>
                     <?php if ( $e->beruf ) : ?><p class="hs-card-beruf"><?php echo esc_html($e->beruf); ?></p><?php endif; ?>
                     <?php if ( $e->partei ) : ?><p class="hs-card-partei"><?php echo esc_html($e->partei); ?><?php if ( $e->aufgabe_partei ) echo ' &ndash; ' . esc_html($e->aufgabe_partei); ?></p><?php endif; ?>
                     <?php if ( $e->parlament ) : ?><p class="hs-card-parlament"><?php echo esc_html($e->parlament); ?><?php if ( $e->parlament_name ) echo ' (' . esc_html($e->parlament_name) . ')'; ?></p><?php endif; ?>
