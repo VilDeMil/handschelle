@@ -29,4 +29,4 @@ php -r "var_dump(extension_loaded('gd'));"
 ```
 ---
 
-(c) 2026 - "Die-Handschelle" Final-10 - www.die-handschelle.com
+(c) 2026 - "Die-Handschelle" Final-11 - www.die-handschelle.com
