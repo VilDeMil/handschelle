@@ -934,15 +934,14 @@ class Handschelle_Shortcodes {
                 <div class="hs-alert hs-alert-success">✅ Eintrag erfolgreich aktualisiert!</div>
             <?php endif; ?>
             <div class="hs-card-header">
-                <div class="hs-card-img-wrap <?php echo $img_url ? '' : 'hs-card-img-placeholder'; ?>">
-                    <?php if ( $img_url ) : ?>
-                    <?php if ( $is_logged_in ) : ?>
+                <?php $display_img = $is_logged_in ? $img_url : ( get_site_icon_url( 96 ) ?: '' ); ?>
+                <div class="hs-card-img-wrap <?php echo $display_img ? '' : 'hs-card-img-placeholder'; ?>">
+                    <?php if ( $display_img && $is_logged_in ) : ?>
                     <a href="<?php echo esc_url( add_query_arg( 'hs_name', $e->name, get_permalink() ) ); ?>" title="<?php echo esc_attr( hs_display_name( $e->name ) ); ?> – Details anzeigen" class="hs-card-img-link">
-                        <img src="<?php echo esc_url( $img_url ); ?>" alt="<?php echo esc_attr( hs_display_name( $e->name ) ); ?>" class="hs-card-img">
+                        <img src="<?php echo esc_url( $display_img ); ?>" alt="<?php echo esc_attr( hs_display_name( $e->name ) ); ?>" class="hs-card-img">
                     </a>
-                    <?php else : ?>
-                        <img src="<?php echo esc_url( $img_url ); ?>" alt="<?php echo esc_attr( hs_display_name( $e->name ) ); ?>" class="hs-card-img">
-                    <?php endif; ?>
+                    <?php elseif ( $display_img ) : ?>
+                        <img src="<?php echo esc_url( $display_img ); ?>" alt="Website-Icon" class="hs-card-img hs-card-img-siteicon">
                     <?php else : ?>👤<?php endif; ?>
                 </div>
                 <div class="hs-card-meta">
@@ -958,6 +957,7 @@ class Handschelle_Shortcodes {
                 </button>
                 <?php endif; ?>
             </div>
+            <?php if ( $is_logged_in ) : ?>
             <div class="hs-card-body">
 
                 <!-- ── Persönlich ──────────────────────────────── -->
@@ -1042,6 +1042,7 @@ class Handschelle_Shortcodes {
                 </div>
 
             </div><!-- .hs-card-body -->
+            <?php endif; // is_logged_in ?>
             <div class="hs-card-date">
                 Eingetragen am <?php echo esc_html( date_i18n('d.m.Y', strtotime($e->datum_eintrag)) ); ?>
                 <?php if ( ! empty( $e->erstellt_am ) ) : ?> &middot; Erstellt: <?php echo esc_html( date_i18n('d.m.Y H:i', strtotime($e->erstellt_am)) ); ?><?php endif; ?>
