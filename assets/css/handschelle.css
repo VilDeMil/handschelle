@@ -91,9 +91,11 @@
 .hs-card-meta { flex:1; min-width:0; }
 .hs-card-name { font-size:1.05rem; font-weight:700; margin:0 0 .25rem; color:#fff; }
 .hs-card-beruf, .hs-card-partei, .hs-card-parlament { font-size:.8rem; margin:.15rem 0; color:rgba(255,255,255,.8); word-break:break-word; }
-.hs-card-body { padding:1rem; flex:1; display:flex; flex-direction:column; gap:.65rem; }
-.hs-card-straftat { border-left:3px solid var(--hs-gold); padding:.6rem .8rem; border-radius:0 var(--hs-radius) var(--hs-radius) 0; }
-.hs-card-straftat p { margin:.3rem 0 0; font-size:.88rem; color:#000000; line-height:1.5; }
+.hs-card-body { padding:1rem; flex:1; display:flex; flex-direction:column; gap:.5rem; }
+.hs-card-section { border:1px solid var(--hs-border); border-radius:var(--hs-radius); padding:.6rem .8rem; display:flex; flex-direction:column; gap:.45rem; }
+.hs-card-section-title { font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--hs-primary); margin-bottom:.2rem; border-bottom:1px solid var(--hs-border); padding-bottom:.25rem; }
+.hs-card-straftat { border-left:3px solid var(--hs-gold); padding:.4rem .6rem; border-radius:0 var(--hs-radius) var(--hs-radius) 0; }
+.hs-card-straftat p { margin:.2rem 0 0; font-size:.88rem; color:#000000; line-height:1.5; }
 .hs-label { font-weight:700; font-size:.8rem; color:var(--hs-primary); display:block; margin-bottom:.1rem; }
 .hs-card-row { font-size:.85rem; color:#444; display:flex; align-items:center; flex-wrap:wrap; gap:.4rem; }
 .hs-card-bemerkung { padding:.6rem .8rem; border-radius:var(--hs-radius); font-size:.85rem; }
@@ -102,7 +104,7 @@
 .hs-card-bemerkung-person p { margin:.2rem 0 0; color:#444; line-height:1.5; }
 .hs-link { color:var(--hs-accent); font-size:.85rem; font-weight:600; text-decoration:none; transition:color .2s; }
 .hs-link:hover { color:var(--hs-accent-h); text-decoration:underline; }
-.hs-card-footer { padding:.75rem 1rem; border-top:1px solid var(--hs-border); display:flex; flex-wrap:wrap; gap:.45rem; }
+.hs-card-footer { padding:.25rem 0; display:flex; flex-wrap:wrap; gap:.45rem; }
 .hs-card-date { padding:.4rem 1rem; font-size:.72rem; color:var(--hs-muted); text-align:right; border-top:1px solid var(--hs-border); }
 
 /* ── Social Media Links ─────────────────────────────────────── */

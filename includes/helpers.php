@@ -79,13 +79,12 @@ function handschelle_laender() {
 
 /**
  * Return the person's name for display.
- * Guests see a redacted placeholder; logged-in users see the real name.
  *
  * @param  string $name  Raw name from DB.
- * @return string        Name (for esc_html/esc_attr by caller) or placeholder.
+ * @return string        Name (for esc_html/esc_attr by caller).
  */
 function hs_display_name( $name ) {
-    return is_user_logged_in() ? $name : '████████';
+    return $name;
 }
 
 function handschelle_get_image_url( $bild ) {
