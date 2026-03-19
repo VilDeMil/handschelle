@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | Final-10 |
+| **Version** | Final-11 |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
 | **Lizenz** | GPL-2.0+ |
@@ -146,6 +146,9 @@ Planned features for upcoming versions:
 ---
 
 ## Release Notes
+
+### Final-11 *(2026-03-19)*
+- **Version bump**: Bumped version from Final-10 to Final-11; updated README.md and all .txt files to reflect the new version.
 
 ### Final-10 *(2026-03-19)*
 - **Version milestone**: Marked version 10.1 as Final-10 to signify the stable, production-ready final release of the version-10 feature set.
