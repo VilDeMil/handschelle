@@ -7,3 +7,10 @@ when display cards sort fields by
 - Links
 - Straftaten
 -- sort by last edit
+
+add Chapter "Connect KI" to EADME.md
+Show how to connect to Github
+- Claude
+- Gemini
+- Copilot
+- ChatGPT
