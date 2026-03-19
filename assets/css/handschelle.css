@@ -201,6 +201,14 @@
 .hs-disclaimer-link { color:var(--hs-accent); text-decoration:none; font-weight:600; transition:color .2s, opacity .2s; }
 .hs-disclaimer-link:hover { color:var(--hs-primary); text-decoration:underline; }
 
+/* ── Donate Block ───────────────────────────────────────────── */
+.hs-donate { border:2px solid var(--hs-accent); border-radius:var(--hs-radius); padding:1.6rem 1.4rem 0; margin:1.5rem 0; background:var(--hs-card-bg); }
+.hs-donate-inner { text-align:center; padding-bottom:1.2rem; }
+.hs-donate-heading { font-size:1.2rem; font-weight:700; color:var(--hs-primary); margin:0 0 .6rem; }
+.hs-donate-text { font-size:.9rem; color:var(--hs-muted); line-height:1.7; margin:0 0 1rem; }
+.hs-donate-btn { display:inline-block; background:var(--hs-accent); color:#fff; font-weight:700; padding:.55rem 1.4rem; border-radius:var(--hs-radius); text-decoration:none; transition:opacity .2s; }
+.hs-donate-btn:hover { opacity:.85; color:#fff; text-decoration:none; }
+
 /* ── Admin Page Footer ──────────────────────────────────────── */
 .hs-page-footer { margin-top:2rem; padding:.6rem 0; border-top:1px solid var(--hs-border); font-size:.8rem; color:var(--hs-muted); }
 .hs-page-footer a { color:var(--hs-muted); text-decoration:none; border-bottom:1px dotted var(--hs-muted); transition:color .2s; }
