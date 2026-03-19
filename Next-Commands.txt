@@ -14,3 +14,14 @@ Show how to connect to Github
 - Gemini
 - Copilot
 - ChatGPT
+
+add Links to AI
+
+add chapter in README.md
+Explain how to connect github to
+- Gemnini
+- Copilot
+- ChatGPT
+- Claude Code
+
+- 
