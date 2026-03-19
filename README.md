@@ -87,6 +87,11 @@
   - [Database / Schema Changes](#database--schema-changes)
   - [General Rules](#general-rules)
 - [Datenschutz / Privacy](#datenschutz--privacy)
+- [Connect GitHub to AI Tools](#connect-github-to-ai-tools)
+  - [Google Gemini](#google-gemini)
+  - [GitHub Copilot](#github-copilot)
+  - [ChatGPT](#chatgpt)
+  - [Claude Code](#claude-code)
 - [Recreate from Scratch](#recreate-from-scratch)
 
 ## Einleitung / Introduction
@@ -1428,6 +1433,135 @@ This plugin stores information exclusively about **public officeholders** (e.g. 
 **Guest visitors:** Non-logged-in visitors see names replaced with `████████` (anonymised) and do not see the person's profile photo — the site icon is shown instead.
 
 **Corrections / Deletion requests:** Incorrect entries or deletion requests can be reported by email to [info@die-handschelle.com](mailto:info@die-handschelle.com). Every entry is manually reviewed before publication (`freigegeben = 0` until approved by an administrator).
+
+---
+
+## Connect GitHub to AI Tools
+
+This section explains how to connect the GitHub repository to popular AI coding assistants so they can read, understand, and contribute to the codebase.
+
+---
+
+### Google Gemini
+
+**Gemini** (via Google AI Studio or Gemini Advanced) can access GitHub repositories through the Gemini Code Assist integration in JetBrains IDEs, VS Code, or directly in the Google Cloud Console.
+
+#### Option A — Gemini Code Assist in VS Code
+
+1. Install the **Gemini Code Assist** extension from the VS Code marketplace.
+2. Sign in with your Google account when prompted.
+3. Open the repository folder locally (`git clone https://github.com/VilDeMil/handschelle.git`).
+4. Gemini Code Assist automatically indexes the open workspace — no additional repository connection is required.
+5. Use the chat panel or inline suggestions to ask questions or generate code.
+
+#### Option B — Gemini in Google AI Studio (manual context)
+
+1. Open [aistudio.google.com](https://aistudio.google.com).
+2. Create a new prompt.
+3. Paste relevant file contents or use the **File upload** feature to attach PHP, CSS, or JS files from the repo.
+4. Ask Gemini to analyse or extend the code.
+
+> **Note:** Gemini does not have a native "connect to GitHub repo" button in AI Studio. For full repo access, use Gemini Code Assist in an IDE.
+
+---
+
+### GitHub Copilot
+
+**GitHub Copilot** is built directly into GitHub and major IDEs. It has native access to any repository it is enabled for.
+
+#### Enable Copilot on the repository
+
+1. Go to **github.com → Your profile → Settings → Copilot** and activate a Copilot plan (Individual, Business, or Enterprise).
+2. In **VS Code**, install the **GitHub Copilot** and **GitHub Copilot Chat** extensions.
+3. Sign in with the GitHub account that has Copilot enabled.
+4. Open the cloned repository — Copilot is now active for inline completions and chat.
+
+#### Use Copilot Chat with repository context
+
+- Open the **Copilot Chat** panel (`Ctrl+Shift+I`).
+- Type `@workspace` to give Copilot access to all files in the open folder.
+- Example: `@workspace Explain how shortcodes are registered in this plugin.`
+
+#### GitHub Copilot on github.com
+
+1. Navigate to any file in the repository on **github.com**.
+2. Press `.` to open the file in **github.dev** (browser-based VS Code).
+3. Copilot Chat is available directly in github.dev with full repo context.
+
+---
+
+### ChatGPT
+
+**ChatGPT** (GPT-4o and above) does not connect to GitHub natively, but there are several ways to give it access to this repository.
+
+#### Option A — Paste file contents
+
+1. Open a file from the repo (e.g. `includes/shortcodes.php`).
+2. Copy the contents and paste them into the ChatGPT chat.
+3. Ask ChatGPT to analyse, fix, or extend the code.
+
+#### Option B — GitHub connector via ChatGPT Connectors (ChatGPT Plus / Team)
+
+1. In ChatGPT, click the **Connectors** icon (plug icon) in the chat input bar.
+2. Select **GitHub** and authenticate with your GitHub account.
+3. Search for and select the `VilDeMil/handschelle` repository.
+4. ChatGPT can now read files from the connected repo directly in the conversation.
+
+> **Availability:** Connectors require a ChatGPT Plus, Team, or Enterprise subscription.
+
+#### Option C — Zapier / Make automation
+
+Connect GitHub webhooks to ChatGPT via **Zapier** or **Make** to automatically summarise new pull requests or issues using the ChatGPT API.
+
+---
+
+### Claude Code
+
+**Claude Code** is Anthropic's official CLI that gives Claude direct access to your local repository — it can read files, run commands, edit code, and push changes.
+
+#### Installation
+
+```bash
+# Requires Node.js 18+
+npm install -g @anthropic/claude-code
+```
+
+#### Connect to this repository
+
+```bash
+# Clone the repository
+git clone https://github.com/VilDeMil/handschelle.git
+cd handschelle
+
+# Start Claude Code — it automatically uses the current directory as context
+claude
+```
+
+Claude Code reads all files in the working directory. No additional configuration is needed.
+
+#### Typical workflow
+
+```bash
+# Ask Claude to explain code
+claude "How does the render_card() method work?"
+
+# Ask Claude to implement a feature and commit it
+claude "Add a new shortcode [handschelle-count] that shows the total number of approved entries"
+
+# Run in non-interactive mode (for CI / scripting)
+claude -p "Check for missing esc_html() calls in shortcodes.php"
+```
+
+#### Environment variables
+
+| Variable | Description |
+|---|---|
+| `ANTHROPIC_API_KEY` | Your Anthropic API key (required if not set via `claude login`) |
+| `CLAUDE_MODEL` | Override the default model (e.g. `claude-opus-4-6`) |
+
+#### GitHub Actions integration
+
+Add Claude Code to your CI pipeline by storing `ANTHROPIC_API_KEY` as a GitHub Actions secret and calling `claude -p "..."` in a workflow step to automate code review or documentation updates.
 
 ---
 
