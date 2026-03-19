@@ -48,6 +48,7 @@ class Handschelle_Shortcodes {
         add_shortcode( 'handschelle-asc-link',         array( $this, 'sc_asc_link' ) );
         add_shortcode( 'wordcloud-name',               array( $this, 'sc_wordcloud_name' ) );
         add_shortcode( 'wordcloud-urteil',             array( $this, 'sc_wordcloud_urteil' ) );
+        add_shortcode( 'wordcloud-straftat',           array( $this, 'sc_wordcloud_straftat' ) );
         add_shortcode( 'handschelle-ticker',           array( $this, 'sc_ticker' ) );
         add_shortcode( 'handschelle-straftat',         array( $this, 'sc_straftat_ticker' ) );
         add_shortcode( 'handschelle-straftat-link',    array( $this, 'sc_straftat_ticker_link' ) );
@@ -1466,6 +1467,47 @@ class Handschelle_Shortcodes {
         echo '</div>';
         return ob_get_clean();
     }
+    /* ================================================================
+       [wordcloud-straftat] – Wordcloud der Straftaten
+    ================================================================ */
+    public function sc_wordcloud_straftat( $atts ) {
+        global $wpdb;
+        $table = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
+        $rows  = $wpdb->get_results(
+            "SELECT straftat, COUNT(*) AS cnt
+             FROM `{$table}`
+             WHERE freigegeben = 1 AND straftat != ''
+             GROUP BY straftat
+             ORDER BY cnt DESC"
+        );
+        if ( empty( $rows ) ) return '<p class="hs-wordcloud-empty">Keine Straftaten vorhanden.</p>';
+
+        $counts  = array_column( (array) $rows, 'cnt' );
+        $max     = max( $counts );
+        $min_em  = 0.85;
+        $max_em  = 2.8;
+        $colors  = array( '#1a1a2e', '#c0392b', '#e74c3c', '#f39c12', '#2980b9', '#27ae60', '#8e44ad' );
+
+        ob_start();
+        echo '<div class="hs-wordcloud">';
+        foreach ( $rows as $i => $r ) {
+            $size  = $max > 1
+                ? $min_em + ( $r->cnt / $max ) * ( $max_em - $min_em )
+                : ( $min_em + $max_em ) / 2;
+            $color = $colors[ $i % count( $colors ) ];
+            printf(
+                '<span class="hs-wordcloud-item" style="font-size:%.2fem;color:%s;" title="%s (%d×)">%s</span>',
+                $size,
+                esc_attr( $color ),
+                esc_attr( $r->straftat ),
+                intval( $r->cnt ),
+                esc_html( $r->straftat )
+            );
+        }
+        echo '</div>';
+        return ob_get_clean();
+    }
+
     /* ================================================================
        [handschelle-ticker] – News-Ticker mit Name & Straftat
        Attribute:
