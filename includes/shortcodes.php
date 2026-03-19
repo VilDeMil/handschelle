@@ -1068,7 +1068,6 @@ class Handschelle_Shortcodes {
                         <?php if ( $e->bemerkung ) : ?><div class="hs-card-bemerkung"><span class="hs-label">💬 Bemerkung:</span><p><?php echo nl2br(esc_html($e->bemerkung)); ?></p></div><?php endif; ?>
                     <?php endif; ?>
                 </div>
-                <?php if ( $e->bemerkung ) : ?><div class="hs-card-bemerkung"><span class="hs-label">💬 Bemerkung:</span><p><?php echo nl2br(esc_html($e->bemerkung)); ?></p></div><?php endif; ?>
 
                 <?php
                 // Additional offences
@@ -1089,42 +1088,6 @@ class Handschelle_Shortcodes {
                 </div>
                 <?php endforeach; ?>
             </div>
-            <?php if ( $is_logged_in ) :
-            $footer_links = array();
-            // Quelle
-            if ( ! empty( $e->link_quelle ) ) {
-                $footer_links[] = '<a href="'.esc_url($e->link_quelle).'" target="_blank" rel="noopener noreferrer" class="hs-sm-link" data-sm="link" title="Quelle">'.$this->svg_link().' Quelle</a>';
-            }
-            // Öffentliche E-Mail
-            if ( ! empty( $e->oeffentliche_email ) ) {
-                $footer_links[] = '<a href="mailto:'.esc_attr($e->oeffentliche_email).'" class="hs-sm-link" data-sm="email" title="E-Mail">✉ '.esc_html($e->oeffentliche_email).'</a>';
-            }
-            // Suchmaschinen + Abgeordnetenwatch
-            $footer_links[] = '<a href="'.esc_url( 'https://www.google.com/search?q=' . urlencode( $e->name ) ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="google" title="Google-Suche">🔍 Google</a>';
-            $footer_links[] = '<a href="'.esc_url( 'https://www.qwant.com/?l=de&q=' . urlencode( $e->name ) ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="qwant" title="Qwant-Suche">🔍 Qwant</a>';
-            $footer_links[] = '<a href="'.esc_url( 'https://duckduckgo.com/?q=' . urlencode( $e->name ) ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="duckduckgo" title="DuckDuckGo-Suche">🔍 DuckDuckGo</a>';
-            $footer_links[] = '<a href="'.esc_url( 'https://www.bing.com/search?q=' . urlencode( $e->name ) ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="bing" title="Bing-Suche">🔍 Bing</a>';
-            $footer_links[] = '<a href="'.esc_url( 'https://www.abgeordnetenwatch.de/profile?politician_search_keys=' . urlencode( $e->name ) ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="abgeordnetenwatch" title="Abgeordnetenwatch">🏛 Abgeordnetenwatch</a>';
-            // Social media
-            foreach ( $this->sm_fields() as $field => list( $icon, $label ) ) {
-                if ( ! empty( $e->$field ) ) {
-                    $key = str_replace( 'sm_', '', $field );
-                    $footer_links[] = '<a href="'.esc_url($e->$field).'" target="_blank" rel="noopener noreferrer" class="hs-sm-link" data-sm="'.esc_attr($key).'" title="'.esc_attr($label).'">'.$icon.' '.esc_html($label).'</a>';
-                }
-            }
-            // Melden-Link im footer (logged-in only, handled in Social section above)
-            ?>
-            <div class="hs-card-footer"><?php echo implode( '', $footer_links ); ?></div>
-            <?php endif; ?>
-            <?php if ( $is_logged_in ) : ?>
-            <?php
-            $melden_subject = 'Straftat melden - ' . $e->name . ' - ' . $e->partei;
-            $melden_href    = 'mailto:info@die-handschelle.com?subject=' . rawurlencode( $melden_subject );
-            ?>
-            <div class="hs-card-melden">
-                <a href="<?php echo esc_attr( $melden_href ); ?>" class="hs-melden-link">⚠ Straftat melden / Änderung</a>
-            </div>
-            <?php endif; ?>
             <div class="hs-card-date">
                 Eingetragen am <?php echo esc_html( date_i18n('d.m.Y', strtotime($e->datum_eintrag)) ); ?>
                 <?php if ( ! empty( $e->erstellt_am ) ) : ?> &middot; Erstellt: <?php echo esc_html( date_i18n('d.m.Y H:i', strtotime($e->erstellt_am)) ); ?><?php endif; ?>
