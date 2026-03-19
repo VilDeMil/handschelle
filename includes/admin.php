@@ -58,7 +58,10 @@ class Handschelle_Admin {
                 $data      = handschelle_sanitize_entry( $_POST );
                 $attach_id = Handschelle_Image_Handler::handle_upload_and_resize( 'bild_upload', $data['name'] ?? '', $data['partei'] ?? '' );
                 if ( $attach_id ) $data['bild'] = $attach_id;
-                Handschelle_Database::insert( $data );
+                $new_id = Handschelle_Database::insert( $data );
+                if ( $new_id ) {
+                    $this->save_offences( $new_id, (array) ( $_POST['hs_offences'] ?? array() ) );
+                }
                 $this->redirect( admin_url( 'admin.php?page=handschelle' ), 'Eintrag gespeichert – bitte freigeben.' );
                 break;
 
@@ -77,6 +80,7 @@ class Handschelle_Admin {
                 }
                 $data['freigegeben'] = isset( $_POST['freigegeben'] ) ? 1 : 0;
                 Handschelle_Database::update( $id, $data );
+                $this->save_offences( $id, (array) ( $_POST['hs_offences'] ?? array() ) );
                 $this->redirect( admin_url( 'admin.php?page=handschelle' ), 'Eintrag aktualisiert.' );
                 break;
 
@@ -273,6 +277,38 @@ class Handschelle_Admin {
     /* ================================================================
        HILFSMETHODEN
     ================================================================ */
+
+    /**
+     * Save the hs_offences[] POST array for a given entry ID.
+     * Each element may have: id, delete, straftat, urteil, status_straftat, link_quelle, aktenzeichen, bemerkung.
+     */
+    private function save_offences( $entry_id, $offences_input ) {
+        foreach ( $offences_input as $off_data ) {
+            $off_id     = intval( $off_data['id'] ?? 0 );
+            $off_delete = intval( $off_data['delete'] ?? 0 );
+            $off_text   = sanitize_textarea_field( $off_data['straftat'] ?? '' );
+
+            if ( $off_id && $off_delete ) {
+                Handschelle_Database::delete_offence( $off_id );
+            } elseif ( $off_id && ! $off_delete && ! empty( $off_text ) ) {
+                Handschelle_Database::update_offence( $off_id, $this->sanitize_offence( $off_data ) );
+            } elseif ( ! $off_id && ! $off_delete && ! empty( $off_text ) ) {
+                Handschelle_Database::insert_offence( $entry_id, $this->sanitize_offence( $off_data ) );
+            }
+        }
+    }
+
+    private function sanitize_offence( $off_data ) {
+        return array(
+            'straftat'        => sanitize_textarea_field( $off_data['straftat'] ?? '' ),
+            'urteil'          => substr( sanitize_text_field( $off_data['urteil'] ?? '' ), 0, 200 ),
+            'status_straftat' => sanitize_text_field( $off_data['status_straftat'] ?? 'Ermittlungen laufen' ),
+            'link_quelle'     => esc_url_raw( $off_data['link_quelle'] ?? '' ),
+            'aktenzeichen'    => substr( sanitize_text_field( $off_data['aktenzeichen'] ?? '' ), 0, 50 ),
+            'bemerkung'       => sanitize_textarea_field( $off_data['bemerkung'] ?? '' ),
+        );
+    }
+
     private function redirect( $url, $msg ) {
         set_transient( 'hs_admin_notice_' . get_current_user_id(), $msg, 30 );
         wp_safe_redirect( $url );
@@ -573,6 +609,64 @@ class Handschelle_Admin {
                     <div class="hs-field hs-field-full"><label>Bemerkung</label><textarea name="bemerkung" rows="4"><?php echo esc_textarea($entry->bemerkung ?? ''); ?></textarea></div>
                     <div class="hs-field"><label>Status Straftat</label><select name="status_straftat"><?php foreach ( $st_opts as $s ) : ?><option value="<?php echo esc_attr($s); ?>" <?php selected($v('status_straftat','Ermittlungen laufen'),$s); ?>><?php echo esc_html($s); ?></option><?php endforeach; ?></select></div>
                 </div>
+            </div>
+
+            <div class="hs-form-section" id="hs-extra-offences-section">
+                <h2>⚖ Weitere Straftaten</h2>
+                <p style="color:#666;font-size:.9em;margin-bottom:.8rem;">Füge hier weitere Straftaten für dieselbe Person hinzu. Die erste Straftat befindet sich im Abschnitt „Details zur Straftat" oben.</p>
+                <div id="hs-offences-container">
+                <?php
+                $existing_offences = $is_edit ? Handschelle_Database::get_offences( $entry->id ) : array();
+                foreach ( $existing_offences as $oi => $off ) :
+                    $st_opts_off = handschelle_status_straftat_options();
+                ?>
+                <div class="hs-offence-row" data-index="<?php echo $oi; ?>">
+                    <div class="hs-offence-header">
+                        <strong>Straftat <?php echo $oi + 2; ?></strong>
+                        <button type="button" class="button hs-offence-remove-btn" data-index="<?php echo $oi; ?>">🗑 Entfernen</button>
+                    </div>
+                    <input type="hidden" name="hs_offences[<?php echo $oi; ?>][id]"     value="<?php echo intval($off->id); ?>">
+                    <input type="hidden" name="hs_offences[<?php echo $oi; ?>][delete]" value="0" class="hs-offence-delete-flag">
+                    <div class="hs-form-grid" style="margin-top:.5rem;">
+                        <div class="hs-field hs-field-full"><label>Straftat</label><textarea name="hs_offences[<?php echo $oi; ?>][straftat]" rows="3" required><?php echo esc_textarea($off->straftat); ?></textarea></div>
+                        <div class="hs-field"><label>Urteil <span>(max. 200)</span></label><input type="text" name="hs_offences[<?php echo $oi; ?>][urteil]" maxlength="200" value="<?php echo esc_attr($off->urteil); ?>"></div>
+                        <div class="hs-field"><label>Link zur Quelle</label><input type="url" name="hs_offences[<?php echo $oi; ?>][link_quelle]" value="<?php echo esc_attr($off->link_quelle ?? ''); ?>" placeholder="https://…"></div>
+                        <div class="hs-field"><label>Aktenzeichen <span>(max. 50)</span></label><input type="text" name="hs_offences[<?php echo $oi; ?>][aktenzeichen]" maxlength="50" value="<?php echo esc_attr($off->aktenzeichen); ?>"></div>
+                        <div class="hs-field"><label>Status Straftat</label>
+                            <select name="hs_offences[<?php echo $oi; ?>][status_straftat]">
+                                <?php foreach ( $st_opts_off as $s ) : ?><option value="<?php echo esc_attr($s); ?>" <?php selected($off->status_straftat, $s); ?>><?php echo esc_html($s); ?></option><?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="hs-field hs-field-full"><label>Bemerkung</label><textarea name="hs_offences[<?php echo $oi; ?>][bemerkung]" rows="2"><?php echo esc_textarea($off->bemerkung ?? ''); ?></textarea></div>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+                </div><!-- #hs-offences-container -->
+                <button type="button" class="button button-secondary" id="hs-add-offence-btn">+ Weitere Straftat hinzufügen</button>
+
+                <!-- Hidden template for JS cloning -->
+                <script type="text/html" id="hs-offence-template">
+                <div class="hs-offence-row" data-index="__IDX__">
+                    <div class="hs-offence-header">
+                        <strong>Straftat __NUM__</strong>
+                        <button type="button" class="button hs-offence-remove-btn" data-index="__IDX__">🗑 Entfernen</button>
+                    </div>
+                    <input type="hidden" name="hs_offences[__IDX__][id]"     value="">
+                    <input type="hidden" name="hs_offences[__IDX__][delete]" value="0" class="hs-offence-delete-flag">
+                    <div class="hs-form-grid" style="margin-top:.5rem;">
+                        <div class="hs-field hs-field-full"><label>Straftat</label><textarea name="hs_offences[__IDX__][straftat]" rows="3"></textarea></div>
+                        <div class="hs-field"><label>Urteil <span>(max. 200)</span></label><input type="text" name="hs_offences[__IDX__][urteil]" maxlength="200" value=""></div>
+                        <div class="hs-field"><label>Link zur Quelle</label><input type="url" name="hs_offences[__IDX__][link_quelle]" value="" placeholder="https://…"></div>
+                        <div class="hs-field"><label>Aktenzeichen <span>(max. 50)</span></label><input type="text" name="hs_offences[__IDX__][aktenzeichen]" maxlength="50" value=""></div>
+                        <div class="hs-field"><label>Status Straftat</label>
+                            <select name="hs_offences[__IDX__][status_straftat]">
+                                <?php foreach ( handschelle_status_straftat_options() as $s ) : ?><option value="<?php echo esc_attr($s); ?>"><?php echo esc_html($s); ?></option><?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="hs-field hs-field-full"><label>Bemerkung</label><textarea name="hs_offences[__IDX__][bemerkung]" rows="2"></textarea></div>
+                    </div>
+                </div>
+                </script>
             </div>
 
             <div class="hs-form-section">
@@ -929,6 +1023,26 @@ class Handschelle_Admin {
             }
         }
         $zip->addFromString( 'bild-map.json', wp_json_encode( $bild_map ) );
+
+        // Build offences CSV (entry_id references main table id)
+        $off_cols = array( 'entry_id', 'straftat', 'urteil', 'status_straftat', 'link_quelle', 'aktenzeichen', 'bemerkung' );
+        $off_csv  = "\xEF\xBB\xBF" . implode( ';', $off_cols ) . "\r\n";
+        foreach ( $entries as $e ) {
+            $offences = Handschelle_Database::get_offences( $e->id );
+            foreach ( $offences as $off ) {
+                $row = array();
+                foreach ( $off_cols as $c ) {
+                    $val = $c === 'entry_id' ? $e->id : ( $off->$c ?? '' );
+                    if ( strpbrk( (string) $val, ";\"\r\n" ) !== false ) {
+                        $val = '"' . str_replace( '"', '""', $val ) . '"';
+                    }
+                    $row[] = $val;
+                }
+                $off_csv .= implode( ';', $row ) . "\r\n";
+            }
+        }
+        $zip->addFromString( 'handschelle-offences.csv', $off_csv );
+
         $zip->close();
 
         if ( ! file_exists( $zip_path ) ) {
@@ -1044,6 +1158,8 @@ class Handschelle_Admin {
                 return ( isset( $restore_col_map[ $field ] ) && isset( $row[ $restore_col_map[ $field ] ] ) )
                     ? $row[ $restore_col_map[ $field ] ] : '';
             };
+            // entry_id_map: old CSV id → new DB id (needed for offences restore)
+            $entry_id_map = array();
             while ( ( $row = fgetcsv( $fh, 0, ';' ) ) !== false ) {
                 if ( count( $row ) < 10 ) continue;
                 // Remap bild attachment ID via bild-map.json; validate result exists locally
@@ -1051,23 +1167,21 @@ class Handschelle_Admin {
                 if ( is_numeric( $bild_raw ) && intval( $bild_raw ) > 0 ) {
                     $old_bild_id = intval( $bild_raw );
                     if ( isset( $old_id_to_new_id[ $old_bild_id ] ) ) {
-                        // Successfully remapped to new attachment ID
                         $bild_val = $old_id_to_new_id[ $old_bild_id ];
                     } elseif ( get_attached_file( $old_bild_id ) ) {
-                        // Same site restore: attachment still valid at original ID
                         $bild_val = $old_bild_id;
                     } else {
-                        // ID not remapped and not found locally — clear to avoid wrong assignment
                         $bild_val = '';
                     }
                 } else {
-                    $bild_val = $bild_raw; // URL or empty
+                    $bild_val = $bild_raw;
                 }
                 $geburtsdatum_raw = sanitize_text_field( $g( 'geburtsdatum' ) );
                 $geburtsdatum_val = ( $geburtsdatum_raw && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $geburtsdatum_raw ) ) ? $geburtsdatum_raw : null;
                 $dod_raw          = sanitize_text_field( $g( 'dod' ) );
                 $dod_val          = ( $dod_raw && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $dod_raw ) ) ? $dod_raw : null;
-                Handschelle_Database::insert( array(
+                $old_entry_id     = intval( $g( 'id' ) );
+                $new_entry_id     = Handschelle_Database::insert( array(
                     'datum_eintrag'   => sanitize_text_field( $g( 'datum_eintrag' ) ) ?: date( 'Y-m-d' ),
                     'name'            => substr( sanitize_text_field( $g( 'name' ) ), 0, 50 ),
                     'beruf'           => substr( sanitize_text_field( $g( 'beruf' ) ), 0, 50 ),
@@ -1100,22 +1214,59 @@ class Handschelle_Admin {
                     'sm_truth_social' => esc_url_raw( $g( 'sm_truth_social' ) ),
                     'freigegeben'     => intval( $g( 'freigegeben' ) ),
                 ) );
+                if ( $new_entry_id && $old_entry_id ) {
+                    $entry_id_map[ $old_entry_id ] = $new_entry_id;
+                }
                 $entry_count++;
             }
             fclose( $fh );
             } // end header check
         }
 
+        // ── 2b. Weitere Straftaten (offences) wiederherstellen ───
+        $off_csv_file  = $temp_dir . 'handschelle-offences.csv';
+        $offence_count = 0;
+        if ( file_exists( $off_csv_file ) ) {
+            $ofh = fopen( $off_csv_file, 'r' );
+            $obom = fread( $ofh, 3 );
+            if ( $obom !== "\xEF\xBB\xBF" ) rewind( $ofh );
+            $off_headers = fgetcsv( $ofh, 0, ';' );
+            if ( ! empty( $off_headers ) ) {
+                $off_col_map = array_flip( array_map( 'trim', $off_headers ) );
+                $og = function( $field ) use ( &$off_row, $off_col_map ) {
+                    return ( isset( $off_col_map[ $field ] ) && isset( $off_row[ $off_col_map[ $field ] ] ) )
+                        ? $off_row[ $off_col_map[ $field ] ] : '';
+                };
+                while ( ( $off_row = fgetcsv( $ofh, 0, ';' ) ) !== false ) {
+                    $old_entry_id = intval( $og( 'entry_id' ) );
+                    if ( ! $old_entry_id || ! isset( $entry_id_map[ $old_entry_id ] ) ) continue;
+                    $straftat = sanitize_textarea_field( $og( 'straftat' ) );
+                    if ( empty( $straftat ) ) continue;
+                    Handschelle_Database::insert_offence( $entry_id_map[ $old_entry_id ], array(
+                        'straftat'        => $straftat,
+                        'urteil'          => substr( sanitize_text_field( $og( 'urteil' ) ), 0, 200 ),
+                        'status_straftat' => sanitize_text_field( $og( 'status_straftat' ) ) ?: 'Ermittlungen laufen',
+                        'link_quelle'     => esc_url_raw( $og( 'link_quelle' ) ),
+                        'aktenzeichen'    => substr( sanitize_text_field( $og( 'aktenzeichen' ) ), 0, 50 ),
+                        'bemerkung'       => sanitize_textarea_field( $og( 'bemerkung' ) ),
+                    ) );
+                    $offence_count++;
+                }
+            }
+            fclose( $ofh );
+        }
+
         // ── 3. Temp cleanup ──────────────────────────────────────
         foreach ( glob( $temp_dir . 'images/*' ) as $f ) @unlink( $f );
         @rmdir( $temp_dir . 'images' );
         @unlink( $temp_dir . 'handschelle-data.csv' );
+        @unlink( $temp_dir . 'handschelle-offences.csv' );
         @unlink( $temp_dir . 'bild-map.json' );
         @rmdir( $temp_dir );
 
         $this->redirect(
             admin_url( 'admin.php?page=handschelle-backup' ),
-            "Wiederherstellung abgeschlossen: {$entry_count} Einträge importiert, {$img_count} Bilder importiert."
+            "Wiederherstellung abgeschlossen: {$entry_count} Einträge, {$offence_count} Weitere Straftaten, {$img_count} Bilder importiert."
         );
     }
 

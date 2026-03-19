@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 9.2 |
+| **Version** | 10.1 |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
 | **Lizenz** | GPL-2.0+ |
@@ -44,6 +44,7 @@
   - [`[handschelle-name-partei]`](#handschelle-name-partei)
   - [`[handschelle-partei]`](#handschelle-partei)
   - [`[handschelle-pie-partei]`](#handschelle-pie-partei)
+  - [`[handschelle-privacy]`](#handschelle-privacy)
   - [`[handschelle-register]`](#handschelle-register)
   - [`[handschelle-result]`](#handschelle-result)
   - [`[handschelle-statistik]`](#handschelle-statistik)
@@ -85,6 +86,7 @@
   - [Shortcode Checklist](#shortcode-checklist)
   - [Database / Schema Changes](#database--schema-changes)
   - [General Rules](#general-rules)
+- [Datenschutz / Privacy](#datenschutz--privacy)
 - [Recreate from Scratch](#recreate-from-scratch)
 
 ## Einleitung / Introduction
@@ -139,6 +141,29 @@ Planned features for upcoming versions:
 ---
 
 ## Release Notes
+
+### 10.1 *(2026-03-18)*
+- **"Straftat melden!" link on every card**: All cards now show a permanent `⚠ Straftat melden!` mailto link (`info@die-handschelle.com`) with a pre-filled subject line (`Straftat melden - <Name> - <Partei>`). Visible to all visitors including guests (previously "Eintrag melden!" was logged-in only). Added `.hs-card-melden` and `.hs-melden-link` CSS classes.
+
+### 10.0 *(2026-03-18)*
+- **Version milestone**: Consolidated all changes from 9.3–9.6 into stable release 10.0. No functional changes; version bumped to mark the multiple-offences feature set as production-ready.
+
+### 9.6 *(2026-03-18)*
+- **`[handschelle-privacy]` shortcode**: New shortcode renders the bilingual Datenschutz / Privacy chapter as styled HTML (two cards, DE + EN). Covers GDPR legal basis, stored / not-stored data, guest anonymisation, and deletion-request contact. CSS classes: `.hs-privacy`, `.hs-privacy-section`, `.hs-privacy-heading`, `.hs-privacy-divider`.
+
+### 9.5 *(2026-03-18)*
+- **CSS – offence buttons**: Added `.hs-offence-remove-btn` / `.hs-offence-inline-remove` styles (red delete button; WP's `.button` class is admin-only and not available on the frontend). Added `.hs-add-offence-inline-btn` for the frontend inline-edit panel. Added `.hs-card-extra-offence p` paragraph style to match `.hs-card-straftat p`.
+
+### 9.4 *(2026-03-18)*
+- **Backup & Restore: Offences included**: `backup_full()` now exports a second file `handschelle-offences.csv` inside the ZIP (columns: `entry_id`, `straftat`, `urteil`, `status_straftat`, `link_quelle`, `aktenzeichen`, `bemerkung`). `restore_full()` now reads this file and re-inserts all additional offences after the main entries are restored, mapping old entry IDs to newly-assigned IDs via an `$entry_id_map`. The success message now reports offence count separately. Backward-compatible: old backups without `handschelle-offences.csv` restore main entries normally with zero offences.
+
+### 9.3 *(2026-03-18)*
+- **Multiple Offences per Person**: Each person entry can now have any number of additional offences. A new table `wp_die_handschelle_offences` stores the extra offences (fields: `straftat`, `urteil`, `status_straftat`, `link_quelle`, `aktenzeichen`, `bemerkung`). The primary offence remains in the main table for full backward compatibility.
+- **Admin form**: New "⚖ Weitere Straftaten" section with existing offences shown as editable rows, a delete button per row, and an "Add further offence" button (JS-based cloning of a template row). Works for both "New Entry" and "Edit Entry" pages.
+- **Frontend inline-edit**: Same add/remove functionality available in the per-card inline edit panel.
+- **Card display**: `render_card()` fetches and renders all additional offences below the primary offence, each with its own status badge, source link (logged-in users only), and optional remarks. Each is labelled "Straftat 2", "Straftat 3", etc.
+- **Cascade delete**: Deleting a main entry also deletes all its associated offences.
+- **DB migration**: `maybe_upgrade_table()` now creates the offences table if missing. Existing data is untouched.
 
 ### 9.2 *(2026-03-16)*
 - **Website-Icon für Gäste**: Nicht eingeloggte Besucher sehen statt des Personenfotos das Website-Icon (`get_site_icon_url`). Das Foto-Bild ist nicht verlinkt – der Klick-Link zum Detailprofil entfällt für Gäste.
@@ -422,6 +447,7 @@ All shortcodes output HTML and can be placed on any WordPress page or post.
 | `[handschelle-partei]` | Party search dropdown only |
 | `[handschelle-result]` | Zeigt Eintrags-Karten für `?hs_name_name=<name>`; zeigt nichts, wenn kein Name bekannt |
 | `[handschelle-pie-partei]` | Pie chart: approved entries per party (Anzahl Partei) — uses Chart.js 4 |
+| `[handschelle-privacy]` | Renders the bilingual Datenschutz / Privacy section (DE + EN) |
 | `[handschelle-register]` | Registrierungsformular: Benutzername, Vorname, Nachname, Spitzname, E-Mail, Webseite, Passwort; neues Konto erhält Status `pending` – Login erst nach Admin-Freischaltung |
 | `[handschelle-statistik]` | Statistics table with bar chart per party (party names are links) |
 | `[handschelle-statistik-name]` | Table: person name / entry count |
@@ -676,6 +702,22 @@ Neue Konten erhalten den Status **`pending`** und können sich nicht einloggen, 
 - Fehler (doppelter Name, E-Mail vergeben, Passwörter ungleich) → jeweils passende Fehlermeldung
 - Pending-Konten → Login gesperrt mit Hinweis
 - Deaktivierte Konten → Login gesperrt mit Hinweis
+
+---
+
+### `[handschelle-privacy]`
+
+Renders the bilingual **Datenschutz / Privacy** chapter as styled HTML. Displays two cards — one German, one English — covering legal basis, data stored, data not stored, guest anonymisation, and contact for corrections / deletion requests.
+
+```
+[handschelle-privacy]
+```
+
+**Displayed content:**
+- 🇩🇪 Legal basis (Art. 6(1)(f) DSGVO), stored / not-stored data lists, guest anonymisation (`████████`), deletion request contact
+- 🇬🇧 Same content in English
+
+No attributes.
 
 ---
 
@@ -1273,7 +1315,7 @@ die-handschelle/
 │   ├── image-handler.php         ← Handschelle_Image_Handler (upload + GD resize 450px)
 │   ├── admin.php                 ← Handschelle_Admin class (admin menus, forms,
 │   │                                CSV import/export, backup/restore)
-│   └── shortcodes.php            ← Handschelle_Shortcodes class (25 shortcodes,
+│   └── shortcodes.php            ← Handschelle_Shortcodes class (26 shortcodes,
 │                                    PRG submit handlers, inline SVG icons)
 └── assets/
     ├── css/handschelle.css       ← Full stylesheet with CSS custom properties
@@ -1340,6 +1382,52 @@ When adding a new column:
 - All output uses `esc_html()` / `esc_url()` / `esc_attr()` — never echo raw data.
 - New admin pages must be added to the **Admin Menu Structure** table in `README.md`.
 - Keep German labels in UI, English in code (variable names, comments, README).
+
+---
+
+## Datenschutz / Privacy
+
+### Datenschutz (Deutsch)
+
+Das Plugin speichert ausschließlich Informationen über **öffentliche Mandatsträger** (z. B. Abgeordnete, Bürgermeister, Minister), die im Zusammenhang mit rechtskräftig verurteilten Straftaten oder laufenden Strafverfahren stehen. Die Verarbeitung erfolgt auf Grundlage des **berechtigten öffentlichen Interesses** gemäß Art. 6 Abs. 1 lit. f DSGVO sowie der Informationsfreiheit.
+
+**Gespeicherte Daten:**
+- Name und Funktion der Person (öffentliches Amt)
+- Partei und Parlament
+- Art und Status der Straftat (nur gerichtlich relevante Informationen)
+- Quellen-URL (öffentlich zugängliche Nachrichtenartikel, Gerichtsurteile o. ä.)
+- Optional: Profilfoto (nur öffentlich verfügbare Bilder)
+
+**Nicht gespeicherte Daten:**
+- Private Adressen, Telefonnummern oder E-Mail-Adressen
+- Informationen über Privatpersonen ohne öffentliches Mandat
+- Gesundheitsdaten oder andere besonders schutzwürdige Kategorien (Art. 9 DSGVO)
+
+**Gastbesucher:** Nicht eingeloggte Besucher sehen Namen als `████████` (anonymisiert) und erhalten kein Profilfoto der eingetragenen Person — stattdessen wird das Website-Icon angezeigt.
+
+**Datenmeldungen / Löschanfragen:** Fehleinträge oder Löschanfragen können per E-Mail an [info@die-handschelle.com](mailto:info@die-handschelle.com) gemeldet werden. Jeder Eintrag wird vor Veröffentlichung manuell geprüft (`freigegeben = 0` bis zur Freigabe durch einen Administrator).
+
+---
+
+### Privacy (English)
+
+This plugin stores information exclusively about **public officeholders** (e.g. members of parliament, mayors, ministers) in connection with criminal convictions or ongoing criminal proceedings. Processing is based on **legitimate public interest** pursuant to Art. 6(1)(f) GDPR and the principle of freedom of information.
+
+**Data stored:**
+- Name and role of the person (public office)
+- Party and parliament
+- Type and status of the offence (court-relevant information only)
+- Source URL (publicly accessible news articles, court rulings, etc.)
+- Optionally: profile photo (publicly available images only)
+
+**Data not stored:**
+- Private addresses, phone numbers, or email addresses
+- Information about private individuals without a public mandate
+- Health data or other special categories under Art. 9 GDPR
+
+**Guest visitors:** Non-logged-in visitors see names replaced with `████████` (anonymised) and do not see the person's profile photo — the site icon is shown instead.
+
+**Corrections / Deletion requests:** Incorrect entries or deletion requests can be reported by email to [info@die-handschelle.com](mailto:info@die-handschelle.com). Every entry is manually reviewed before publication (`freigegeben = 0` until approved by an administrator).
 
 ---
 

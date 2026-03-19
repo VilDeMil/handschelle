@@ -72,6 +72,29 @@
 
 ---
 
+---
+
+### Additional Offences Table — `wp_{prefix}_die_handschelle_offences`
+
+Stores extra offences per person entry (one-to-many relationship).
+
+| Field | Type | Description |
+|---|---|---|
+| `id` | INT AUTO_INCREMENT | Primary key |
+| `entry_id` | INT | Foreign key → `wp_die_handschelle.id` (cascade delete) |
+| `straftat` | TEXT | Offence description |
+| `urteil` | VARCHAR(200) | Verdict |
+| `link_quelle` | TEXT | Source URL |
+| `aktenzeichen` | VARCHAR(50) | Case file number |
+| `bemerkung` | TEXT | Remarks |
+| `status_straftat` | VARCHAR(50) | Crime status (same options as main table) |
+| `datum_eintrag` | DATE | Entry date |
+| `erstellt_am` | DATETIME | Created timestamp |
+
+Index on `entry_id` for fast lookup.
+
+---
+
 ### `status_straftat` Options
 
 | Value | Meaning |
@@ -115,4 +138,4 @@
 ---
 ---
 
-(c) 2026 - "Die-Handschelle" 9.2 - www.die-handschelle.com
+(c) 2026 - "Die-Handschelle" 10.0 - www.die-handschelle.com
