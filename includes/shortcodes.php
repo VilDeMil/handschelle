@@ -1024,7 +1024,7 @@ class Handschelle_Shortcodes {
                     $social_links[] = '<a href="'.esc_url( 'https://www.abgeordnetenwatch.de/profile?politician_search_keys=' . urlencode( $e->name ) ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="abgeordnetenwatch" title="Abgeordnetenwatch">🏛 Abgeordnetenwatch</a>';
                     $melden_subject = 'Meldung - ' . $e->name . ' - ' . $e->partei;
                     $melden_href    = 'mailto:info@die-handschelle.com?subject=' . rawurlencode( $melden_subject );
-                    $social_links[] = '<a href="' . esc_attr( $melden_href ) . '" class="hs-sm-link hs-melden-link" data-sm="melden" title="Eintrag melden">⚠️ Eintrag melden!</a>';
+                    $social_links[] = '<a href="' . esc_attr( $melden_href ) . '" class="hs-sm-link hs-melden-link" data-sm="melden" title="Straftat melden / Änderung">⚠️ Straftat melden / Änderung</a>';
                     ?>
                     <div class="hs-card-footer"><?php echo implode( '', $social_links ); ?></div>
                 </div>
