@@ -11,12 +11,12 @@ die-handschelle/
 │   ├── image-handler.php         ← Handschelle_Image_Handler (upload + GD resize 450px)
 │   ├── admin.php                 ← Handschelle_Admin class (admin menus, forms,
 │   │                                CSV import/export, backup/restore)
-│   └── shortcodes.php            ← Handschelle_Shortcodes class (all 19 shortcodes,
-│                                    PRG submit handler, inline SVG icons, 24 shortcodes)
+│   └── shortcodes.php            ← Handschelle_Shortcodes class (26 shortcodes,
+│                                    PRG submit handler, inline SVG icons)
 └── assets/
     ├── css/handschelle.css       ← Full stylesheet with CSS custom properties
     └── js/handschelle.js         ← Frontend and admin JS
 ```
 ---
 
-(c) 2026 - "Die-Handschelle" 9.2 - www.die-handschelle.com
+(c) 2026 - "Die-Handschelle" 10.0 - www.die-handschelle.com

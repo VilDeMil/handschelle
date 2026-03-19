@@ -1,0 +1,29 @@
+Creaete gift request [handschelle-gift]
+https://claude.ai/gift
+--
+when display cards sort fields by
+- private data
+- Political
+- Links
+- Straftaten
+-- sort by last edit
+
+add Chapter "Connect KI" to EADME.md
+Show how to connect to Github
+- Claude
+- Gemini
+- Copilot
+- ChatGPT
+
+add Links to AI
+
+add chapter in README.md
+Explain how to connect github to
+- Gemnini
+- Copilot
+- ChatGPT
+- Claude Code
+
+Share Links
+
+- 

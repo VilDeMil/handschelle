@@ -102,9 +102,22 @@
 .hs-card-bemerkung p { margin:.2rem 0 0; color:#555; line-height:1.5; }
 .hs-card-bemerkung-person { padding:.6rem .8rem; border-radius:var(--hs-radius); font-size:.85rem; background:#f0f4ff; }
 .hs-card-bemerkung-person p { margin:.2rem 0 0; color:#444; line-height:1.5; }
+.hs-card-extra-offence { margin-top:.8rem; padding:.8rem; border-left:3px solid var(--hs-accent); background:#fff9f9; border-radius:0 var(--hs-radius) var(--hs-radius) 0; }
+.hs-card-extra-offence p { margin:.3rem 0 0; font-size:.88rem; color:#000; line-height:1.5; }
+.hs-offence-row { border:1px solid #ddd; border-radius:var(--hs-radius); padding:1rem; margin-bottom:.8rem; background:#fafafa; }
+.hs-offence-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:.6rem; }
+.hs-offence-remove-btn,
+.hs-offence-inline-remove { background:#e74c3c; color:#fff; border:none; border-radius:4px; padding:.25rem .6rem; font-size:.8rem; cursor:pointer; line-height:1.4; transition:background .15s; font-family:var(--hs-font); }
+.hs-offence-remove-btn:hover,
+.hs-offence-inline-remove:hover { background:#922b21; }
+.hs-add-offence-inline-btn { background:#fff; color:var(--hs-primary); border:1.5px solid var(--hs-border); border-radius:var(--hs-radius); padding:.4rem .9rem; font-size:.82rem; font-weight:600; cursor:pointer; font-family:var(--hs-font); transition:background .15s,border-color .15s; margin-top:.5rem; display:inline-block; }
+.hs-add-offence-inline-btn:hover { background:#f0f0f0; border-color:#bbb; }
 .hs-link { color:var(--hs-accent); font-size:.85rem; font-weight:600; text-decoration:none; transition:color .2s; }
 .hs-link:hover { color:var(--hs-accent-h); text-decoration:underline; }
-.hs-card-footer { padding:.25rem 0; display:flex; flex-wrap:wrap; gap:.45rem; }
+.hs-card-footer { padding:.75rem 1rem; border-top:1px solid var(--hs-border); display:flex; flex-wrap:wrap; gap:.45rem; }
+.hs-card-melden { padding:.4rem 1rem; border-top:1px solid var(--hs-border); text-align:right; }
+.hs-melden-link { font-size:.75rem; font-weight:700; color:var(--hs-accent); text-decoration:none; letter-spacing:.02em; transition:color .2s,opacity .2s; }
+.hs-melden-link:hover { color:var(--hs-accent-h); text-decoration:underline; }
 .hs-card-date { padding:.4rem 1rem; font-size:.72rem; color:var(--hs-muted); text-align:right; border-top:1px solid var(--hs-border); }
 
 /* ── Social Media Links ─────────────────────────────────────── */
@@ -800,3 +813,15 @@ a.hs-st-item { display: inline-block; }
     text-align: center;
 }
 .hs-register-info { margin: 0; font-size: 1rem; color: #333; }
+
+/* ================================================================
+   [handschelle-privacy] – Datenschutz / Privacy
+================================================================ */
+.hs-privacy { font-family:var(--hs-font); color:#222; display:flex; flex-direction:column; gap:1.2rem; }
+.hs-privacy-section { padding:1.4rem 1.6rem; background:var(--hs-card-bg); border:1px solid var(--hs-border); border-radius:var(--hs-radius); box-shadow:var(--hs-shadow); }
+.hs-privacy-heading { font-size:1.1rem; font-weight:700; color:var(--hs-primary); margin:0 0 1rem; padding-bottom:.5rem; border-bottom:2px solid var(--hs-accent); }
+.hs-privacy-section p { font-size:.9rem; line-height:1.65; margin:.6rem 0; color:#333; }
+.hs-privacy-section ul { margin:.3rem 0 .6rem 1.4rem; padding:0; }
+.hs-privacy-section ul li { font-size:.88rem; line-height:1.6; color:#444; margin-bottom:.2rem; }
+.hs-privacy-section code { background:#f0f0f0; padding:.1rem .35rem; border-radius:3px; font-family:monospace; font-size:.9em; color:#333; letter-spacing:.02em; }
+.hs-privacy-divider { border:none; border-top:1px solid var(--hs-border); margin:0; }

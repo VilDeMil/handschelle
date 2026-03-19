@@ -56,6 +56,7 @@ class Handschelle_Shortcodes {
         add_shortcode( 'handschelle-login',            array( $this, 'sc_login' ) );
         add_shortcode( 'handschelle-register',         array( $this, 'sc_register' ) );
         add_shortcode( 'handschelle-pie-partei',       array( $this, 'sc_pie_partei' ) );
+        add_shortcode( 'handschelle-privacy',          array( $this, 'sc_privacy' ) );
 
         // Submit früh verarbeiten – BEVOR Header gesendet werden
         add_action( 'init', array( $this, 'early_frontend_submit' ) );
@@ -261,6 +262,36 @@ class Handschelle_Shortcodes {
         }
 
         Handschelle_Database::update( $id, $data );
+
+        // Process additional offences
+        $offences_input = isset( $_POST['hs_offences'] ) ? (array) $_POST['hs_offences'] : array();
+        foreach ( $offences_input as $off_data ) {
+            $off_id     = intval( $off_data['id'] ?? 0 );
+            $off_delete = intval( $off_data['delete'] ?? 0 );
+            $off_text   = sanitize_textarea_field( $off_data['straftat'] ?? '' );
+
+            if ( $off_id && $off_delete ) {
+                Handschelle_Database::delete_offence( $off_id );
+            } elseif ( $off_id && ! $off_delete && ! empty( $off_text ) ) {
+                Handschelle_Database::update_offence( $off_id, array(
+                    'straftat'        => $off_text,
+                    'urteil'          => substr( sanitize_text_field( $off_data['urteil'] ?? '' ), 0, 200 ),
+                    'status_straftat' => sanitize_text_field( $off_data['status_straftat'] ?? 'Ermittlungen laufen' ),
+                    'link_quelle'     => esc_url_raw( $off_data['link_quelle'] ?? '' ),
+                    'aktenzeichen'    => substr( sanitize_text_field( $off_data['aktenzeichen'] ?? '' ), 0, 50 ),
+                    'bemerkung'       => sanitize_textarea_field( $off_data['bemerkung'] ?? '' ),
+                ) );
+            } elseif ( ! $off_id && ! $off_delete && ! empty( $off_text ) ) {
+                Handschelle_Database::insert_offence( $id, array(
+                    'straftat'        => $off_text,
+                    'urteil'          => substr( sanitize_text_field( $off_data['urteil'] ?? '' ), 0, 200 ),
+                    'status_straftat' => sanitize_text_field( $off_data['status_straftat'] ?? 'Ermittlungen laufen' ),
+                    'link_quelle'     => esc_url_raw( $off_data['link_quelle'] ?? '' ),
+                    'aktenzeichen'    => substr( sanitize_text_field( $off_data['aktenzeichen'] ?? '' ), 0, 50 ),
+                    'bemerkung'       => sanitize_textarea_field( $off_data['bemerkung'] ?? '' ),
+                ) );
+            }
+        }
 
         wp_safe_redirect( add_query_arg( 'hs_edited', $id, $this->return_url() ) );
         exit;
@@ -1045,8 +1076,61 @@ class Handschelle_Shortcodes {
                         <?php if ( $e->bemerkung ) : ?><div class="hs-card-bemerkung"><span class="hs-label">💬 Bemerkung:</span><p><?php echo nl2br(esc_html($e->bemerkung)); ?></p></div><?php endif; ?>
                     <?php endif; ?>
                 </div>
+                <?php if ( $e->bemerkung ) : ?><div class="hs-card-bemerkung"><span class="hs-label">💬 Bemerkung:</span><p><?php echo nl2br(esc_html($e->bemerkung)); ?></p></div><?php endif; ?>
 
-            </div><!-- .hs-card-body -->
+                <?php
+                // Additional offences
+                $extra_offences = Handschelle_Database::get_offences( $e->id );
+                foreach ( $extra_offences as $oi => $off ) :
+                ?>
+                <div class="hs-card-extra-offence">
+                    <div class="hs-card-straftat"><span class="hs-label">⚖ Straftat <?php echo $oi + 2; ?>:</span><p><?php echo nl2br(esc_html($off->straftat)); ?></p></div>
+                    <?php if ( $off->urteil ) : ?><div class="hs-card-row"><span class="hs-label">📋 Urteil:</span> <?php echo esc_html($off->urteil); ?></div><?php endif; ?>
+                    <?php if ( $off->aktenzeichen ) : ?><div class="hs-card-row"><span class="hs-label">📁 Aktenzeichen:</span> <?php echo esc_html($off->aktenzeichen); ?></div><?php endif; ?>
+                    <div class="hs-card-row">
+                        <span class="hs-badge <?php echo esc_attr($status_class[$off->status_straftat] ?? 'hs-status-ermittlung'); ?>"><?php echo esc_html($off->status_straftat); ?></span>
+                    </div>
+                    <?php if ( ! empty( $off->link_quelle ) && $is_logged_in ) : ?>
+                    <div class="hs-card-row"><a href="<?php echo esc_url($off->link_quelle); ?>" target="_blank" rel="noopener noreferrer" class="hs-sm-link">🔗 Quelle</a></div>
+                    <?php endif; ?>
+                    <?php if ( $off->bemerkung ) : ?><div class="hs-card-bemerkung"><span class="hs-label">💬 Bemerkung:</span><p><?php echo nl2br(esc_html($off->bemerkung)); ?></p></div><?php endif; ?>
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <?php if ( $is_logged_in ) :
+            $footer_links = array();
+            // Quelle
+            if ( ! empty( $e->link_quelle ) ) {
+                $footer_links[] = '<a href="'.esc_url($e->link_quelle).'" target="_blank" rel="noopener noreferrer" class="hs-sm-link" data-sm="link" title="Quelle">'.$this->svg_link().' Quelle</a>';
+            }
+            // Öffentliche E-Mail
+            if ( ! empty( $e->oeffentliche_email ) ) {
+                $footer_links[] = '<a href="mailto:'.esc_attr($e->oeffentliche_email).'" class="hs-sm-link" data-sm="email" title="E-Mail">✉ '.esc_html($e->oeffentliche_email).'</a>';
+            }
+            // Suchmaschinen + Abgeordnetenwatch
+            $footer_links[] = '<a href="'.esc_url( 'https://www.google.com/search?q=' . urlencode( $e->name ) ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="google" title="Google-Suche">🔍 Google</a>';
+            $footer_links[] = '<a href="'.esc_url( 'https://www.qwant.com/?l=de&q=' . urlencode( $e->name ) ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="qwant" title="Qwant-Suche">🔍 Qwant</a>';
+            $footer_links[] = '<a href="'.esc_url( 'https://duckduckgo.com/?q=' . urlencode( $e->name ) ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="duckduckgo" title="DuckDuckGo-Suche">🔍 DuckDuckGo</a>';
+            $footer_links[] = '<a href="'.esc_url( 'https://www.bing.com/search?q=' . urlencode( $e->name ) ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="bing" title="Bing-Suche">🔍 Bing</a>';
+            $footer_links[] = '<a href="'.esc_url( 'https://www.abgeordnetenwatch.de/profile?politician_search_keys=' . urlencode( $e->name ) ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="abgeordnetenwatch" title="Abgeordnetenwatch">🏛 Abgeordnetenwatch</a>';
+            // Social media
+            foreach ( $this->sm_fields() as $field => list( $icon, $label ) ) {
+                if ( ! empty( $e->$field ) ) {
+                    $key = str_replace( 'sm_', '', $field );
+                    $footer_links[] = '<a href="'.esc_url($e->$field).'" target="_blank" rel="noopener noreferrer" class="hs-sm-link" data-sm="'.esc_attr($key).'" title="'.esc_attr($label).'">'.$icon.' '.esc_html($label).'</a>';
+                }
+            }
+            // Eintrag melden — removed from logged-in footer (now shown for all visitors below)
+            ?>
+            <div class="hs-card-footer"><?php echo implode( '', $footer_links ); ?></div>
+            <?php endif; ?>
+            <?php
+            $melden_subject = 'Straftat melden - ' . $e->name . ' - ' . $e->partei;
+            $melden_href    = 'mailto:info@die-handschelle.com?subject=' . rawurlencode( $melden_subject );
+            ?>
+            <div class="hs-card-melden">
+                <a href="<?php echo esc_attr( $melden_href ); ?>" class="hs-melden-link">⚠ Straftat melden!</a>
+            </div>
             <div class="hs-card-date">
                 Eingetragen am <?php echo esc_html( date_i18n('d.m.Y', strtotime($e->datum_eintrag)) ); ?>
                 <?php if ( ! empty( $e->erstellt_am ) ) : ?> &middot; Erstellt: <?php echo esc_html( date_i18n('d.m.Y H:i', strtotime($e->erstellt_am)) ); ?><?php endif; ?>
@@ -1153,6 +1237,36 @@ class Handschelle_Shortcodes {
                                     <option value="<?php echo esc_attr($st); ?>" <?php selected($e->status_straftat, $st); ?>><?php echo esc_html($st); ?></option>
                                 <?php endforeach; ?>
                             </select>
+                        </div>
+
+                        <!-- Weitere Straftaten -->
+                        <div class="hs-edit-section-title">⚖ Weitere Straftaten</div>
+                        <div class="hs-field hs-field-full">
+                            <div id="hs-offences-container-<?php echo intval($e->id); ?>">
+                            <?php
+                            $inline_offences = Handschelle_Database::get_offences( $e->id );
+                            foreach ( $inline_offences as $oi => $off ) :
+                            ?>
+                            <div class="hs-offence-row" data-index="<?php echo $oi; ?>">
+                                <div class="hs-offence-header">
+                                    <strong>Straftat <?php echo $oi + 2; ?></strong>
+                                    <button type="button" class="button hs-offence-remove-btn" data-container="hs-offences-container-<?php echo intval($e->id); ?>" data-index="<?php echo $oi; ?>">🗑</button>
+                                </div>
+                                <input type="hidden" name="hs_offences[<?php echo $oi; ?>][id]"     value="<?php echo intval($off->id); ?>">
+                                <input type="hidden" name="hs_offences[<?php echo $oi; ?>][delete]" value="0" class="hs-offence-delete-flag">
+                                <div class="hs-field hs-field-full"><label>Straftat <?php echo $oi + 2; ?></label><textarea name="hs_offences[<?php echo $oi; ?>][straftat]" rows="3"><?php echo esc_textarea($off->straftat); ?></textarea></div>
+                                <div class="hs-field"><label>Urteil</label><input type="text" name="hs_offences[<?php echo $oi; ?>][urteil]" maxlength="200" value="<?php echo esc_attr($off->urteil); ?>"></div>
+                                <div class="hs-field"><label>Link zur Quelle</label><input type="url" name="hs_offences[<?php echo $oi; ?>][link_quelle]" value="<?php echo esc_attr($off->link_quelle ?? ''); ?>"></div>
+                                <div class="hs-field"><label>Aktenzeichen</label><input type="text" name="hs_offences[<?php echo $oi; ?>][aktenzeichen]" maxlength="50" value="<?php echo esc_attr($off->aktenzeichen); ?>"></div>
+                                <div class="hs-field"><label>Status</label>
+                                    <select name="hs_offences[<?php echo $oi; ?>][status_straftat]">
+                                        <?php foreach ( handschelle_status_straftat_options() as $s ) : ?><option value="<?php echo esc_attr($s); ?>" <?php selected($off->status_straftat, $s); ?>><?php echo esc_html($s); ?></option><?php endforeach; ?>
+                                    </select>
+                                </div>
+                            </div>
+                            <?php endforeach; ?>
+                            </div>
+                            <button type="button" class="button hs-add-offence-inline-btn" data-entry-id="<?php echo intval($e->id); ?>" data-container="hs-offences-container-<?php echo intval($e->id); ?>" data-count="<?php echo count($inline_offences); ?>">+ Weitere Straftat</button>
                         </div>
 
                         <!-- Social Media -->
@@ -2047,6 +2161,59 @@ class Handschelle_Shortcodes {
             '4',
             true
         );
+        return ob_get_clean();
+    }
+
+    /* ================================================================
+       [handschelle-privacy] – Datenschutz / Privacy Abschnitt
+    ================================================================ */
+    public function sc_privacy( $atts ) {
+        ob_start();
+        ?>
+        <div class="hs-privacy hs-frontend">
+            <div class="hs-privacy-section">
+                <h3 class="hs-privacy-heading">&#127465;&#127466; Datenschutz</h3>
+                <p>Das Plugin speichert ausschlie&szlig;lich Informationen &uuml;ber <strong>&ouml;ffentliche Mandatstr&auml;ger</strong> (z.&nbsp;B. Abgeordnete, B&uuml;rgermeister, Minister), die im Zusammenhang mit rechtskr&auml;ftig verurteilten Straftaten oder laufenden Strafverfahren stehen. Die Verarbeitung erfolgt auf Grundlage des <strong>berechtigten &ouml;ffentlichen Interesses</strong> gem&auml;&szlig; Art.&nbsp;6 Abs.&nbsp;1 lit.&nbsp;f DSGVO sowie der Informationsfreiheit.</p>
+                <p><strong>Gespeicherte Daten:</strong></p>
+                <ul>
+                    <li>Name und Funktion der Person (&ouml;ffentliches Amt)</li>
+                    <li>Partei und Parlament</li>
+                    <li>Art und Status der Straftat (nur gerichtlich relevante Informationen)</li>
+                    <li>Quellen-URL (&ouml;ffentlich zug&auml;ngliche Nachrichtenartikel, Gerichtsurteile o.&nbsp;&auml;.)</li>
+                    <li>Optional: Profilfoto (nur &ouml;ffentlich verf&uuml;gbare Bilder)</li>
+                </ul>
+                <p><strong>Nicht gespeicherte Daten:</strong></p>
+                <ul>
+                    <li>Private Adressen, Telefonnummern oder E-Mail-Adressen</li>
+                    <li>Informationen &uuml;ber Privatpersonen ohne &ouml;ffentliches Mandat</li>
+                    <li>Gesundheitsdaten oder andere besonders schutzw&uuml;rdige Kategorien (Art.&nbsp;9 DSGVO)</li>
+                </ul>
+                <p><strong>Gastbesucher:</strong> Nicht eingeloggte Besucher sehen Namen als <code>&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;</code> (anonymisiert) und erhalten kein Profilfoto der eingetragenen Person &mdash; stattdessen wird das Website-Icon angezeigt.</p>
+                <p><strong>Datenmeldungen&nbsp;/ L&ouml;schanfragen:</strong> Fehleintr&auml;ge oder L&ouml;schanfragen k&ouml;nnen per E-Mail an <a href="mailto:info@die-handschelle.com" class="hs-link">info@die-handschelle.com</a> gemeldet werden. Jeder Eintrag wird vor Ver&ouml;ffentlichung manuell gepr&uuml;ft.</p>
+            </div>
+            <hr class="hs-privacy-divider">
+            <div class="hs-privacy-section">
+                <h3 class="hs-privacy-heading">&#127468;&#127463; Privacy</h3>
+                <p>This plugin stores information exclusively about <strong>public officeholders</strong> (e.g. members of parliament, mayors, ministers) in connection with criminal convictions or ongoing criminal proceedings. Processing is based on <strong>legitimate public interest</strong> pursuant to Art.&nbsp;6(1)(f) GDPR and the principle of freedom of information.</p>
+                <p><strong>Data stored:</strong></p>
+                <ul>
+                    <li>Name and role of the person (public office)</li>
+                    <li>Party and parliament</li>
+                    <li>Type and status of the offence (court-relevant information only)</li>
+                    <li>Source URL (publicly accessible news articles, court rulings, etc.)</li>
+                    <li>Optionally: profile photo (publicly available images only)</li>
+                </ul>
+                <p><strong>Data not stored:</strong></p>
+                <ul>
+                    <li>Private addresses, phone numbers, or email addresses</li>
+                    <li>Information about private individuals without a public mandate</li>
+                    <li>Health data or other special categories under Art.&nbsp;9 GDPR</li>
+                </ul>
+                <p><strong>Guest visitors:</strong> Non-logged-in visitors see names replaced with <code>&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;</code> (anonymised) and do not see the person&rsquo;s profile photo &mdash; the site icon is shown instead.</p>
+                <p><strong>Corrections&nbsp;/ Deletion requests:</strong> Incorrect entries or deletion requests can be reported by email to <a href="mailto:info@die-handschelle.com" class="hs-link">info@die-handschelle.com</a>. Every entry is manually reviewed before publication.</p>
+            </div>
+        </div>
+        <?php
         return ob_get_clean();
     }
 

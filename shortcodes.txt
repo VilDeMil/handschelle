@@ -28,6 +28,7 @@ All shortcodes output HTML and can be placed on any WordPress page or post.
 | `[wordcloud-name]` | Word cloud of person names (sized by entry count) — shows Name (Partei) |
 | `[wordcloud-urteil]` | Word cloud of verdicts (`urteil`) sized by frequency |
 | `[handschelle-login]` | Login form with „stay logged in" checkbox and optional redirect |
+| `[handschelle-privacy]` | Bilingual Datenschutz / Privacy block (DE + EN) |
 | `[handschelle-register]` | Registration form (respects WP „Anyone can register" setting) |
 
 ---
@@ -269,6 +270,18 @@ Copyright / contact block.
 
 ---
 
+### `[handschelle-privacy]`
+
+Renders the bilingual Datenschutz / Privacy section as two styled cards (German + English).
+
+```
+[handschelle-privacy]
+```
+
+No attributes.
+
+---
+
 ### Typical Page Setup
 
 ```
@@ -293,4 +306,4 @@ Copyright / contact block.
 ---
 ---
 
-(c) 2026 - "Die-Handschelle" 9.2 - www.die-handschelle.com
+(c) 2026 - "Die-Handschelle" 10.0 - www.die-handschelle.com
