@@ -2252,7 +2252,6 @@ class Handschelle_Shortcodes {
         global $wpdb;
         $table = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
 
-        // Zufälligen freigegebenen Eintrag holen
         $e = $wpdb->get_row(
             "SELECT * FROM `{$table}` WHERE freigegeben = 1 ORDER BY RAND() LIMIT 1"
         );
@@ -2265,71 +2264,70 @@ class Handschelle_Shortcodes {
         $img_url      = $is_logged_in ? handschelle_get_image_url( $e->bild ) : '';
         $display_name = hs_display_name( $e->name );
 
-        $status_labels = array(
-            'Verurteilt'          => 'VERURTEILT',
-            'Ermittlungen laufen' => 'ERMITTLUNGEN LAUFEN',
-            'Eingestellt'         => 'EINGESTELLT',
+        $status_css = array(
+            'Verurteilt'          => 'verurteilt',
+            'Ermittlungen laufen' => 'ermittlung',
+            'Eingestellt'         => 'eingestellt',
         );
-        $status_label = isset( $status_labels[ $e->status_straftat ] )
-            ? $status_labels[ $e->status_straftat ]
-            : esc_html( $e->status_straftat );
+        $status_key = isset( $status_css[ $e->status_straftat ] ) ? $status_css[ $e->status_straftat ] : 'ermittlung';
 
         ob_start();
         ?>
         <div class="hs-wanted-wrap hs-frontend">
-            <div class="hs-wanted-poster">
-                <div class="hs-wanted-header">
-                    <div class="hs-wanted-stars">★ ★ ★ ★ ★</div>
-                    <div class="hs-wanted-title">GESUCHT</div>
-                    <div class="hs-wanted-subtitle">DIE HANDSCHELLE</div>
+            <div class="hs-wanted-card">
+
+                <div class="hs-wanted-topbar">
+                    <span class="hs-wanted-topbar-label">⚠ FAHNDUNGSPLAKAT</span>
+                    <span class="hs-wanted-topbar-site">die-handschelle.com</span>
                 </div>
 
-                <div class="hs-wanted-photo-area">
-                    <?php if ( $img_url ) : ?>
-                        <img src="<?php echo esc_url( $img_url ); ?>"
-                             alt="<?php echo esc_attr( $display_name ); ?>"
-                             class="hs-wanted-photo">
-                    <?php else : ?>
-                        <div class="hs-wanted-photo-placeholder">👤</div>
-                    <?php endif; ?>
+                <div class="hs-wanted-body">
+                    <div class="hs-wanted-photo-col">
+                        <?php if ( $img_url ) : ?>
+                            <img src="<?php echo esc_url( $img_url ); ?>"
+                                 alt="<?php echo esc_attr( $display_name ); ?>"
+                                 class="hs-wanted-photo">
+                        <?php else : ?>
+                            <div class="hs-wanted-photo-placeholder">👤</div>
+                        <?php endif; ?>
+                        <div class="hs-wanted-status hs-wanted-status--<?php echo esc_attr( $status_key ); ?>">
+                            <?php echo esc_html( $e->status_straftat ); ?>
+                        </div>
+                    </div>
+
+                    <div class="hs-wanted-info-col">
+                        <div class="hs-wanted-name"><?php echo esc_html( $display_name ); ?></div>
+
+                        <?php if ( $e->partei ) : ?>
+                        <div class="hs-wanted-row">
+                            <span class="hs-wanted-label">Partei</span>
+                            <span class="hs-wanted-value"><?php echo esc_html( $e->partei ); ?></span>
+                        </div>
+                        <?php endif; ?>
+
+                        <?php if ( $e->parlament ) : ?>
+                        <div class="hs-wanted-row">
+                            <span class="hs-wanted-label">Parlament</span>
+                            <span class="hs-wanted-value"><?php echo esc_html( $e->parlament ); ?><?php if ( $e->parlament_name ) echo ' (' . esc_html( $e->parlament_name ) . ')'; ?></span>
+                        </div>
+                        <?php endif; ?>
+
+                        <?php if ( $e->straftat ) : ?>
+                        <div class="hs-wanted-row hs-wanted-row--block">
+                            <span class="hs-wanted-label">Straftat</span>
+                            <span class="hs-wanted-value"><?php echo nl2br( esc_html( wp_trim_words( $e->straftat, 35, '…' ) ) ); ?></span>
+                        </div>
+                        <?php endif; ?>
+
+                        <?php if ( $e->urteil ) : ?>
+                        <div class="hs-wanted-row hs-wanted-row--block">
+                            <span class="hs-wanted-label">Urteil</span>
+                            <span class="hs-wanted-value hs-wanted-value--urteil"><?php echo esc_html( $e->urteil ); ?></span>
+                        </div>
+                        <?php endif; ?>
+                    </div>
                 </div>
 
-                <div class="hs-wanted-name-block">
-                    <div class="hs-wanted-name"><?php echo esc_html( $display_name ); ?></div>
-                    <?php if ( $e->spitzname ) : ?>
-                        <div class="hs-wanted-aka">alias „<?php echo esc_html( $e->spitzname ); ?>"</div>
-                    <?php endif; ?>
-                </div>
-
-                <?php if ( $e->partei || $e->beruf ) : ?>
-                <div class="hs-wanted-meta-row">
-                    <?php if ( $e->beruf ) : ?>
-                        <span class="hs-wanted-meta-item"><?php echo esc_html( $e->beruf ); ?></span>
-                    <?php endif; ?>
-                    <?php if ( $e->partei ) : ?>
-                        <span class="hs-wanted-meta-item hs-wanted-partei"><?php echo esc_html( $e->partei ); ?></span>
-                    <?php endif; ?>
-                </div>
-                <?php endif; ?>
-
-                <div class="hs-wanted-crime-label">STRAFTAT</div>
-                <div class="hs-wanted-crime">
-                    <?php echo nl2br( esc_html( wp_trim_words( $e->straftat, 40, '…' ) ) ); ?>
-                </div>
-
-                <div class="hs-wanted-status hs-wanted-status--<?php echo esc_attr( sanitize_html_class( strtolower( str_replace( ' ', '-', $e->status_straftat ) ) ) ); ?>">
-                    <?php echo esc_html( $status_label ); ?>
-                </div>
-
-                <?php if ( $e->urteil ) : ?>
-                <div class="hs-wanted-verdict-label">URTEIL</div>
-                <div class="hs-wanted-verdict"><?php echo esc_html( $e->urteil ); ?></div>
-                <?php endif; ?>
-
-                <div class="hs-wanted-footer">
-                    <div class="hs-wanted-footer-line">www.die-handschelle.com</div>
-                    <div class="hs-wanted-stars">★ ★ ★ ★ ★</div>
-                </div>
             </div>
         </div>
         <?php

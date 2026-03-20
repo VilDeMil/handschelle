@@ -837,193 +837,127 @@ a.hs-st-item { display: inline-block; }
 .hs-privacy-divider { border:none; border-top:1px solid var(--hs-border); margin:0; }
 
 /* ================================================================
-   [handschelle-wanted] – Fahndungsplakat
+   [handschelle-wanted] – Fahndungsplakat (digital)
 ================================================================ */
 .hs-wanted-wrap {
-    display: flex;
-    justify-content: center;
-    padding: 1.5rem 1rem;
-    font-family: 'Georgia', 'Times New Roman', serif;
+    font-family: var(--hs-font);
+    padding: 1rem 0;
 }
-.hs-wanted-poster {
-    background: #f5e9c9;
-    border: 8px solid #5a2d00;
-    outline: 3px solid #5a2d00;
-    outline-offset: 4px;
-    box-shadow: 0 10px 40px rgba(0,0,0,.45), inset 0 0 60px rgba(90,45,0,.08);
-    max-width: 420px;
-    width: 100%;
-    padding: 2rem 1.8rem 1.5rem;
-    text-align: center;
-    position: relative;
-    background-image:
-        repeating-linear-gradient(
-            0deg,
-            transparent,
-            transparent 28px,
-            rgba(90,45,0,.04) 28px,
-            rgba(90,45,0,.04) 29px
-        );
-}
-.hs-wanted-header {
-    margin-bottom: 1rem;
-}
-.hs-wanted-stars {
-    color: #8b0000;
-    font-size: 1rem;
-    letter-spacing: .4em;
-    margin-bottom: .3rem;
-}
-.hs-wanted-title {
-    font-size: 3.2rem;
-    font-weight: 900;
-    color: #8b0000;
-    text-transform: uppercase;
-    letter-spacing: .15em;
-    line-height: 1;
-    text-shadow: 2px 2px 0 rgba(139,0,0,.2);
-    margin: .1rem 0;
-}
-.hs-wanted-subtitle {
-    font-size: .75rem;
-    font-weight: 700;
-    letter-spacing: .3em;
-    color: #5a2d00;
-    text-transform: uppercase;
-    border-top: 2px solid #5a2d00;
-    border-bottom: 2px solid #5a2d00;
-    padding: .2rem 0;
-    margin-top: .4rem;
-}
-.hs-wanted-photo-area {
-    margin: 1rem auto;
-    width: 180px;
-    height: 200px;
-    border: 5px solid #5a2d00;
+.hs-wanted-card {
+    background: var(--hs-primary);
+    border-radius: var(--hs-radius);
     overflow: hidden;
+    box-shadow: var(--hs-shadow-lg);
+    max-width: 620px;
+}
+.hs-wanted-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--hs-accent);
+    padding: .45rem 1rem;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #fff;
+}
+.hs-wanted-topbar-site { opacity: .75; font-weight: 400; }
+.hs-wanted-body {
+    display: flex;
+    gap: 0;
+}
+.hs-wanted-photo-col {
+    flex-shrink: 0;
+    width: 160px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(0,0,0,.25);
+    padding: 1.2rem .8rem 1rem;
+    gap: .8rem;
+}
+.hs-wanted-photo {
+    width: 130px;
+    height: 150px;
+    object-fit: cover;
+    object-position: top center;
+    border-radius: 4px;
+    border: 2px solid rgba(255,255,255,.15);
+    display: block;
+}
+.hs-wanted-photo-placeholder {
+    width: 130px;
+    height: 150px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #e8d5a3;
-    box-shadow: 3px 3px 0 rgba(0,0,0,.25);
-}
-.hs-wanted-photo {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: top center;
-    filter: sepia(30%) contrast(1.05);
-}
-.hs-wanted-photo-placeholder {
-    font-size: 6rem;
-    line-height: 1;
-    opacity: .5;
-}
-.hs-wanted-name-block {
-    margin: .8rem 0 .5rem;
-}
-.hs-wanted-name {
-    font-size: 1.6rem;
-    font-weight: 900;
-    color: #1a0a00;
-    text-transform: uppercase;
-    letter-spacing: .06em;
-    line-height: 1.1;
-    border-top: 2px solid #5a2d00;
-    border-bottom: 2px solid #5a2d00;
-    padding: .35rem .2rem;
-    word-break: break-word;
-}
-.hs-wanted-aka {
-    font-size: .82rem;
-    color: #5a2d00;
-    margin-top: .3rem;
-    font-style: italic;
-}
-.hs-wanted-meta-row {
-    display: flex;
-    justify-content: center;
-    gap: .6rem;
-    flex-wrap: wrap;
-    margin: .5rem 0;
-}
-.hs-wanted-meta-item {
-    font-size: .78rem;
-    color: #3b1a00;
-    background: rgba(90,45,0,.12);
-    padding: .15rem .6rem;
-    border-radius: 2px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: .05em;
-}
-.hs-wanted-partei {
-    background: rgba(139,0,0,.12);
-    color: #8b0000;
-}
-.hs-wanted-crime-label {
-    font-size: .65rem;
-    font-weight: 700;
-    letter-spacing: .3em;
-    color: #5a2d00;
-    text-transform: uppercase;
-    margin: 1rem 0 .25rem;
-}
-.hs-wanted-crime {
-    font-size: .9rem;
-    color: #1a0a00;
-    line-height: 1.55;
-    background: rgba(255,255,255,.4);
-    border: 1px solid rgba(90,45,0,.2);
-    padding: .6rem .8rem;
-    border-radius: 2px;
-    text-align: left;
+    font-size: 4rem;
+    background: rgba(255,255,255,.05);
+    border-radius: 4px;
+    border: 2px solid rgba(255,255,255,.1);
 }
 .hs-wanted-status {
-    margin: .9rem 0 .5rem;
-    font-size: 1rem;
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: .12em;
-    padding: .35rem .6rem;
-    border: 3px solid currentColor;
-    display: inline-block;
-    transform: rotate(-2deg);
-}
-.hs-wanted-status--verurteilt          { color: #8b0000; border-color: #8b0000; }
-.hs-wanted-status--ermittlungen-laufen { color: #b87000; border-color: #b87000; }
-.hs-wanted-status--eingestellt         { color: #2e7d32; border-color: #2e7d32; }
-.hs-wanted-verdict-label {
     font-size: .65rem;
     font-weight: 700;
-    letter-spacing: .3em;
-    color: #5a2d00;
     text-transform: uppercase;
-    margin: .8rem 0 .2rem;
+    letter-spacing: .08em;
+    padding: .25rem .55rem;
+    border-radius: 3px;
+    text-align: center;
+    width: 100%;
 }
-.hs-wanted-verdict {
+.hs-wanted-status--verurteilt   { background: rgba(192,57,43,.25); color: #ff8a80; border: 1px solid rgba(192,57,43,.5); }
+.hs-wanted-status--ermittlung   { background: rgba(243,156,18,.2); color: #ffd54f; border: 1px solid rgba(243,156,18,.4); }
+.hs-wanted-status--eingestellt  { background: rgba(39,174,96,.2);  color: #69f0ae; border: 1px solid rgba(39,174,96,.4); }
+.hs-wanted-info-col {
+    flex: 1;
+    padding: 1.2rem 1.3rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: .6rem;
+    min-width: 0;
+}
+.hs-wanted-name {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.2;
+    word-break: break-word;
+    padding-bottom: .55rem;
+    border-bottom: 1px solid rgba(255,255,255,.12);
+}
+.hs-wanted-row {
+    display: flex;
+    align-items: baseline;
+    gap: .5rem;
+    flex-wrap: wrap;
+}
+.hs-wanted-row--block {
+    flex-direction: column;
+    gap: .2rem;
+}
+.hs-wanted-label {
+    font-size: .68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--hs-accent);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.hs-wanted-value {
     font-size: .88rem;
-    font-style: italic;
-    color: #1a0a00;
-    padding: .3rem .6rem;
-    background: rgba(255,255,255,.3);
-    border-left: 3px solid #8b0000;
-    text-align: left;
+    color: rgba(255,255,255,.85);
+    line-height: 1.5;
+    word-break: break-word;
 }
-.hs-wanted-footer {
-    margin-top: 1.2rem;
-    padding-top: .8rem;
-    border-top: 2px solid #5a2d00;
+.hs-wanted-value--urteil {
+    color: #ff8a80;
+    font-weight: 600;
 }
-.hs-wanted-footer-line {
-    font-size: .7rem;
-    color: #5a2d00;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    margin-bottom: .3rem;
-}
-@media (max-width: 480px) {
-    .hs-wanted-title { font-size: 2.4rem; }
-    .hs-wanted-photo-area { width: 150px; height: 165px; }
-    .hs-wanted-name { font-size: 1.3rem; }
+@media (max-width: 500px) {
+    .hs-wanted-body { flex-direction: column; }
+    .hs-wanted-photo-col { width: 100%; flex-direction: row; padding: .8rem 1rem; }
+    .hs-wanted-photo, .hs-wanted-photo-placeholder { width: 80px; height: 90px; }
 }
