@@ -850,19 +850,6 @@ a.hs-st-item { display: inline-block; }
     box-shadow: var(--hs-shadow-lg);
     max-width: 620px;
 }
-.hs-wanted-topbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: var(--hs-accent);
-    padding: .45rem 1rem;
-    font-size: .72rem;
-    font-weight: 700;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    color: #fff;
-}
-.hs-wanted-topbar-site { opacity: .75; font-weight: 400; }
 .hs-wanted-body {
     display: flex;
     gap: 0;

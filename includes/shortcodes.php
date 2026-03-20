@@ -2276,11 +2276,6 @@ class Handschelle_Shortcodes {
         <div class="hs-wanted-wrap hs-frontend">
             <div class="hs-wanted-card">
 
-                <div class="hs-wanted-topbar">
-                    <span class="hs-wanted-topbar-label">⚠ FAHNDUNGSPLAKAT</span>
-                    <span class="hs-wanted-topbar-site">die-handschelle.com</span>
-                </div>
-
                 <div class="hs-wanted-body">
                     <div class="hs-wanted-photo-col">
                         <?php if ( $img_url ) : ?>
