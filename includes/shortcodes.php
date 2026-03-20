@@ -59,6 +59,7 @@ class Handschelle_Shortcodes {
         add_shortcode( 'handschelle-register',         array( $this, 'sc_register' ) );
         add_shortcode( 'handschelle-pie-partei',       array( $this, 'sc_pie_partei' ) );
         add_shortcode( 'handschelle-privacy',          array( $this, 'sc_privacy' ) );
+        add_shortcode( 'handschelle-wanted',           array( $this, 'sc_wanted' ) );
 
         // Submit früh verarbeiten – BEVOR Header gesendet werden
         add_action( 'init', array( $this, 'early_frontend_submit' ) );
@@ -2238,6 +2239,90 @@ class Handschelle_Shortcodes {
                 </ul>
                 <p><strong>Guest visitors:</strong> Non-logged-in visitors see names replaced with <code>&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;</code> (anonymised) and do not see the person&rsquo;s profile photo &mdash; the site icon is shown instead.</p>
                 <p><strong>Corrections&nbsp;/ Deletion requests:</strong> Incorrect entries or deletion requests can be reported by email to <a href="mailto:info@die-handschelle.com" class="hs-link">info@die-handschelle.com</a>. Every entry is manually reviewed before publication.</p>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /* ================================================================
+       [handschelle-wanted] – Fahndungsplakat (zufälliger Eintrag)
+    ================================================================ */
+    public function sc_wanted( $atts ) {
+        global $wpdb;
+        $table = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
+
+        $e = $wpdb->get_row(
+            "SELECT * FROM `{$table}` WHERE freigegeben = 1 ORDER BY RAND() LIMIT 1"
+        );
+
+        if ( ! $e ) {
+            return '<p class="hs-empty">Keine Einträge vorhanden.</p>';
+        }
+
+        $is_logged_in = is_user_logged_in();
+        $img_url      = $is_logged_in ? handschelle_get_image_url( $e->bild ) : '';
+        $display_name = hs_display_name( $e->name );
+
+        $status_css = array(
+            'Verurteilt'          => 'verurteilt',
+            'Ermittlungen laufen' => 'ermittlung',
+            'Eingestellt'         => 'eingestellt',
+        );
+        $status_key = isset( $status_css[ $e->status_straftat ] ) ? $status_css[ $e->status_straftat ] : 'ermittlung';
+
+        ob_start();
+        ?>
+        <div class="hs-wanted-wrap hs-frontend">
+            <div class="hs-wanted-card">
+
+                <div class="hs-wanted-body">
+                    <div class="hs-wanted-photo-col">
+                        <?php if ( $img_url ) : ?>
+                            <img src="<?php echo esc_url( $img_url ); ?>"
+                                 alt="<?php echo esc_attr( $display_name ); ?>"
+                                 class="hs-wanted-photo">
+                        <?php else : ?>
+                            <div class="hs-wanted-photo-placeholder">👤</div>
+                        <?php endif; ?>
+                        <div class="hs-wanted-status hs-wanted-status--<?php echo esc_attr( $status_key ); ?>">
+                            <?php echo esc_html( $e->status_straftat ); ?>
+                        </div>
+                    </div>
+
+                    <div class="hs-wanted-info-col">
+                        <div class="hs-wanted-name"><?php echo esc_html( $display_name ); ?></div>
+
+                        <?php if ( $e->partei ) : ?>
+                        <div class="hs-wanted-row">
+                            <span class="hs-wanted-label">Partei</span>
+                            <span class="hs-wanted-value"><?php echo esc_html( $e->partei ); ?></span>
+                        </div>
+                        <?php endif; ?>
+
+                        <?php if ( $e->parlament ) : ?>
+                        <div class="hs-wanted-row">
+                            <span class="hs-wanted-label">Parlament</span>
+                            <span class="hs-wanted-value"><?php echo esc_html( $e->parlament ); ?><?php if ( $e->parlament_name ) echo ' (' . esc_html( $e->parlament_name ) . ')'; ?></span>
+                        </div>
+                        <?php endif; ?>
+
+                        <?php if ( $e->straftat ) : ?>
+                        <div class="hs-wanted-row hs-wanted-row--block">
+                            <span class="hs-wanted-label">Straftat</span>
+                            <span class="hs-wanted-value"><?php echo nl2br( esc_html( wp_trim_words( $e->straftat, 35, '…' ) ) ); ?></span>
+                        </div>
+                        <?php endif; ?>
+
+                        <?php if ( $e->urteil ) : ?>
+                        <div class="hs-wanted-row hs-wanted-row--block">
+                            <span class="hs-wanted-label">Urteil</span>
+                            <span class="hs-wanted-value hs-wanted-value--urteil"><?php echo esc_html( $e->urteil ); ?></span>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
             </div>
         </div>
         <?php
