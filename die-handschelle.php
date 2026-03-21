@@ -43,8 +43,9 @@ function handschelle_enqueue_assets() {
     wp_enqueue_style( 'handschelle-style', HANDSCHELLE_PLUGIN_URL . 'assets/css/handschelle.css', array(), HANDSCHELLE_VERSION );
     wp_enqueue_script( 'handschelle-script', HANDSCHELLE_PLUGIN_URL . 'assets/js/handschelle.js', array( 'jquery' ), HANDSCHELLE_VERSION, true );
     wp_localize_script( 'handschelle-script', 'handschelle_ajax', array(
-        'ajax_url' => admin_url( 'admin-ajax.php' ),
-        'nonce'    => wp_create_nonce( 'handschelle_nonce' ),
+        'ajax_url'     => admin_url( 'admin-ajax.php' ),
+        'nonce'        => wp_create_nonce( 'handschelle_nonce' ),
+        'person_nonce' => wp_create_nonce( 'hs_person_data_nonce' ),
     ) );
 }
 add_action( 'wp_enqueue_scripts', 'handschelle_enqueue_assets' );

@@ -207,6 +207,112 @@
             }
         });
 
+        // ── 14. Smart-Formular: Name-Dropdown → Personendaten auto-ausfüllen ──
+        $('#hs-smart-name-select').on('change', function () {
+            var name  = $(this).val();
+            var $form = $('#hs-smart-form');
+
+            if (!name) {
+                // Neue Person: Namensfeld zeigen + alle Personenfelder leeren & editierbar
+                $('#hs-smart-new-name-row').show();
+                $('#hs-smart-name-input').val('').removeAttr('readonly').css('background', '');
+                $form.find('[data-field]').each(function () {
+                    var $el = $(this);
+                    if ($el.is('select')) {
+                        $el.removeClass('hs-smart-locked');
+                    } else if ($el.is('input[type="checkbox"]')) {
+                        $el.prop('checked', false).removeClass('hs-smart-locked').css('pointer-events', '');
+                    } else {
+                        $el.val('').removeAttr('readonly').css('background', '');
+                    }
+                });
+                // Geburtsland zurück auf Deutschland
+                $form.find('[data-field="geburtsland"]').val('Deutschland');
+                // Status zurück auf Aktiv
+                $form.find('[data-field="status_aktiv"]').val('1');
+                // DoD-Zeile ausblenden
+                $form.find('.hs-dod-row').hide().find('[data-field="dod"]').val('');
+                // Bildvorschau leeren
+                $('#hs-smart-bild-preview').empty();
+                return;
+            }
+
+            // Existierende Person: Daten per AJAX laden
+            $.post(
+                (typeof handschelle_ajax !== 'undefined' ? handschelle_ajax.ajax_url : '/wp-admin/admin-ajax.php'),
+                {
+                    action: 'hs_get_person_data',
+                    nonce:  (typeof handschelle_ajax !== 'undefined' ? handschelle_ajax.person_nonce : ''),
+                    name:   name
+                },
+                function (response) {
+                    if (!response || !response.success) return;
+                    var d = response.data;
+
+                    // Namensfeld sperren + befüllen
+                    $('#hs-smart-new-name-row').hide();
+                    $('#hs-smart-name-input').val(name).attr('readonly', 'readonly').css('background', '#f8f8f8');
+
+                    // Hilfsfunktion: Feld befüllen + sperren
+                    function fill(fieldName, value) {
+                        var $el = $form.find('[data-field="' + fieldName + '"]');
+                        if (!$el.length) return;
+                        if ($el.is('select')) {
+                            $el.val(value).addClass('hs-smart-locked');
+                        } else if ($el.is('input[type="checkbox"]')) {
+                            $el.prop('checked', value == 1).addClass('hs-smart-locked').css('pointer-events', 'none');
+                        } else {
+                            $el.val(value || '').attr('readonly', 'readonly').css('background', '#f8f8f8');
+                        }
+                    }
+
+                    fill('beruf',              d.beruf);
+                    fill('spitzname',          d.spitzname);
+                    fill('geburtsort',         d.geburtsort);
+                    fill('geburtsland',        d.geburtsland);
+                    fill('geburtsdatum',       d.geburtsdatum);
+                    fill('private_email',      d.private_email);
+                    fill('oeffentliche_email', d.oeffentliche_email);
+                    fill('bemerkung_person',   d.bemerkung_person);
+                    fill('partei',             d.partei);
+                    fill('aufgabe_partei',     d.aufgabe_partei);
+                    fill('parlament',          d.parlament);
+                    fill('parlament_name',     d.parlament_name);
+                    fill('status_aktiv',       d.status_aktiv);
+                    fill('sm_facebook',        d.sm_facebook);
+                    fill('sm_youtube',         d.sm_youtube);
+                    fill('sm_personal',        d.sm_personal);
+                    fill('sm_twitter',         d.sm_twitter);
+                    fill('sm_homepage',        d.sm_homepage);
+                    fill('sm_wikipedia',       d.sm_wikipedia);
+                    fill('sm_linkedin',        d.sm_linkedin);
+                    fill('sm_xing',            d.sm_xing);
+                    fill('sm_truth_social',    d.sm_truth_social);
+                    fill('sm_sonstige',        d.sm_sonstige);
+
+                    // Verstorben + DoD
+                    fill('verstorben', d.verstorben);
+                    if (d.verstorben == 1) {
+                        $form.find('.hs-dod-row').show();
+                        fill('dod', d.dod);
+                    } else {
+                        $form.find('.hs-dod-row').hide();
+                        $form.find('[data-field="dod"]').val('');
+                    }
+
+                    // Bildvorschau (aus DB)
+                    if (d.bild_url) {
+                        $('#hs-smart-bild-preview').html(
+                            '<img src="' + $('<div>').text(d.bild_url).html() + '" alt="Bild" style="max-height:100px;border-radius:4px;display:block;margin-bottom:.4rem;">' +
+                            '<small style="color:#7f8c8d;">Bild aus Datenbank übernommen</small>'
+                        );
+                    } else {
+                        $('#hs-smart-bild-preview').empty();
+                    }
+                }
+            );
+        });
+
         // ── 12. WP Media Library Picker (Admin) ─────────────────
         if ( typeof wp !== 'undefined' && wp.media ) {
             $(document).on('click', '.hs-media-btn', function (e) {
