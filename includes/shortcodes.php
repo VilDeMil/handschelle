@@ -219,8 +219,9 @@ class Handschelle_Shortcodes {
 
                 <form method="post" enctype="multipart/form-data" class="hs-form" id="hs-smart-form">
                     <?php wp_nonce_field( 'hs_frontend_submit', 'hs_nonce' ); ?>
-                    <input type="hidden" name="hs_submit"     value="1">
-                    <input type="hidden" name="hs_return_url" value="<?php echo esc_url( get_permalink() ); ?>">
+                    <input type="hidden" name="hs_submit"          value="1">
+                    <input type="hidden" name="hs_smart_entry_id"  value="0" id="hs-smart-entry-id">
+                    <input type="hidden" name="hs_return_url"      value="<?php echo esc_url( get_permalink() ); ?>">
 
                     <!-- ── Person auswählen ────────────────────── -->
                     <div class="hs-form-section">
@@ -326,16 +327,6 @@ class Handschelle_Shortcodes {
                         </div>
                     </div>
 
-                    <!-- ── Social Media ──────────────────────────── -->
-                    <div class="hs-form-section">
-                        <h3>📱 Social-Media Links</h3>
-                        <div class="hs-form-grid">
-                            <?php foreach ( array( 'sm_facebook'=>'📘 Facebook','sm_youtube'=>'▶ YouTube','sm_personal'=>'👤 Persönliches Profil','sm_twitter'=>'🐦 Twitter / X','sm_homepage'=>'🌐 Persönliche Homepage','sm_wikipedia'=>'📖 Wikipedia','sm_linkedin'=>'💼 LinkedIn','sm_xing'=>'💼 Xing','sm_truth_social'=>'🗣 Truth Social','sm_sonstige'=>'🔗 Sonstige' ) as $field => $label ) : ?>
-                                <div class="hs-field"><label><?php echo $label; ?></label><input type="url" name="<?php echo esc_attr($field); ?>" data-field="<?php echo esc_attr($field); ?>" placeholder="https://…"></div>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
-
                     <!-- ── Submit ────────────────────────────────── -->
                     <div class="hs-form-actions">
                         <button type="submit" class="hs-btn hs-btn-primary">📨 Eintrag einreichen</button>
@@ -373,6 +364,7 @@ class Handschelle_Shortcodes {
         }
 
         wp_send_json_success( array(
+            'entry_id'           => (int) $row->id,
             'beruf'              => $row->beruf,
             'geburtsort'         => $row->geburtsort,
             'geburtsland'        => $row->geburtsland,
@@ -389,16 +381,6 @@ class Handschelle_Shortcodes {
             'parlament'          => $row->parlament,
             'parlament_name'     => $row->parlament_name,
             'status_aktiv'       => (string) $row->status_aktiv,
-            'sm_facebook'        => $row->sm_facebook,
-            'sm_youtube'         => $row->sm_youtube,
-            'sm_personal'        => $row->sm_personal,
-            'sm_twitter'         => $row->sm_twitter,
-            'sm_homepage'        => $row->sm_homepage,
-            'sm_wikipedia'       => $row->sm_wikipedia,
-            'sm_linkedin'        => $row->sm_linkedin,
-            'sm_xing'            => $row->sm_xing,
-            'sm_truth_social'    => $row->sm_truth_social,
-            'sm_sonstige'        => $row->sm_sonstige,
         ) );
     }
 
@@ -413,10 +395,33 @@ class Handschelle_Shortcodes {
             exit;
         }
 
-        $data      = handschelle_sanitize_entry( $_POST );
-        $attach_id = Handschelle_Image_Handler::handle_upload_and_resize( 'bild_upload', $data['name'] ?? '', $data['partei'] ?? '' );
-        if ( $attach_id ) $data['bild'] = $attach_id;
-        $inserted = Handschelle_Database::insert( $data );
+        $entry_id = intval( $_POST['hs_smart_entry_id'] ?? 0 );
+
+        if ( $entry_id > 0 ) {
+            // Smart-Formular: neue Straftat für bestehende Person eintragen
+            $entry = Handschelle_Database::get_one( $entry_id );
+            if ( ! $entry ) {
+                wp_safe_redirect( add_query_arg( 'hs_error', '1', $this->return_url() ) );
+                exit;
+            }
+            $raw = handschelle_sanitize_entry( $_POST );
+            $inserted = Handschelle_Database::insert_offence( $entry_id, array(
+                'straftat'        => $raw['straftat']        ?? '',
+                'urteil'          => $raw['urteil']          ?? '',
+                'link_quelle'     => $raw['link_quelle']     ?? '',
+                'aktenzeichen'    => $raw['aktenzeichen']    ?? '',
+                'bemerkung'       => $raw['bemerkung']       ?? '',
+                'status_straftat' => $raw['status_straftat'] ?? 'Ermittlungen laufen',
+                'datum_eintrag'   => $raw['datum_eintrag']   ?? current_time( 'Y-m-d' ),
+                'freigegeben'     => 0,
+            ) );
+        } else {
+            // Regulärer Neueintrag
+            $data      = handschelle_sanitize_entry( $_POST );
+            $attach_id = Handschelle_Image_Handler::handle_upload_and_resize( 'bild_upload', $data['name'] ?? '', $data['partei'] ?? '' );
+            if ( $attach_id ) $data['bild'] = $attach_id;
+            $inserted = Handschelle_Database::insert( $data );
+        }
 
         // PRG-Redirect – verhindert Doppel-Submit bei F5
         if ( $inserted ) {

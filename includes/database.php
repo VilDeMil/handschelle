@@ -214,6 +214,17 @@ class Handschelle_Database {
             $wpdb->query( "ALTER TABLE `{$table}` MODIFY COLUMN `straftat` TEXT NOT NULL DEFAULT ''" );
         }
 
+        // Add freigegeben column to offences table if missing (existing rows default to 1 = already approved)
+        {
+            global $wpdb;
+            $ot = $wpdb->prefix . HANDSCHELLE_DB_TABLE . '_offences';
+            $col = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND COLUMN_NAME = 'freigegeben'", DB_NAME, $ot ) );
+            if ( ! $col ) {
+                $wpdb->query( "ALTER TABLE `{$ot}` ADD COLUMN `freigegeben` TINYINT(1) NOT NULL DEFAULT 1" );
+                $wpdb->query( "ALTER TABLE `{$ot}` ADD KEY `idx_off_freigabe` (`freigegeben`)" );
+            }
+        }
+
         update_option( 'handschelle_db_version', HANDSCHELLE_VERSION );
     }
 
@@ -235,21 +246,35 @@ class Handschelle_Database {
             `bemerkung`       TEXT,
             `status_straftat` VARCHAR(50)      NOT NULL DEFAULT 'Ermittlungen laufen',
             `datum_eintrag`   DATE             NULL DEFAULT NULL,
+            `freigegeben`     TINYINT(1)       NOT NULL DEFAULT 1,
             `erstellt_am`     DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (`id`),
-            KEY `idx_entry_id` (`entry_id`)
+            KEY `idx_entry_id`     (`entry_id`),
+            KEY `idx_off_freigabe` (`freigegeben`)
         ) {$charset_collate};";
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
         dbDelta( $sql );
     }
 
-    public static function get_offences( $entry_id ) {
+    public static function get_offences( $entry_id, $only_approved = true ) {
         global $wpdb;
         $table = $wpdb->prefix . HANDSCHELLE_DB_TABLE . '_offences';
-        return $wpdb->get_results( $wpdb->prepare(
-            "SELECT * FROM `{$table}` WHERE entry_id = %d ORDER BY id ASC",
-            intval( $entry_id )
-        ) );
+        $sql   = $only_approved
+            ? $wpdb->prepare( "SELECT * FROM `{$table}` WHERE entry_id = %d AND freigegeben = 1 ORDER BY id ASC", intval( $entry_id ) )
+            : $wpdb->prepare( "SELECT * FROM `{$table}` WHERE entry_id = %d ORDER BY id ASC", intval( $entry_id ) );
+        return $wpdb->get_results( $sql );
+    }
+
+    public static function get_pending_offences() {
+        global $wpdb;
+        $ot = $wpdb->prefix . HANDSCHELLE_DB_TABLE . '_offences';
+        $mt = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
+        return $wpdb->get_results(
+            "SELECT o.*, e.name, e.partei FROM `{$ot}` o
+             JOIN `{$mt}` e ON e.id = o.entry_id
+             WHERE o.freigegeben = 0
+             ORDER BY o.erstellt_am DESC"
+        );
     }
 
     public static function insert_offence( $entry_id, $data ) {

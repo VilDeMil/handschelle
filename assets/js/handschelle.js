@@ -214,6 +214,7 @@
 
             if (!name) {
                 // Neue Person: Namensfeld zeigen + alle Personenfelder leeren & editierbar
+                $('#hs-smart-entry-id').val('0');
                 $('#hs-smart-new-name-row').show();
                 $('#hs-smart-name-input').val('').removeAttr('readonly').css('background', '');
                 $form.find('[data-field]').each(function () {
@@ -232,8 +233,9 @@
                 $form.find('[data-field="status_aktiv"]').val('1');
                 // DoD-Zeile ausblenden
                 $form.find('.hs-dod-row').hide().find('[data-field="dod"]').val('');
-                // Bildvorschau leeren
+                // Bildvorschau leeren + Upload wieder anzeigen
                 $('#hs-smart-bild-preview').empty();
+                $('#hs-smart-bild-upload').show().closest('.hs-field').find('small').show();
                 return;
             }
 
@@ -249,7 +251,8 @@
                     if (!response || !response.success) return;
                     var d = response.data;
 
-                    // Namensfeld sperren + befüllen
+                    // Entry-ID setzen + Namensfeld sperren + befüllen
+                    $('#hs-smart-entry-id').val(d.entry_id || 0);
                     $('#hs-smart-new-name-row').hide();
                     $('#hs-smart-name-input').val(name).attr('readonly', 'readonly').css('background', '#f8f8f8');
 
@@ -279,16 +282,6 @@
                     fill('parlament',          d.parlament);
                     fill('parlament_name',     d.parlament_name);
                     fill('status_aktiv',       d.status_aktiv);
-                    fill('sm_facebook',        d.sm_facebook);
-                    fill('sm_youtube',         d.sm_youtube);
-                    fill('sm_personal',        d.sm_personal);
-                    fill('sm_twitter',         d.sm_twitter);
-                    fill('sm_homepage',        d.sm_homepage);
-                    fill('sm_wikipedia',       d.sm_wikipedia);
-                    fill('sm_linkedin',        d.sm_linkedin);
-                    fill('sm_xing',            d.sm_xing);
-                    fill('sm_truth_social',    d.sm_truth_social);
-                    fill('sm_sonstige',        d.sm_sonstige);
 
                     // Verstorben + DoD
                     fill('verstorben', d.verstorben);
@@ -300,14 +293,15 @@
                         $form.find('[data-field="dod"]').val('');
                     }
 
-                    // Bildvorschau (aus DB)
+                    // Bildvorschau (aus DB) + Upload-Feld sperren
+                    $('#hs-smart-bild-upload').hide().closest('.hs-field').find('small').hide();
                     if (d.bild_url) {
                         $('#hs-smart-bild-preview').html(
                             '<img src="' + $('<div>').text(d.bild_url).html() + '" alt="Bild" style="max-height:100px;border-radius:4px;display:block;margin-bottom:.4rem;">' +
                             '<small style="color:#7f8c8d;">Bild aus Datenbank übernommen</small>'
                         );
                     } else {
-                        $('#hs-smart-bild-preview').empty();
+                        $('#hs-smart-bild-preview').html('<small style="color:#7f8c8d;">Kein Bild vorhanden</small>');
                     }
                 }
             );

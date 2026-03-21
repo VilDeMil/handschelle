@@ -39,9 +39,12 @@ class Handschelle_Admin {
         add_submenu_page( 'handschelle', 'Bilder',             'Bilder',          'manage_options', 'handschelle-bilder',        array( $this, 'page_bilder' ) );
         add_submenu_page( 'handschelle', 'Backup & Restore',  'Backup & Restore','manage_options', 'handschelle-backup',        array( $this, 'page_backup' ) );
         add_submenu_page( 'handschelle', 'Datenbank',          'Datenbank',       'manage_options', 'handschelle-db',            array( $this, 'page_database' ) );
-        $pending_count = count( get_users( array( 'meta_key' => 'hs_user_status', 'meta_value' => 'pending' ) ) );
-        $users_label   = '👥 Benutzer' . ( $pending_count ? ' <span class="awaiting-mod">' . $pending_count . '</span>' : '' );
+        $pending_count    = count( get_users( array( 'meta_key' => 'hs_user_status', 'meta_value' => 'pending' ) ) );
+        $users_label      = '👥 Benutzer' . ( $pending_count ? ' <span class="awaiting-mod">' . $pending_count . '</span>' : '' );
         add_submenu_page( 'handschelle', 'Benutzer',           $users_label,      'manage_options', 'handschelle-users',          array( $this, 'page_users' ) );
+        $pending_straftat = count( Handschelle_Database::get_pending_offences() );
+        $straftat_label   = '⚖ Straftaten freigeben' . ( $pending_straftat ? ' <span class="awaiting-mod">' . $pending_straftat . '</span>' : '' );
+        add_submenu_page( 'handschelle', 'Straftaten freigeben', $straftat_label, 'manage_options', 'handschelle-straftaten',     array( $this, 'page_straftaten' ) );
     }
 
     /* ================================================================
@@ -183,6 +186,40 @@ class Handschelle_Admin {
             case 'drop':
                 Handschelle_Database::drop_table();
                 $this->redirect( admin_url( 'admin.php?page=handschelle-db' ), 'Datenbanktabelle gelöscht.' );
+                break;
+
+            case 'approve_offence':
+                $id = intval( $_REQUEST['id'] ?? 0 );
+                if ( $id ) Handschelle_Database::update_offence( $id, array( 'freigegeben' => 1 ) );
+                $this->redirect( admin_url( 'admin.php?page=handschelle-straftaten' ), 'Straftat freigegeben.' );
+                break;
+
+            case 'reject_offence':
+                $id = intval( $_REQUEST['id'] ?? 0 );
+                if ( $id ) Handschelle_Database::update_offence( $id, array( 'freigegeben' => 0 ) );
+                $this->redirect( admin_url( 'admin.php?page=handschelle-straftaten' ), 'Straftat gesperrt.' );
+                break;
+
+            case 'delete_offence':
+                $id = intval( $_REQUEST['id'] ?? 0 );
+                if ( $id ) Handschelle_Database::delete_offence( $id );
+                $this->redirect( admin_url( 'admin.php?page=handschelle-straftaten' ), 'Straftat gelöscht.' );
+                break;
+
+            case 'bulk_offence':
+                $op  = sanitize_text_field( $_POST['hs_bulk_off_op'] ?? '' );
+                $ids = array_map( 'intval', (array) ( $_POST['hs_bulk_off_ids'] ?? array() ) );
+                $ids = array_filter( $ids );
+                if ( ! empty( $ids ) && in_array( $op, array( 'approve', 'reject', 'delete' ), true ) ) {
+                    foreach ( $ids as $oid ) {
+                        if ( $op === 'approve' )     Handschelle_Database::update_offence( $oid, array( 'freigegeben' => 1 ) );
+                        elseif ( $op === 'reject' )  Handschelle_Database::update_offence( $oid, array( 'freigegeben' => 0 ) );
+                        elseif ( $op === 'delete' )  Handschelle_Database::delete_offence( $oid );
+                    }
+                    $label = array( 'approve' => 'freigegeben', 'reject' => 'gesperrt', 'delete' => 'gelöscht' );
+                    $this->redirect( admin_url( 'admin.php?page=handschelle-straftaten' ), count( $ids ) . ' Straftat/Straftaten ' . $label[ $op ] . '.' );
+                }
+                $this->redirect( admin_url( 'admin.php?page=handschelle-straftaten' ), 'Keine Straftaten ausgewählt.' );
                 break;
         }
     }
@@ -1355,6 +1392,107 @@ class Handschelle_Admin {
             return new WP_Error( 'hs_deactivated', __( 'Dein Konto wurde deaktiviert. Bitte wende dich an den Administrator.', 'die-handschelle' ) );
         }
         return $user;
+    }
+
+    /* ================================================================
+       SEITE: STRAFTATEN FREIGEBEN
+    ================================================================ */
+    public function page_straftaten() {
+        $nonce    = wp_create_nonce( 'handschelle_admin_action' );
+        $filter   = sanitize_text_field( $_GET['hs_off_filter'] ?? 'pending' );
+        global $wpdb;
+        $ot = $wpdb->prefix . HANDSCHELLE_DB_TABLE . '_offences';
+        $mt = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
+        if ( $filter === 'approved' ) {
+            $offences = $wpdb->get_results( "SELECT o.*, e.name, e.partei FROM `{$ot}` o JOIN `{$mt}` e ON e.id = o.entry_id WHERE o.freigegeben = 1 ORDER BY o.erstellt_am DESC" );
+        } elseif ( $filter === 'all' ) {
+            $offences = $wpdb->get_results( "SELECT o.*, e.name, e.partei FROM `{$ot}` o JOIN `{$mt}` e ON e.id = o.entry_id ORDER BY o.erstellt_am DESC" );
+        } else {
+            $offences = Handschelle_Database::get_pending_offences();
+        }
+        $all_pending  = count( Handschelle_Database::get_pending_offences() );
+        ?>
+        <div class="wrap hs-wrap">
+            <h1>⚖ Straftaten freigeben <span class="hs-version"><?php echo esc_html( HANDSCHELLE_VERSION ); ?></span></h1>
+            <div class="hs-stats-bar">
+                <span>Ausstehend: <strong class="<?php echo $all_pending ? 'hs-warn' : ''; ?>"><?php echo $all_pending; ?></strong></span>
+            </div>
+
+            <div class="hs-filter-tabs">
+                <a href="<?php echo esc_url( admin_url( 'admin.php?page=handschelle-straftaten&hs_off_filter=pending' ) ); ?>"
+                   class="hs-filter-tab <?php echo $filter === 'pending' ? 'active' : ''; ?>">⏳ Ausstehend <span class="hs-filter-count"><?php echo $all_pending; ?></span></a>
+                <a href="<?php echo esc_url( admin_url( 'admin.php?page=handschelle-straftaten&hs_off_filter=approved' ) ); ?>"
+                   class="hs-filter-tab <?php echo $filter === 'approved' ? 'active' : ''; ?>">✅ Freigegeben</a>
+                <a href="<?php echo esc_url( admin_url( 'admin.php?page=handschelle-straftaten&hs_off_filter=all' ) ); ?>"
+                   class="hs-filter-tab <?php echo $filter === 'all' ? 'active' : ''; ?>">Alle</a>
+            </div>
+
+            <form method="post" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>">
+                <?php wp_nonce_field( 'handschelle_admin_action' ); ?>
+                <input type="hidden" name="page"      value="handschelle-straftaten">
+                <input type="hidden" name="hs_action" value="bulk_offence">
+
+                <div class="hs-bulk-bar" style="margin-bottom:.5rem;">
+                    <label><input type="checkbox" id="hs-off-bulk-all"> Alle auswählen</label>
+                    <select name="hs_bulk_off_op">
+                        <option value="">-- Bulk-Aktion --</option>
+                        <option value="approve">✅ Freigeben</option>
+                        <option value="reject">🚫 Sperren</option>
+                        <option value="delete">🗑 Löschen</option>
+                    </select>
+                    <button type="submit" class="button hs-btn">Ausführen</button>
+                </div>
+
+                <table class="widefat fixed striped hs-admin-table">
+                    <thead>
+                        <tr>
+                            <th style="width:36px"></th>
+                            <th>Person</th>
+                            <th>Partei</th>
+                            <th>Straftat</th>
+                            <th style="width:110px">Datum</th>
+                            <th style="width:110px">Status</th>
+                            <th style="width:220px">Aktionen</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <?php if ( empty( $offences ) ) : ?>
+                        <tr><td colspan="7" style="text-align:center;padding:2rem;color:#999;">Keine Straftaten vorhanden.</td></tr>
+                    <?php endif; ?>
+                    <?php foreach ( $offences as $o ) : ?>
+                        <tr>
+                            <td><input type="checkbox" name="hs_bulk_off_ids[]" value="<?php echo intval( $o->id ); ?>" class="hs-off-bulk-cb"></td>
+                            <td><strong><?php echo esc_html( $o->name ); ?></strong></td>
+                            <td><?php echo esc_html( $o->partei ); ?></td>
+                            <td><?php echo esc_html( mb_substr( $o->straftat, 0, 100 ) ) . ( mb_strlen( $o->straftat ) > 100 ? '…' : '' ); ?>
+                                <?php if ( ! empty( $o->urteil ) ) : ?><br><small><?php echo esc_html( $o->urteil ); ?></small><?php endif; ?>
+                            </td>
+                            <td><?php echo esc_html( $o->datum_eintrag ?? '' ); ?></td>
+                            <td><?php echo $o->freigegeben ? '<span class="hs-badge hs-badge-aktiv">✅ Freigegeben</span>' : '<span class="hs-badge hs-badge-pending">⏳ Ausstehend</span>'; ?></td>
+                            <td class="hs-actions">
+                                <?php if ( ! $o->freigegeben ) : ?>
+                                    <a href="<?php echo esc_url( admin_url( "admin.php?page=handschelle-straftaten&hs_action=approve_offence&id={$o->id}&_wpnonce={$nonce}" ) ); ?>" class="button button-small button-primary">✅ Freigeben</a>
+                                <?php else : ?>
+                                    <a href="<?php echo esc_url( admin_url( "admin.php?page=handschelle-straftaten&hs_action=reject_offence&id={$o->id}&_wpnonce={$nonce}" ) ); ?>" class="button button-small">🚫 Sperren</a>
+                                <?php endif; ?>
+                                <a href="<?php echo esc_url( admin_url( "admin.php?page=handschelle-straftaten&hs_action=delete_offence&id={$o->id}&_wpnonce={$nonce}" ) ); ?>" class="button button-small hs-btn-delete" onclick="return confirm('Straftat wirklich löschen?')">🗑 Löschen</a>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </form>
+            <?php echo $this->hs_footer(); ?>
+        </div>
+        <script>
+        (function(){
+            var all = document.getElementById('hs-off-bulk-all');
+            if (all) all.addEventListener('change', function(){
+                document.querySelectorAll('.hs-off-bulk-cb').forEach(function(cb){ cb.checked = all.checked; });
+            });
+        })();
+        </script>
+        <?php
     }
 
     /* ================================================================
