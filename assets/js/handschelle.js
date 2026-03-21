@@ -236,6 +236,8 @@
                 // Bildvorschau leeren + Upload wieder anzeigen
                 $('#hs-smart-bild-preview').empty();
                 $('#hs-smart-bild-upload').show().closest('.hs-field').find('small').show();
+                // Social-Media und E-Mail-Felder wieder anzeigen
+                $('#hs-smart-social-section').show();
                 return;
             }
 
@@ -293,6 +295,8 @@
                         $form.find('[data-field="dod"]').val('');
                     }
 
+                    // Social-Media-Sektion ausblenden (person already has data)
+                    $('#hs-smart-social-section').hide();
                     // Bildvorschau (aus DB) + Upload-Feld sperren
                     $('#hs-smart-bild-upload').hide().closest('.hs-field').find('small').hide();
                     if (d.bild_url) {

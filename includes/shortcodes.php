@@ -327,6 +327,16 @@ class Handschelle_Shortcodes {
                         </div>
                     </div>
 
+                    <!-- ── Social Media (nur bei neuer Person) ──── -->
+                    <div class="hs-form-section" id="hs-smart-social-section">
+                        <h3>📱 Social-Media Links</h3>
+                        <div class="hs-form-grid">
+                            <?php foreach ( array( 'sm_facebook'=>'📘 Facebook','sm_youtube'=>'▶ YouTube','sm_personal'=>'👤 Persönliches Profil','sm_twitter'=>'🐦 Twitter / X','sm_homepage'=>'🌐 Persönliche Homepage','sm_wikipedia'=>'📖 Wikipedia','sm_linkedin'=>'💼 LinkedIn','sm_xing'=>'💼 Xing','sm_truth_social'=>'🗣 Truth Social','sm_sonstige'=>'🔗 Sonstige' ) as $field => $label ) : ?>
+                                <div class="hs-field"><label><?php echo $label; ?></label><input type="url" name="<?php echo esc_attr($field); ?>" placeholder="https://…"></div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+
                     <!-- ── Submit ────────────────────────────────── -->
                     <div class="hs-form-actions">
                         <button type="submit" class="hs-btn hs-btn-primary">📨 Eintrag einreichen</button>
