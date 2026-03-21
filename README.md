@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | Final-11 |
+| **Version** | Final-12 |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
 | **Lizenz** | GPL-2.0+ |
@@ -122,7 +122,7 @@ Planned features for upcoming versions:
 
 - **Mailing-Liste**: Newsletter / subscription list so followers are notified when new entries are published.
 - **Multilanguage**: Full multilingual support (DE / EN and more) via the WordPress language system.
-- **Multiple Offences**: Support for recording multiple separate crimes per person, each with its own status, verdict, and source link.
+- ~~**Multiple Offences**: Support for recording multiple separate crimes per person, each with its own status, verdict, and source link.~~ *(done — Final-12)*
 - **Multiuser**: Role-based multi-user system with individual dashboards, personal submission histories, and per-user moderation rights.
 - **International Version**
 
@@ -146,6 +146,9 @@ Planned features for upcoming versions:
 ---
 
 ## Release Notes
+
+### Final-12 *(2026-03-21)*
+- **Smart-form: link Straftat to existing person**: When a name is selected from the dropdown and data is loaded, submitting the `[handschelle-anzeige]` smart form now creates a new Straftat (offence row in `wp_die_handschelle_offences`) linked to the existing person via `entry_id`. No new person entry is created. Hidden field `hs_smart_entry_id` carries the resolved `entry_id`; the form handler branches on this value — `entry_id > 0` → `insert_offence()` only, `entry_id == 0` → full `insert()` as before.
 
 ### Final-11 *(2026-03-19)*
 - **Version bump**: Bumped version from Final-10 to Final-11; updated README.md and all .txt files to reflect the new version.
