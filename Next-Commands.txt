@@ -1,18 +1,75 @@
-Creaete gift request [handschelle-gift]
+modify gift request [handschelle-gift]
 https://claude.ai/gift
+bitcoin:
+paypal
+moero
 --
 
 add Links to AI
 
-add chapter in README.md
-Explain how to connect github to
-- Gemnini
-- Copilot
-- ChatGPT
-- Claude Code
 
-Share Links
+
+Share Links from cards
 
 create neue straftat mit load data handschelle-register-smart
-
+create [handschelle-smart]
+- functionality like [handschelle]
 - 
+
+- Name (max. 50 Zeichen)
+- Vor- und Nachname
+- Beruf (max. 50 Zeichen)
+Show only for logged in users
+Spitzname (max. 100 Zeichen)
+Geburtsort (max. 100 Zeichen)
+Geburtsland
+Geburtsdatum
+Private E-Mail
+Öffentliche E-Mail
+Verstorben
+Bemerkung zur Person (max. 500 Zeichen)
+Bild hochladen
+Partei (max. 50 Zeichen)
+Aufgabe in der Partei
+Parlament
+
+— Bitte wählen —
+Parlament Name (max. 50 Zeichen)
+z.B. Wahlkreis München
+Status
+
+Aktiv
+⚖ Details zur Straftat
+Straftat
+Kurze Beschreibung der Straftat …
+Urteil (max. 200 Zeichen)
+z.B. 2 Jahre auf Bewährung
+Link zur Quelle
+https://…
+Aktenzeichen (max. 50 Zeichen)
+z.B. 1 StR 123/24
+Bemerkung
+Weitere Anmerkungen …
+Status der Straftat
+
+Ermittlungen laufen
+📱 Social-Media Links
+📘 Facebook
+https://…
+▶ YouTube
+https://…
+👤 Persönliches Profil
+https://…
+🐦 Twitter / X
+https://…
+🌐 Persönliche Homepage
+https://…
+📖 Wikipedia
+https://…
+💼 LinkedIn
+https://…
+💼 Xing
+https://…
+🗣 Truth Social
+https://…
+🔗 Sonstige
