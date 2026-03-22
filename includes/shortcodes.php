@@ -2421,12 +2421,19 @@ class Handschelle_Shortcodes {
                                 <textarea name="bemerkung_person" maxlength="500" rows="4" placeholder="Weitere Informationen zur Person …"></textarea>
                                 <small class="hs-char-counter" data-target="bemerkung_person">0 / 500 Zeichen</small>
                             </div>
+                            <!-- Read-only image preview (shown when existing person is selected) -->
+                            <div class="hs-field hs-field-full hs-smart-image-preview" style="display:none;">
+                                <label>Bild</label>
+                                <div class="hs-smart-image-preview-inner"></div>
+                            </div>
+                            <?php if ( is_user_logged_in() ) : ?>
                             <div class="hs-field hs-field-full hs-smart-image-section">
                                 <label>Bild hochladen</label>
                                 <input type="file" name="bild_upload" accept="image/*" class="hs-file-input">
                                 <div class="hs-file-preview" id="hs-smart-file-preview"></div>
                                 <small>Wird automatisch auf max. 450 px Höhe skaliert.</small>
                             </div>
+                            <?php endif; ?>
                             <?php if ( is_user_logged_in() ) : ?>
                             <div class="hs-field"><label>Private E-Mail</label><input type="email" name="private_email" maxlength="200" placeholder="privat@beispiel.de"></div>
                             <div class="hs-field"><label>Öffentliche E-Mail</label><input type="email" name="oeffentliche_email" maxlength="200" placeholder="kontakt@beispiel.de"></div>
@@ -2540,6 +2547,7 @@ class Handschelle_Shortcodes {
             'sm_xing'          => $entry->sm_xing,
             'sm_truth_social'  => $entry->sm_truth_social,
             'sm_sonstige'      => $entry->sm_sonstige,
+            'bild_url'         => handschelle_get_image_url( $entry->bild ),
         );
 
         // E-Mail-Felder nur für eingeloggte Nutzer
