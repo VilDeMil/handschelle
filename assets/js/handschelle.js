@@ -273,11 +273,11 @@
             var $el = $form.find('[name="' + fieldName + '"]');
             if (!$el.length) return;
             if ($el.is('select')) {
-                $el.val(value).prop('disabled', true);
+                $el.val(value).prop('disabled', true).addClass('hs-field-locked');
             } else if ($el.is('input[type="checkbox"]')) {
-                $el.prop('checked', value == '1').prop('disabled', true);
+                $el.prop('checked', value == '1').prop('disabled', true).addClass('hs-field-locked');
             } else {
-                $el.val(value || '').prop('readonly', true).prop('disabled', false);
+                $el.val(value || '').prop('readonly', true).addClass('hs-field-locked');
             }
         }
 
@@ -285,12 +285,25 @@
             var $el = $form.find('[name="' + fieldName + '"]');
             if (!$el.length) return;
             if ($el.is('select')) {
-                $el.prop('disabled', false);
+                $el.val('').prop('disabled', false).removeClass('hs-field-locked');
             } else if ($el.is('input[type="checkbox"]')) {
-                $el.prop('disabled', false);
+                $el.prop('checked', false).prop('disabled', false).removeClass('hs-field-locked');
             } else {
-                $el.prop('readonly', false);
+                $el.val('').prop('readonly', false).removeClass('hs-field-locked');
             }
+        }
+
+        function hsSmartBuildSearchLinks(name) {
+            var enc = encodeURIComponent(name);
+            return [
+                { url: 'https://www.google.com/search?q=' + enc,                                               label: '🔍 Google' },
+                { url: 'https://www.qwant.com/?l=de&q=' + enc,                                                 label: '🔍 Qwant' },
+                { url: 'https://duckduckgo.com/?q=' + enc,                                                     label: '🔍 DuckDuckGo' },
+                { url: 'https://www.bing.com/search?q=' + enc,                                                 label: '🔍 Bing' },
+                { url: 'https://www.abgeordnetenwatch.de/profile?politician_search_keys=' + enc,               label: '🏛 Abgeordnetenwatch' },
+            ].map(function(l) {
+                return '<a href="' + l.url + '" target="_blank" rel="noopener noreferrer" class="hs-btn hs-search-btn">' + l.label + '</a>';
+            }).join('');
         }
 
         function hsSmartPopulate($form, data) {
@@ -302,15 +315,14 @@
             allFields.forEach(function(f) { hsSmartLockField($form, f, data[f] || ''); });
 
             // Geburtsland select
-            $form.find('[name="geburtsland"]').val(data.geburtsland || 'Deutschland').prop('disabled', true);
+            $form.find('[name="geburtsland"]').val(data.geburtsland || 'Deutschland').prop('disabled', true).addClass('hs-field-locked');
 
             // Verstorben checkbox + DoD
-            var $verstorbenCb = $form.find('[name="verstorben"]');
-            $verstorbenCb.prop('checked', data.verstorben == '1').prop('disabled', true);
+            $form.find('[name="verstorben"]').prop('checked', data.verstorben == '1').prop('disabled', true).addClass('hs-field-locked');
             var $dodRow = $form.find('.hs-dod-row');
             if (data.verstorben == '1') {
                 $dodRow.show();
-                $form.find('[name="dod"]').val(data.dod || '').prop('readonly', true);
+                $form.find('[name="dod"]').val(data.dod || '').prop('readonly', true).addClass('hs-field-locked');
             } else {
                 $dodRow.hide();
                 $form.find('[name="dod"]').val('');
@@ -333,6 +345,13 @@
                 $imgPreview.hide().find('.hs-smart-image-preview-inner').empty();
             }
 
+            // Show search links for the loaded person
+            var $sl = $form.find('.hs-smart-search-links');
+            if (data.name) {
+                $sl.find('.hs-search-buttons').html(hsSmartBuildSearchLinks(data.name));
+                $sl.show();
+            }
+
             // Show locked banner
             $form.find('.hs-smart-person-locked').show();
         }
@@ -345,12 +364,24 @@
                 .concat(['geburtsland','dod']);
 
             allFields.forEach(function(f) { hsSmartUnlockField($form, f); });
-            $form.find('[name="verstorben"]').prop('disabled', false);
+            $form.find('[name="verstorben"]').prop('checked', false).prop('disabled', false).removeClass('hs-field-locked');
+            $form.find('.hs-dod-row').hide();
             $form.find('#hs-smart-entry-id').val('');
             $form.find('.hs-smart-image-section').show();
             $form.find('.hs-smart-image-preview').hide().find('.hs-smart-image-preview-inner').empty();
+            $form.find('.hs-smart-search-links').hide().find('.hs-search-buttons').empty();
             $form.find('.hs-smart-person-locked').hide();
             $form.find('#hs-smart-person-select').val('');
+
+            // Reset entry-specific fields
+            $form.find('[name="straftat"]').val('');
+            $form.find('[name="urteil"]').val('');
+            $form.find('[name="link_quelle"]').val('');
+            $form.find('[name="aktenzeichen"]').val('');
+            $form.find('[name="bemerkung"]').val('');
+            $form.find('[name="status_straftat"]').val($form.find('[name="status_straftat"] option:first').val());
+            var today = new Date().toISOString().slice(0, 10);
+            $form.find('[name="datum_eintrag"]').val(today);
         }
 
         $(document).on('change', '.hs-smart-person-select', function () {
