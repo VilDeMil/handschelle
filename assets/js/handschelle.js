@@ -263,6 +263,106 @@
             });
         }
 
+        // ── 14. Smart-Formular: Personen-Dropdown ────────────────
+        var SMART_PERSONAL_FIELDS  = ['name','beruf','spitzname','geburtsort','geburtsdatum','bemerkung_person'];
+        var SMART_POLITIK_FIELDS   = ['partei','aufgabe_partei','parlament','parlament_name','status_aktiv'];
+        var SMART_SOCIAL_FIELDS    = ['sm_facebook','sm_youtube','sm_personal','sm_twitter','sm_homepage','sm_wikipedia','sm_linkedin','sm_xing','sm_truth_social','sm_sonstige'];
+        var SMART_EMAIL_FIELDS     = ['private_email','oeffentliche_email'];
+
+        function hsSmartLockField($form, fieldName, value) {
+            var $el = $form.find('[name="' + fieldName + '"]');
+            if (!$el.length) return;
+            if ($el.is('select')) {
+                $el.val(value).prop('disabled', true);
+            } else if ($el.is('input[type="checkbox"]')) {
+                $el.prop('checked', value == '1').prop('disabled', true);
+            } else {
+                $el.val(value || '').prop('readonly', true).prop('disabled', false);
+            }
+        }
+
+        function hsSmartUnlockField($form, fieldName) {
+            var $el = $form.find('[name="' + fieldName + '"]');
+            if (!$el.length) return;
+            if ($el.is('select')) {
+                $el.prop('disabled', false);
+            } else if ($el.is('input[type="checkbox"]')) {
+                $el.prop('disabled', false);
+            } else {
+                $el.prop('readonly', false);
+            }
+        }
+
+        function hsSmartPopulate($form, data) {
+            var allFields = SMART_PERSONAL_FIELDS
+                .concat(SMART_POLITIK_FIELDS)
+                .concat(SMART_SOCIAL_FIELDS)
+                .concat(SMART_EMAIL_FIELDS);
+
+            allFields.forEach(function(f) { hsSmartLockField($form, f, data[f] || ''); });
+
+            // Geburtsland select
+            $form.find('[name="geburtsland"]').val(data.geburtsland || 'Deutschland').prop('disabled', true);
+
+            // Verstorben checkbox + DoD
+            var $verstorbenCb = $form.find('[name="verstorben"]');
+            $verstorbenCb.prop('checked', data.verstorben == '1').prop('disabled', true);
+            var $dodRow = $form.find('.hs-dod-row');
+            if (data.verstorben == '1') {
+                $dodRow.show();
+                $form.find('[name="dod"]').val(data.dod || '').prop('readonly', true);
+            } else {
+                $dodRow.hide();
+                $form.find('[name="dod"]').val('');
+            }
+
+            // Set hidden entry ID
+            $form.find('#hs-smart-entry-id').val(data.id);
+
+            // Hide image upload (person already exists in DB)
+            $form.find('.hs-smart-image-section').hide();
+
+            // Show locked banner
+            $form.find('.hs-smart-person-locked').show();
+        }
+
+        function hsSmartClear($form) {
+            var allFields = SMART_PERSONAL_FIELDS
+                .concat(SMART_POLITIK_FIELDS)
+                .concat(SMART_SOCIAL_FIELDS)
+                .concat(SMART_EMAIL_FIELDS)
+                .concat(['geburtsland','dod']);
+
+            allFields.forEach(function(f) { hsSmartUnlockField($form, f); });
+            $form.find('[name="verstorben"]').prop('disabled', false);
+            $form.find('#hs-smart-entry-id').val('');
+            $form.find('.hs-smart-image-section').show();
+            $form.find('.hs-smart-person-locked').hide();
+            $form.find('#hs-smart-person-select').val('');
+        }
+
+        $(document).on('change', '.hs-smart-person-select', function () {
+            var entryId = $(this).val();
+            var $form   = $(this).closest('form');
+            if (!entryId) {
+                hsSmartClear($form);
+                return;
+            }
+            $.post(
+                handschelle_ajax.ajax_url,
+                { action: 'hs_get_person_data', nonce: handschelle_ajax.nonce, entry_id: entryId },
+                function (response) {
+                    if (response && response.success) {
+                        hsSmartPopulate($form, response.data);
+                    }
+                }
+            );
+        });
+
+        $(document).on('click', '.hs-smart-clear-btn', function () {
+            hsSmartClear($(this).closest('form'));
+        });
+
     });
 
 })(jQuery);
