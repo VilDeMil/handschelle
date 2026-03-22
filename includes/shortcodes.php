@@ -61,11 +61,18 @@ class Handschelle_Shortcodes {
         add_shortcode( 'handschelle-privacy',          array( $this, 'sc_privacy' ) );
         add_shortcode( 'handschelle-wanted',           array( $this, 'sc_wanted' ) );
 
+        add_shortcode( 'handschelle-smart',            array( $this, 'sc_smart_eingabe' ) );
+
         // Submit früh verarbeiten – BEVOR Header gesendet werden
         add_action( 'init', array( $this, 'early_frontend_submit' ) );
         add_action( 'init', array( $this, 'early_frontend_edit' ) );
         add_action( 'init', array( $this, 'early_login_submit' ) );
         add_action( 'init', array( $this, 'early_register_submit' ) );
+        add_action( 'init', array( $this, 'early_smart_submit' ) );
+
+        // AJAX: Personendaten für [handschelle-smart] laden
+        add_action( 'wp_ajax_hs_get_person_data',        array( $this, 'ajax_get_person_data' ) );
+        add_action( 'wp_ajax_nopriv_hs_get_person_data', array( $this, 'ajax_get_person_data' ) );
     }
 
     /* ================================================================
@@ -2337,6 +2344,274 @@ class Handschelle_Shortcodes {
         </div>
         <?php
         return ob_get_clean();
+    }
+
+    /* ================================================================
+       [handschelle-smart] – Smart-Eingabeformular mit Personen-Dropdown
+    ================================================================ */
+    public function sc_smart_eingabe( $atts ) {
+        $persons = Handschelle_Database::get_persons_dropdown();
+
+        ob_start();
+        ?>
+        <div class="hs-frontend hs-full-width">
+            <div class="hs-eingabe-form">
+                <h2 class="hs-section-title">📝 Straftat melden</h2>
+
+                <?php if ( ! empty( $_GET['hs_smart_success'] ) ) : ?>
+                    <div class="hs-alert hs-alert-success">✅ Danke! Eintrag empfangen und wird geprüft.</div>
+                <?php elseif ( ! empty( $_GET['hs_smart_error'] ) ) : ?>
+                    <div class="hs-alert hs-alert-error">⚠️ Fehler beim Speichern. Bitte Seite neu laden und erneut versuchen.</div>
+                <?php endif; ?>
+
+                <form method="post" enctype="multipart/form-data" class="hs-form" id="hs-smart-form">
+                    <?php wp_nonce_field( 'hs_smart_submit', 'hs_smart_nonce' ); ?>
+                    <input type="hidden" name="hs_smart_submit" value="1">
+                    <input type="hidden" name="hs_return_url"   value="<?php echo esc_url( get_permalink() ); ?>">
+                    <input type="hidden" name="hs_existing_entry_id" id="hs-smart-entry-id" value="">
+
+                    <!-- ── Personen-Auswahl ───────────────────── -->
+                    <div class="hs-form-section hs-smart-selector-section">
+                        <h3>👤 Person auswählen</h3>
+                        <p class="hs-note">Wähle eine bereits bekannte Person aus dem Dropdown, um deren Daten zu übernehmen – oder lass das Feld leer, um eine neue Person einzutragen.</p>
+                        <div class="hs-form-grid">
+                            <div class="hs-field hs-field-full">
+                                <label for="hs-smart-person-select">Bekannte Person</label>
+                                <select id="hs-smart-person-select" class="hs-smart-person-select">
+                                    <option value="">-- Neue Person eintragen --</option>
+                                    <?php foreach ( $persons as $p ) : ?>
+                                        <option value="<?php echo esc_attr( $p->id ); ?>">
+                                            <?php echo esc_html( $p->name ); ?><?php if ( $p->partei ) echo ' (' . esc_html( $p->partei ) . ')'; ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="hs-smart-person-locked" style="display:none;">
+                            <div class="hs-alert hs-alert-info">🔒 Personendaten wurden übernommen und sind gesperrt. <button type="button" class="hs-btn hs-btn-sm hs-smart-clear-btn">Person ändern</button></div>
+                        </div>
+                    </div>
+
+                    <!-- ── Personal ──────────────────────────── -->
+                    <div class="hs-form-section hs-smart-personal-section">
+                        <h3>📋 Personal</h3>
+                        <div class="hs-form-grid hs-smart-personal-fields">
+                            <div class="hs-field"><label>Name <span>(max. 50 Zeichen)</span></label><input type="text" name="name" maxlength="50" required placeholder="Vor- und Nachname"></div>
+                            <div class="hs-field"><label>Beruf <span>(max. 50 Zeichen)</span></label><input type="text" name="beruf" maxlength="50" placeholder="z.B. Politiker, Unternehmer"></div>
+                            <div class="hs-field"><label>Spitzname <span>(max. 100 Zeichen)</span></label><input type="text" name="spitzname" maxlength="100" placeholder="z.B. Der Fuchs"></div>
+                            <div class="hs-field"><label>Geburtsort <span>(max. 100 Zeichen)</span></label><input type="text" name="geburtsort" maxlength="100" placeholder="z.B. Berlin"></div>
+                            <div class="hs-field">
+                                <label>Geburtsland</label>
+                                <select name="geburtsland">
+                                    <?php foreach ( handschelle_laender() as $land ) : ?>
+                                        <option value="<?php echo esc_attr($land); ?>" <?php selected( $land, 'Deutschland' ); ?>><?php echo esc_html($land); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="hs-field"><label>Geburtsdatum</label><input type="date" name="geburtsdatum"></div>
+                            <div class="hs-field">
+                                <label class="hs-checkbox-label"><input type="checkbox" name="verstorben" class="hs-verstorben-cb" value="1"> Verstorben</label>
+                            </div>
+                            <div class="hs-field hs-dod-row" style="display:none;">
+                                <label>Sterbedatum (DoD)</label>
+                                <input type="date" name="dod">
+                            </div>
+                            <div class="hs-field hs-field-full">
+                                <label>Bemerkung zur Person <span>(max. 500 Zeichen)</span></label>
+                                <textarea name="bemerkung_person" maxlength="500" rows="4" placeholder="Weitere Informationen zur Person …"></textarea>
+                                <small class="hs-char-counter" data-target="bemerkung_person">0 / 500 Zeichen</small>
+                            </div>
+                            <div class="hs-field hs-field-full hs-smart-image-section">
+                                <label>Bild hochladen</label>
+                                <input type="file" name="bild_upload" accept="image/*" class="hs-file-input">
+                                <div class="hs-file-preview" id="hs-smart-file-preview"></div>
+                                <small>Wird automatisch auf max. 450 px Höhe skaliert.</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── Social Media ──────────────────────── -->
+                    <div class="hs-form-section hs-smart-social-section">
+                        <h3>📱 Social-Media Links</h3>
+                        <div class="hs-form-grid hs-smart-social-fields">
+                            <?php foreach ( array( 'sm_facebook'=>'📘 Facebook','sm_youtube'=>'▶ YouTube','sm_personal'=>'👤 Persönliches Profil','sm_twitter'=>'🐦 Twitter / X','sm_homepage'=>'🌐 Persönliche Homepage','sm_wikipedia'=>'📖 Wikipedia','sm_linkedin'=>'💼 LinkedIn','sm_xing'=>'💼 Xing','sm_truth_social'=>'🗣 Truth Social','sm_sonstige'=>'🔗 Sonstige' ) as $field => $label ) : ?>
+                                <div class="hs-field"><label><?php echo $label; ?></label><input type="url" name="<?php echo esc_attr($field); ?>" placeholder="https://…"></div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+
+                    <!-- ── Politik ───────────────────────────── -->
+                    <div class="hs-form-section hs-smart-politik-section">
+                        <h3>🏛 Politik</h3>
+                        <div class="hs-form-grid hs-smart-politik-fields">
+                            <div class="hs-field"><label>Partei <span>(max. 50 Zeichen)</span></label><input type="text" name="partei" maxlength="50" placeholder="z.B. CDU, SPD, Grüne …"></div>
+                            <div class="hs-field"><label>Aufgabe in der Partei</label><input type="text" name="aufgabe_partei" maxlength="100" placeholder="z.B. Vorsitzender, MdB …"></div>
+                            <div class="hs-field">
+                                <label>Parlament</label>
+                                <select name="parlament">
+                                    <option value="">-- Bitte wählen --</option>
+                                    <?php foreach ( handschelle_parlaments() as $p ) : ?>
+                                        <option value="<?php echo esc_attr($p); ?>"><?php echo esc_html($p); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="hs-field"><label>Parlament Name <span>(max. 50 Zeichen)</span></label><input type="text" name="parlament_name" maxlength="50" placeholder="z.B. Wahlkreis München"></div>
+                            <div class="hs-field"><label>Status</label><select name="status_aktiv"><option value="1">Aktiv</option><option value="0">Inaktiv</option></select></div>
+                        </div>
+                    </div>
+
+                    <!-- ── Straftat ──────────────────────────── -->
+                    <div class="hs-form-section">
+                        <h3>⚖ Details zur Straftat</h3>
+                        <div class="hs-form-grid">
+                            <div class="hs-field hs-field-full">
+                                <label>Straftat</label>
+                                <textarea name="straftat" rows="3" placeholder="Kurze Beschreibung der Straftat …" required></textarea>
+                            </div>
+                            <div class="hs-field"><label>Urteil <span>(max. 200 Zeichen)</span></label><input type="text" name="urteil" maxlength="200" placeholder="z.B. 2 Jahre auf Bewährung"></div>
+                            <div class="hs-field"><label>Link zur Quelle</label><input type="url" name="link_quelle" placeholder="https://…"></div>
+                            <div class="hs-field"><label>Aktenzeichen <span>(max. 50 Zeichen)</span></label><input type="text" name="aktenzeichen" maxlength="50" placeholder="z.B. 1 StR 123/24"></div>
+                            <div class="hs-field hs-field-full"><label>Bemerkung</label><textarea name="bemerkung" rows="4" placeholder="Weitere Anmerkungen …"></textarea></div>
+                            <div class="hs-field">
+                                <label>Status der Straftat</label>
+                                <select name="status_straftat">
+                                    <?php foreach ( handschelle_status_straftat_options() as $s ) : ?>
+                                        <option value="<?php echo esc_attr($s); ?>"><?php echo esc_html($s); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="hs-field"><label>Datum</label><input type="date" name="datum_eintrag" value="<?php echo esc_attr( date('Y-m-d') ); ?>" required></div>
+                        </div>
+                    </div>
+
+                    <!-- ── E-Mail (nur für eingeloggte Nutzer) ── -->
+                    <?php if ( is_user_logged_in() ) : ?>
+                    <div class="hs-form-section">
+                        <h3>✉ Kontaktdaten</h3>
+                        <div class="hs-form-grid hs-smart-email-fields">
+                            <div class="hs-field"><label>Private E-Mail</label><input type="email" name="private_email" maxlength="200" placeholder="privat@beispiel.de"></div>
+                            <div class="hs-field"><label>Öffentliche E-Mail</label><input type="email" name="oeffentliche_email" maxlength="200" placeholder="kontakt@beispiel.de"></div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+
+                    <!-- ── Submit ────────────────────────────── -->
+                    <div class="hs-form-actions">
+                        <button type="submit" class="hs-btn hs-btn-primary">📨 Eintrag einreichen</button>
+                        <p class="hs-note">* Einreichungen werden vor der Veröffentlichung geprüft.</p>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /* ================================================================
+       AJAX: Personendaten für [handschelle-smart] liefern
+    ================================================================ */
+    public function ajax_get_person_data() {
+        check_ajax_referer( 'handschelle_nonce', 'nonce' );
+
+        $id    = intval( $_POST['entry_id'] ?? 0 );
+        $entry = $id ? Handschelle_Database::get_one( $id ) : null;
+
+        if ( ! $entry ) {
+            wp_send_json_error( 'Not found' );
+            return;
+        }
+
+        $data = array(
+            'id'               => $entry->id,
+            'name'             => $entry->name,
+            'beruf'            => $entry->beruf,
+            'spitzname'        => $entry->spitzname,
+            'geburtsort'       => $entry->geburtsort,
+            'geburtsland'      => $entry->geburtsland,
+            'geburtsdatum'     => $entry->geburtsdatum === '0000-00-00' ? '' : $entry->geburtsdatum,
+            'verstorben'       => $entry->verstorben,
+            'dod'              => ( $entry->dod && $entry->dod !== '0000-00-00' ) ? $entry->dod : '',
+            'bemerkung_person' => $entry->bemerkung_person,
+            'partei'           => $entry->partei,
+            'aufgabe_partei'   => $entry->aufgabe_partei,
+            'parlament'        => $entry->parlament,
+            'parlament_name'   => $entry->parlament_name,
+            'status_aktiv'     => $entry->status_aktiv,
+            'sm_facebook'      => $entry->sm_facebook,
+            'sm_youtube'       => $entry->sm_youtube,
+            'sm_personal'      => $entry->sm_personal,
+            'sm_twitter'       => $entry->sm_twitter,
+            'sm_homepage'      => $entry->sm_homepage,
+            'sm_wikipedia'     => $entry->sm_wikipedia,
+            'sm_linkedin'      => $entry->sm_linkedin,
+            'sm_xing'          => $entry->sm_xing,
+            'sm_truth_social'  => $entry->sm_truth_social,
+            'sm_sonstige'      => $entry->sm_sonstige,
+        );
+
+        // E-Mail-Felder nur für eingeloggte Nutzer
+        if ( is_user_logged_in() ) {
+            $data['private_email']      = $entry->private_email;
+            $data['oeffentliche_email'] = $entry->oeffentliche_email;
+        }
+
+        wp_send_json_success( $data );
+    }
+
+    /* ================================================================
+       [handschelle-smart] SUBMIT-HANDLER auf init-Hook
+    ================================================================ */
+    public function early_smart_submit() {
+        if ( empty( $_POST['hs_smart_submit'] ) ) return;
+
+        if ( ! isset( $_POST['hs_smart_nonce'] ) ||
+             ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['hs_smart_nonce'] ) ), 'hs_smart_submit' ) ) {
+            wp_safe_redirect( add_query_arg( 'hs_smart_error', '1', $this->return_url() ) );
+            exit;
+        }
+
+        $existing_id = intval( $_POST['hs_existing_entry_id'] ?? 0 );
+
+        if ( $existing_id > 0 ) {
+            // Existing person selected → add new offence to offences table
+            $entry = Handschelle_Database::get_one( $existing_id );
+            if ( ! $entry ) {
+                wp_safe_redirect( add_query_arg( 'hs_smart_error', '1', $this->return_url() ) );
+                exit;
+            }
+
+            $urteil_raw = sanitize_text_field( $_POST['urteil'] ?? '' );
+            $offence_data = array(
+                'straftat'        => sanitize_textarea_field( $_POST['straftat']       ?? '' ),
+                'urteil'          => substr( $urteil_raw, 0, 200 ),
+                'link_quelle'     => esc_url_raw( $_POST['link_quelle']   ?? '' ),
+                'aktenzeichen'    => substr( sanitize_text_field( $_POST['aktenzeichen'] ?? '' ), 0, 50 ),
+                'bemerkung'       => sanitize_textarea_field( $_POST['bemerkung']      ?? '' ),
+                'status_straftat' => sanitize_text_field( $_POST['status_straftat']    ?? 'Ermittlungen laufen' ),
+                'datum_eintrag'   => sanitize_text_field( $_POST['datum_eintrag']      ?: date( 'Y-m-d' ) ),
+            );
+
+            if ( empty( $offence_data['straftat'] ) ) {
+                wp_safe_redirect( add_query_arg( 'hs_smart_error', '1', $this->return_url() ) );
+                exit;
+            }
+
+            $inserted = Handschelle_Database::insert_offence( $existing_id, $offence_data );
+
+        } else {
+            // New person → insert full entry
+            $data      = handschelle_sanitize_entry( $_POST );
+            $attach_id = Handschelle_Image_Handler::handle_upload_and_resize( 'bild_upload', $data['name'] ?? '', $data['partei'] ?? '' );
+            if ( $attach_id ) $data['bild'] = $attach_id;
+            $inserted = Handschelle_Database::insert( $data );
+        }
+
+        if ( $inserted ) {
+            wp_safe_redirect( add_query_arg( 'hs_smart_success', '1', $this->return_url() ) );
+        } else {
+            wp_safe_redirect( add_query_arg( 'hs_smart_error', '1', $this->return_url() ) );
+        }
+        exit;
     }
 
 }
