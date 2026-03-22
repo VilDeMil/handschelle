@@ -12,11 +12,27 @@ die-handschelle/
 │   ├── admin.php                 ← Handschelle_Admin class (admin menus, forms,
 │   │                                CSV import/export, backup/restore)
 │   └── shortcodes.php            ← Handschelle_Shortcodes class (26 shortcodes,
-│                                    PRG submit handler, inline SVG icons)
+│                                    PRG submit handlers, inline SVG icons)
 └── assets/
     ├── css/handschelle.css       ← Full stylesheet with CSS custom properties
     └── js/handschelle.js         ← Frontend and admin JS
 ```
+
+### Documentation files (*.txt)
+
+| File | Content |
+|---|---|
+| `installation-from-github.txt` | Installation methods (ZIP, Git, WP-CLI), requirements |
+| `build-package.txt` | How to create a release ZIP |
+| `shortcodes.txt` | All shortcodes with attributes and examples |
+| `fields-database-schema.txt` | Database schema, field types, status options |
+| `code-reference.txt` | PHP class reference, JS API, CSS design tokens |
+| `plugin-structure.txt` | This file — directory tree and file overview |
+| `instructions-for-ai-llm.txt` | Rules for AI assistants contributing to this codebase |
+| `datenschutz-privacy.txt` | GDPR / privacy statement (DE + EN) |
+| `connect-github-to-ai-tools.txt` | How to connect this repo to Gemini, Copilot, ChatGPT, Claude Code |
+| `recreate-from-scratch.txt` | Complete AI prompt to rebuild the plugin from a blank slate |
+
 ---
 
-(c) 2026 - "Die-Handschelle" Final-11 - www.die-handschelle.com
+(c) 2026 - "Die-Handschelle" Final-12 - www.die-handschelle.com

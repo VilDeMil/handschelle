@@ -27,6 +27,7 @@ cd .. && zip -r die-handschelle.zip die-handschelle/ --exclude "die-handschelle/
 php -r "var_dump(extension_loaded('gd'));"
 # expected: bool(true)
 ```
+
 ---
 
-(c) 2026 - "Die-Handschelle" Final-11 - www.die-handschelle.com
+(c) 2026 - "Die-Handschelle" Final-12 - www.die-handschelle.com
