@@ -2276,6 +2276,12 @@ class Handschelle_Shortcodes {
         <div class="hs-wanted-wrap hs-frontend">
             <div class="hs-wanted-card">
 
+                <div class="hs-wanted-header">
+                    <div class="hs-wanted-header-authority">BUNDESKRIMINALAMT</div>
+                    <div class="hs-wanted-header-title">FAHNDUNGSPLAKAT</div>
+                    <div class="hs-wanted-header-gesucht">GESUCHT</div>
+                </div>
+
                 <div class="hs-wanted-body">
                     <div class="hs-wanted-photo-col">
                         <?php if ( $img_url ) : ?>
@@ -2283,11 +2289,8 @@ class Handschelle_Shortcodes {
                                  alt="<?php echo esc_attr( $display_name ); ?>"
                                  class="hs-wanted-photo">
                         <?php else : ?>
-                            <div class="hs-wanted-photo-placeholder">👤</div>
+                            <div class="hs-wanted-photo-placeholder">?</div>
                         <?php endif; ?>
-                        <div class="hs-wanted-status hs-wanted-status--<?php echo esc_attr( $status_key ); ?>">
-                            <?php echo esc_html( $e->status_straftat ); ?>
-                        </div>
                     </div>
 
                     <div class="hs-wanted-info-col">
@@ -2295,32 +2298,39 @@ class Handschelle_Shortcodes {
 
                         <?php if ( $e->partei ) : ?>
                         <div class="hs-wanted-row">
-                            <span class="hs-wanted-label">Partei</span>
+                            <span class="hs-wanted-label">Partei:</span>
                             <span class="hs-wanted-value"><?php echo esc_html( $e->partei ); ?></span>
                         </div>
                         <?php endif; ?>
 
                         <?php if ( $e->parlament ) : ?>
                         <div class="hs-wanted-row">
-                            <span class="hs-wanted-label">Parlament</span>
+                            <span class="hs-wanted-label">Parlament:</span>
                             <span class="hs-wanted-value"><?php echo esc_html( $e->parlament ); ?><?php if ( $e->parlament_name ) echo ' (' . esc_html( $e->parlament_name ) . ')'; ?></span>
                         </div>
                         <?php endif; ?>
 
                         <?php if ( $e->straftat ) : ?>
                         <div class="hs-wanted-row hs-wanted-row--block">
-                            <span class="hs-wanted-label">Straftat</span>
+                            <span class="hs-wanted-label">Straftat:</span>
                             <span class="hs-wanted-value"><?php echo nl2br( esc_html( wp_trim_words( $e->straftat, 35, '…' ) ) ); ?></span>
                         </div>
                         <?php endif; ?>
 
                         <?php if ( $e->urteil ) : ?>
                         <div class="hs-wanted-row hs-wanted-row--block">
-                            <span class="hs-wanted-label">Urteil</span>
+                            <span class="hs-wanted-label">Urteil:</span>
                             <span class="hs-wanted-value hs-wanted-value--urteil"><?php echo esc_html( $e->urteil ); ?></span>
                         </div>
                         <?php endif; ?>
                     </div>
+                </div>
+
+                <div class="hs-wanted-footer">
+                    <div class="hs-wanted-status hs-wanted-status--<?php echo esc_attr( $status_key ); ?>">
+                        <?php echo esc_html( $e->status_straftat ); ?>
+                    </div>
+                    <div class="hs-wanted-footer-hinweis">Hinweise bitte an die zuständigen Behörden melden.</div>
                 </div>
 
             </div>
