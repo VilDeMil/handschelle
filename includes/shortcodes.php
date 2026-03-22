@@ -879,7 +879,7 @@ class Handschelle_Shortcodes {
                     Wer die Arbeit schätzt, kann uns mit einem Geschenk helfen, den Betrieb zu sichern.
                 </p>
                 <a href="https://claude.ai/gift" target="_blank" rel="noopener noreferrer" class="hs-btn hs-donate-btn">
-                    🎁 Geschenk senden
+                    🎁 Rechenzeit mit Claude.ai senden
                 </a>
             </div>
             <?php echo $this->sc_disclaimer( array() ); ?>
