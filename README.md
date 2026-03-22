@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | Final-14 |
+| **Version** | Final-15 |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
 | **Lizenz** | GPL-2.0+ |
@@ -146,6 +146,9 @@ Planned features for upcoming versions:
 ---
 
 ## Release Notes
+
+### Final-15 *(2026-03-22)*
+- **Pages backup/restore: menus, overwrite, warning**: Backup now also exports all nav menus (`wp_get_nav_menus`) into `pages.json` under `menus` key — each item stores type, URL, parent index, and slug-based object reference for portability. Restore: confirm checkbox required; existing menu items are deleted and recreated (full overwrite); parent relationships wired in a second pass via `_menu_item_menu_item_parent`; menu item URLs rewritten with Link/Path domain replacement. Red warning added to form. Version bumped Final-14 → Final-15.
 
 ### Final-14 *(2026-03-22)*
 - **Pages restore: "Restore to which Domain"**: Backup now stores `source_url` (`home_url()`) in `pages.json`. Restore form adds **Link** (target domain) and **Path** (optional path prefix) fields. On restore, all occurrences of `source_url` in `post_content` and `post_excerpt` are replaced with `<link><path>` before saving. Backward-compatible with old flat-array backups (no URL replacement performed). JSON format changed from flat array to `{ source_url, pages: [...] }`.

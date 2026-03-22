@@ -1609,7 +1609,9 @@ class Handschelle_Admin {
             'post_status'    => array( 'publish', 'draft', 'private' ),
             'posts_per_page' => -1,
         ) );
+        $menus = wp_get_nav_menus();
         $total = count( $pages );
+        $total_menus = count( $menus );
         ?>
         <div class="wrap hs-wrap">
             <h1>📄 Seiten Backup &amp; Restore</h1>
@@ -1617,8 +1619,8 @@ class Handschelle_Admin {
             <!-- ── BACKUP ── -->
             <div class="hs-form-section">
                 <h2>⬇ Backup erstellen</h2>
-                <p>Erstellt eine ZIP-Datei mit allen WordPress-Seiten als JSON.<br>
-                   Aktuell: <strong><?php echo $total; ?> Seite(n)</strong> (veröffentlicht, Entwurf, privat).</p>
+                <p>Erstellt eine ZIP-Datei mit allen WordPress-Seiten und Navigationsmenüs als JSON.<br>
+                   Aktuell: <strong><?php echo $total; ?> Seite(n)</strong> und <strong><?php echo $total_menus; ?> Menü(s)</strong> (veröffentlicht, Entwurf, privat).</p>
                 <form method="post" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>">
                     <?php wp_nonce_field( 'handschelle_admin_action' ); ?>
                     <input type="hidden" name="hs_action" value="backup_pages">
@@ -1630,7 +1632,7 @@ class Handschelle_Admin {
             <!-- ── RESTORE ── -->
             <div class="hs-form-section" style="margin-top:2rem;">
                 <h2>⬆ Backup wiederherstellen</h2>
-                <p>Seiten aus einer Backup-ZIP importieren. Bestehende Seiten werden anhand des Slugs erkannt und aktualisiert; neue Seiten werden angelegt.</p>
+                <p style="color:#c0392b;font-weight:600;">⚠ Beim Wiederherstellen werden <strong>alle bestehenden Seiten überschrieben</strong>, die im Backup enthalten sind (Abgleich per Slug). Menüs werden vollständig ersetzt.</p>
                 <form method="post" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>" enctype="multipart/form-data">
                     <?php wp_nonce_field( 'handschelle_admin_action' ); ?>
                     <input type="hidden" name="hs_action" value="restore_pages">
@@ -1641,7 +1643,7 @@ class Handschelle_Admin {
                     </div>
                     <div class="hs-form-section" style="background:#f8f8f8;border:1px solid #ddd;padding:1rem;margin-bottom:.8rem;max-width:420px;">
                         <strong>🌐 Auf welche Domain wiederherstellen?</strong>
-                        <p style="margin:.4rem 0 .8rem;color:#555;font-size:.88em;">Alle Links im Seiteninhalt werden von der Quell-Domain auf <code>Link + Pfad</code> umgeschrieben. Felder leer lassen, um Links unverändert zu übernehmen.</p>
+                        <p style="margin:.4rem 0 .8rem;color:#555;font-size:.88em;">Alle Links im Seiteninhalt und in Menüs werden von der Quell-Domain auf <code>Link + Pfad</code> umgeschrieben. Felder leer lassen, um Links unverändert zu übernehmen.</p>
                         <div class="hs-field" style="margin-bottom:.6rem;">
                             <label>Link <span style="color:#888;font-size:.85em;">(Domain, z.B. https://www.neue-domain.de)</span></label>
                             <input type="url" name="restore_link" placeholder="https://www.neue-domain.de" style="width:100%;">
@@ -1651,7 +1653,11 @@ class Handschelle_Admin {
                             <input type="text" name="restore_path" placeholder="/unterordner" style="width:100%;">
                         </div>
                     </div>
-                    <button type="submit" class="button button-primary hs-btn">⬆ Seiten importieren</button>
+                    <label class="hs-checkbox-label" style="margin-bottom:.8rem;display:block;">
+                        <input type="checkbox" name="pages_restore_confirm" value="1" required>
+                        Ich verstehe, dass bestehende Seiten überschrieben und Menüs vollständig ersetzt werden.
+                    </label>
+                    <button type="submit" class="button hs-btn-danger" onclick="return confirm('Wirklich wiederherstellen? Bestehende Seiten und Menüs werden überschrieben!')">⬆ Seiten importieren</button>
                 </form>
             </div>
             <?php echo $this->hs_footer(); ?>
@@ -1704,9 +1710,57 @@ class Handschelle_Admin {
             return;
         }
 
+        // Export nav menus
+        $menus_data = array();
+        foreach ( wp_get_nav_menus() as $menu ) {
+            $items      = wp_get_nav_menu_items( $menu->term_id );
+            $items_data = array();
+            // Map item DB-ID → sequential index for parent references
+            $id_to_idx  = array();
+            foreach ( (array) $items as $idx => $item ) {
+                $id_to_idx[ $item->ID ] = $idx;
+            }
+            foreach ( (array) $items as $idx => $item ) {
+                $entry = array(
+                    'title'        => $item->title,
+                    'url'          => $item->url,
+                    'type'         => $item->type,
+                    'object'       => $item->object,
+                    'menu_order'   => $item->menu_order,
+                    'target'       => $item->target,
+                    'classes'      => implode( ' ', (array) $item->classes ),
+                    'xfn'          => $item->xfn,
+                    'description'  => $item->description,
+                    'attr_title'   => $item->attr_title,
+                    'parent_index' => isset( $id_to_idx[ $item->menu_item_parent ] )
+                                      ? $id_to_idx[ $item->menu_item_parent ] : -1,
+                );
+                if ( $item->type === 'post_type' && $item->object_id ) {
+                    $linked = get_post( $item->object_id );
+                    if ( $linked ) {
+                        $entry['object_slug'] = $linked->post_name;
+                        $entry['object_type'] = $linked->post_type;
+                    }
+                } elseif ( $item->type === 'taxonomy' && $item->object_id ) {
+                    $term = get_term( $item->object_id );
+                    if ( $term && ! is_wp_error( $term ) ) {
+                        $entry['term_slug'] = $term->slug;
+                        $entry['taxonomy']  = $term->taxonomy;
+                    }
+                }
+                $items_data[] = $entry;
+            }
+            $menus_data[] = array(
+                'name'  => $menu->name,
+                'slug'  => $menu->slug,
+                'items' => $items_data,
+            );
+        }
+
         $export = array(
             'source_url' => home_url(),
             'pages'      => $data,
+            'menus'      => $menus_data,
         );
         $zip->addFromString( 'pages.json', wp_json_encode( $export, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) );
         $zip->close();
@@ -1736,6 +1790,10 @@ class Handschelle_Admin {
         }
         if ( empty( $_FILES['pages_zip']['tmp_name'] ) ) {
             $this->redirect( admin_url( 'admin.php?page=handschelle-pages-backup' ), 'Fehler: Keine Backup-Datei hochgeladen.' );
+            return;
+        }
+        if ( empty( $_POST['pages_restore_confirm'] ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-pages-backup' ), 'Bitte Bestätigung ankreuzen.' );
             return;
         }
 
@@ -1839,9 +1897,76 @@ class Handschelle_Admin {
             }
         }
 
+        // ── Restore nav menus ────────────────────────────────────────
+        $menus_created = 0;
+        $menus_updated = 0;
+
+        foreach ( $json['menus'] ?? array() as $menu_data ) {
+            $menu_name = sanitize_text_field( $menu_data['name'] ?? '' );
+            $menu_slug = sanitize_title( $menu_data['slug'] ?? $menu_name );
+            if ( ! $menu_name ) continue;
+
+            // Find or create the menu
+            $existing = get_term_by( 'slug', $menu_slug, 'nav_menu' );
+            if ( $existing ) {
+                $menu_id = $existing->term_id;
+                // Remove all existing items for a clean overwrite
+                foreach ( (array) wp_get_nav_menu_items( $menu_id ) as $old_item ) {
+                    wp_delete_post( $old_item->ID, true );
+                }
+                $menus_updated++;
+            } else {
+                $result  = wp_create_nav_menu( $menu_name );
+                $menu_id = is_wp_error( $result ) ? 0 : $result;
+                $menus_created++;
+            }
+            if ( ! $menu_id ) continue;
+
+            // First pass: create all items (without parent)
+            $created_ids = array();
+            foreach ( (array) ( $menu_data['items'] ?? array() ) as $idx => $item ) {
+                $url = $item['url'] ?? '';
+                if ( $source_url && $target_url ) {
+                    $url = str_replace( $source_url, $target_url, $url );
+                }
+
+                $object_id = 0;
+                if ( ( $item['type'] ?? '' ) === 'post_type' && ! empty( $item['object_slug'] ) ) {
+                    $linked = get_page_by_path( $item['object_slug'], OBJECT, $item['object_type'] ?? 'page' );
+                    if ( $linked ) $object_id = $linked->ID;
+                } elseif ( ( $item['type'] ?? '' ) === 'taxonomy' && ! empty( $item['term_slug'] ) ) {
+                    $term = get_term_by( 'slug', $item['term_slug'], $item['taxonomy'] ?? 'category' );
+                    if ( $term ) $object_id = $term->term_id;
+                }
+
+                $new_id = wp_update_nav_menu_item( $menu_id, 0, array(
+                    'menu-item-title'       => sanitize_text_field( $item['title'] ?? '' ),
+                    'menu-item-url'         => esc_url_raw( $url ),
+                    'menu-item-type'        => sanitize_text_field( $item['type'] ?? 'custom' ),
+                    'menu-item-object'      => sanitize_text_field( $item['object'] ?? 'custom' ),
+                    'menu-item-object-id'   => $object_id,
+                    'menu-item-target'      => sanitize_text_field( $item['target'] ?? '' ),
+                    'menu-item-classes'     => sanitize_text_field( $item['classes'] ?? '' ),
+                    'menu-item-xfn'         => sanitize_text_field( $item['xfn'] ?? '' ),
+                    'menu-item-description' => sanitize_text_field( $item['description'] ?? '' ),
+                    'menu-item-attr-title'  => sanitize_text_field( $item['attr_title'] ?? '' ),
+                    'menu-item-position'    => intval( $item['menu_order'] ?? ( $idx + 1 ) ),
+                    'menu-item-status'      => 'publish',
+                ) );
+                $created_ids[ $idx ] = is_wp_error( $new_id ) ? 0 : $new_id;
+            }
+
+            // Second pass: wire up parent relationships
+            foreach ( (array) ( $menu_data['items'] ?? array() ) as $idx => $item ) {
+                $parent_idx = intval( $item['parent_index'] ?? -1 );
+                if ( $parent_idx < 0 || empty( $created_ids[ $parent_idx ] ) || empty( $created_ids[ $idx ] ) ) continue;
+                update_post_meta( $created_ids[ $idx ], '_menu_item_menu_item_parent', (string) $created_ids[ $parent_idx ] );
+            }
+        }
+
         $this->redirect(
             admin_url( 'admin.php?page=handschelle-pages-backup' ),
-            "{$created} Seite(n) erstellt, {$updated} aktualisiert."
+            "{$created} Seite(n) erstellt, {$updated} überschrieben — {$menus_created} Menü(s) angelegt, {$menus_updated} ersetzt."
         );
     }
 
