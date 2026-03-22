@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | Final-11 |
+| **Version** | 12.Alpha.01 |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
 | **Lizenz** | GPL-2.0+ |
@@ -123,6 +123,9 @@ Planned features for upcoming versions:
 ---
 
 ## Release Notes
+
+### 12.Alpha.01 *(2026-03-22)*
+- **Version bump**: Bumped version from Final-11 to 12.Alpha.01; updated README.md and all .txt files to reflect the new version.
 
 ### Final-11 *(2026-03-19)*
 - **Version bump**: Bumped version from Final-10 to Final-11; updated README.md and all .txt files to reflect the new version.
