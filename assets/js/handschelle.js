@@ -371,6 +371,16 @@
             $form.find('.hs-smart-search-links').hide().find('.hs-search-buttons').empty();
             $form.find('.hs-smart-person-locked').hide();
             $form.find('#hs-smart-person-select').val('');
+
+            // Reset entry-specific fields
+            $form.find('[name="straftat"]').val('');
+            $form.find('[name="urteil"]').val('');
+            $form.find('[name="link_quelle"]').val('');
+            $form.find('[name="aktenzeichen"]').val('');
+            $form.find('[name="bemerkung"]').val('');
+            $form.find('[name="status_straftat"]').val($form.find('[name="status_straftat"] option:first').val());
+            var today = new Date().toISOString().slice(0, 10);
+            $form.find('[name="datum_eintrag"]').val(today);
         }
 
         $(document).on('change', '.hs-smart-person-select', function () {
