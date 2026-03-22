@@ -285,11 +285,11 @@
             var $el = $form.find('[name="' + fieldName + '"]');
             if (!$el.length) return;
             if ($el.is('select')) {
-                $el.prop('disabled', false).removeClass('hs-field-locked');
+                $el.val('').prop('disabled', false).removeClass('hs-field-locked');
             } else if ($el.is('input[type="checkbox"]')) {
-                $el.prop('disabled', false).removeClass('hs-field-locked');
+                $el.prop('checked', false).prop('disabled', false).removeClass('hs-field-locked');
             } else {
-                $el.prop('readonly', false).removeClass('hs-field-locked');
+                $el.val('').prop('readonly', false).removeClass('hs-field-locked');
             }
         }
 
@@ -364,7 +364,8 @@
                 .concat(['geburtsland','dod']);
 
             allFields.forEach(function(f) { hsSmartUnlockField($form, f); });
-            $form.find('[name="verstorben"]').prop('disabled', false).removeClass('hs-field-locked');
+            $form.find('[name="verstorben"]').prop('checked', false).prop('disabled', false).removeClass('hs-field-locked');
+            $form.find('.hs-dod-row').hide();
             $form.find('#hs-smart-entry-id').val('');
             $form.find('.hs-smart-image-section').show();
             $form.find('.hs-smart-image-preview').hide().find('.hs-smart-image-preview-inner').empty();
