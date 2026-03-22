@@ -37,7 +37,7 @@ class Handschelle_Database {
             `parlament`       VARCHAR(100)     NOT NULL DEFAULT '',
             `parlament_name`  VARCHAR(50)      NOT NULL DEFAULT '',
             `status_aktiv`    TINYINT(1)       NOT NULL DEFAULT 1,
-            `straftat`        TEXT             NOT NULL DEFAULT '',
+            `straftat`        TEXT             NOT NULL,
             `urteil`          VARCHAR(200)     NOT NULL DEFAULT '',
             `link_quelle`     TEXT,
             `aktenzeichen`    VARCHAR(50)      NOT NULL DEFAULT '',
@@ -200,6 +200,12 @@ class Handschelle_Database {
      * dbDelta() never removes columns, so existing data is always preserved.
      */
     public static function maybe_upgrade_table() {
+        // Always ensure the offences table exists — idempotent via IF NOT EXISTS.
+        // This covers cases where the table was never created (e.g. MySQL 8 strict
+        // mode rejected the old DEFAULT '' syntax during a previous upgrade) or was
+        // accidentally dropped.
+        self::create_offences_table();
+
         $stored = get_option( 'handschelle_db_version', '0' );
         if ( version_compare( $stored, HANDSCHELLE_VERSION, '>=' ) ) {
             return;
@@ -211,7 +217,7 @@ class Handschelle_Database {
         if ( version_compare( $stored, '8.1', '<' ) ) {
             global $wpdb;
             $table = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
-            $wpdb->query( "ALTER TABLE `{$table}` MODIFY COLUMN `straftat` TEXT NOT NULL DEFAULT ''" );
+            $wpdb->query( "ALTER TABLE `{$table}` MODIFY COLUMN `straftat` TEXT NOT NULL" );
         }
 
         update_option( 'handschelle_db_version', HANDSCHELLE_VERSION );
@@ -228,7 +234,7 @@ class Handschelle_Database {
         $sql = "CREATE TABLE IF NOT EXISTS `{$table}` (
             `id`              INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
             `entry_id`        INT(11) UNSIGNED NOT NULL,
-            `straftat`        TEXT             NOT NULL DEFAULT '',
+            `straftat`        TEXT             NOT NULL,
             `urteil`          VARCHAR(200)     NOT NULL DEFAULT '',
             `link_quelle`     TEXT,
             `aktenzeichen`    VARCHAR(50)      NOT NULL DEFAULT '',
