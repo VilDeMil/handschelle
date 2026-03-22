@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | Final-13 |
+| **Version** | Final-14 |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
 | **Lizenz** | GPL-2.0+ |
@@ -146,6 +146,9 @@ Planned features for upcoming versions:
 ---
 
 ## Release Notes
+
+### Final-14 *(2026-03-22)*
+- **Pages restore: "Restore to which Domain"**: Backup now stores `source_url` (`home_url()`) in `pages.json`. Restore form adds **Link** (target domain) and **Path** (optional path prefix) fields. On restore, all occurrences of `source_url` in `post_content` and `post_excerpt` are replaced with `<link><path>` before saving. Backward-compatible with old flat-array backups (no URL replacement performed). JSON format changed from flat array to `{ source_url, pages: [...] }`.
 
 ### Final-13 *(2026-03-22)*
 - **WordPress pages backup & restore**: New admin submenu **📄 Seiten Backup** (`handschelle-pages-backup`). Download a ZIP containing all WP pages (published, draft, private) as `pages.json`. Restore uploads a backup ZIP and creates or updates pages matched by slug — parent pages are resolved by slug, page template is preserved. Methods: `page_pages_backup()`, `backup_pages()`, `restore_pages()`.

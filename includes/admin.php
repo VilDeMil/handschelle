@@ -1639,6 +1639,18 @@ class Handschelle_Admin {
                         <label>Backup-ZIP auswählen</label>
                         <input type="file" name="pages_zip" accept=".zip" required>
                     </div>
+                    <div class="hs-form-section" style="background:#f8f8f8;border:1px solid #ddd;padding:1rem;margin-bottom:.8rem;max-width:420px;">
+                        <strong>🌐 Auf welche Domain wiederherstellen?</strong>
+                        <p style="margin:.4rem 0 .8rem;color:#555;font-size:.88em;">Alle Links im Seiteninhalt werden von der Quell-Domain auf <code>Link + Pfad</code> umgeschrieben. Felder leer lassen, um Links unverändert zu übernehmen.</p>
+                        <div class="hs-field" style="margin-bottom:.6rem;">
+                            <label>Link <span style="color:#888;font-size:.85em;">(Domain, z.B. https://www.neue-domain.de)</span></label>
+                            <input type="url" name="restore_link" placeholder="https://www.neue-domain.de" style="width:100%;">
+                        </div>
+                        <div class="hs-field">
+                            <label>Path <span style="color:#888;font-size:.85em;">(Pfad-Präfix, z.B. /unterordner — optional)</span></label>
+                            <input type="text" name="restore_path" placeholder="/unterordner" style="width:100%;">
+                        </div>
+                    </div>
                     <button type="submit" class="button button-primary hs-btn">⬆ Seiten importieren</button>
                 </form>
             </div>
@@ -1692,7 +1704,11 @@ class Handschelle_Admin {
             return;
         }
 
-        $zip->addFromString( 'pages.json', wp_json_encode( $data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) );
+        $export = array(
+            'source_url' => home_url(),
+            'pages'      => $data,
+        );
+        $zip->addFromString( 'pages.json', wp_json_encode( $export, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) );
         $zip->close();
 
         if ( ! file_exists( $zip_path ) ) {
@@ -1740,13 +1756,33 @@ class Handschelle_Admin {
             return;
         }
 
-        $pages = json_decode( file_get_contents( $json_file ), true ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+        $json  = json_decode( file_get_contents( $json_file ), true ); // phpcs:ignore WordPress.WP.AlternativeFunctions
         @unlink( $json_file );
         @rmdir( $temp_dir );
 
-        if ( ! is_array( $pages ) ) {
+        if ( ! is_array( $json ) ) {
             $this->redirect( admin_url( 'admin.php?page=handschelle-pages-backup' ), 'Fehler: Ungültiges JSON-Format.' );
             return;
+        }
+
+        // Support both old (flat array) and new ({ source_url, pages }) format
+        $source_url = '';
+        if ( isset( $json['pages'] ) && is_array( $json['pages'] ) ) {
+            $source_url = rtrim( $json['source_url'] ?? '', '/' );
+            $pages      = $json['pages'];
+        } else {
+            $pages = $json;
+        }
+
+        // Build target URL from restore_link + restore_path fields
+        $restore_link = esc_url_raw( sanitize_text_field( wp_unslash( $_POST['restore_link'] ?? '' ) ) );
+        $restore_path = sanitize_text_field( wp_unslash( $_POST['restore_path'] ?? '' ) );
+        $target_url   = '';
+        if ( $restore_link ) {
+            $target_url = rtrim( $restore_link, '/' );
+            if ( $restore_path ) {
+                $target_url .= '/' . ltrim( $restore_path, '/' );
+            }
         }
 
         // First pass: build slug → new ID map (needed for parent resolution)
@@ -1767,10 +1803,17 @@ class Handschelle_Admin {
                 $parent_id = $slug_to_id[ sanitize_title( $page['post_parent'] ) ] ?? 0;
             }
 
+            $content = $page['post_content'] ?? '';
+            $excerpt = $page['post_excerpt'] ?? '';
+            if ( $source_url && $target_url ) {
+                $content = str_replace( $source_url, $target_url, $content );
+                $excerpt = str_replace( $source_url, $target_url, $excerpt );
+            }
+
             $post_data = array(
                 'post_title'   => sanitize_text_field( $page['post_title'] ?? '' ),
-                'post_content' => wp_kses_post( $page['post_content'] ?? '' ),
-                'post_excerpt' => sanitize_textarea_field( $page['post_excerpt'] ?? '' ),
+                'post_content' => wp_kses_post( $content ),
+                'post_excerpt' => sanitize_textarea_field( $excerpt ),
                 'post_status'  => $status,
                 'post_name'    => $slug,
                 'post_parent'  => $parent_id,
