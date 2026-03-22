@@ -2427,6 +2427,10 @@ class Handschelle_Shortcodes {
                                 <div class="hs-file-preview" id="hs-smart-file-preview"></div>
                                 <small>Wird automatisch auf max. 450 px Höhe skaliert.</small>
                             </div>
+                            <?php if ( is_user_logged_in() ) : ?>
+                            <div class="hs-field"><label>Private E-Mail</label><input type="email" name="private_email" maxlength="200" placeholder="privat@beispiel.de"></div>
+                            <div class="hs-field"><label>Öffentliche E-Mail</label><input type="email" name="oeffentliche_email" maxlength="200" placeholder="kontakt@beispiel.de"></div>
+                            <?php endif; ?>
                         </div>
                     </div>
 
@@ -2483,17 +2487,6 @@ class Handschelle_Shortcodes {
                             <div class="hs-field"><label>Datum</label><input type="date" name="datum_eintrag" value="<?php echo esc_attr( date('Y-m-d') ); ?>" required></div>
                         </div>
                     </div>
-
-                    <!-- ── E-Mail (nur für eingeloggte Nutzer) ── -->
-                    <?php if ( is_user_logged_in() ) : ?>
-                    <div class="hs-form-section">
-                        <h3>✉ Kontaktdaten</h3>
-                        <div class="hs-form-grid hs-smart-email-fields">
-                            <div class="hs-field"><label>Private E-Mail</label><input type="email" name="private_email" maxlength="200" placeholder="privat@beispiel.de"></div>
-                            <div class="hs-field"><label>Öffentliche E-Mail</label><input type="email" name="oeffentliche_email" maxlength="200" placeholder="kontakt@beispiel.de"></div>
-                        </div>
-                    </div>
-                    <?php endif; ?>
 
                     <!-- ── Submit ────────────────────────────── -->
                     <div class="hs-form-actions">
