@@ -38,6 +38,7 @@ class Handschelle_Admin {
         add_submenu_page( 'handschelle', 'Import / Export',    'Import / Export', 'manage_options', 'handschelle-import-export', array( $this, 'page_import_export' ) );
         add_submenu_page( 'handschelle', 'Bilder',             'Bilder',          'manage_options', 'handschelle-bilder',        array( $this, 'page_bilder' ) );
         add_submenu_page( 'handschelle', 'Backup & Restore',  'Backup & Restore','manage_options', 'handschelle-backup',        array( $this, 'page_backup' ) );
+        add_submenu_page( 'handschelle', 'Seiten Backup',      '📄 Seiten Backup','manage_options', 'handschelle-pages-backup',  array( $this, 'page_pages_backup' ) );
         add_submenu_page( 'handschelle', 'Datenbank',          'Datenbank',       'manage_options', 'handschelle-db',            array( $this, 'page_database' ) );
         $pending_count    = count( get_users( array( 'meta_key' => 'hs_user_status', 'meta_value' => 'pending' ) ) );
         $users_label      = '👥 Benutzer' . ( $pending_count ? ' <span class="awaiting-mod">' . $pending_count . '</span>' : '' );
@@ -171,6 +172,8 @@ class Handschelle_Admin {
             case 'import_images_zip': $this->import_images_zip(); break;
             case 'backup_full':       $this->backup_full(); break;
             case 'restore_full':      $this->restore_full(); break;
+            case 'backup_pages':      $this->backup_pages(); break;
+            case 'restore_pages':     $this->restore_pages(); break;
 
             case 'truncate':
                 Handschelle_Database::truncate_table();
@@ -1597,6 +1600,208 @@ class Handschelle_Admin {
         </div>
         <?php
     }
+    /* ================================================================
+       SEITE: SEITEN BACKUP & RESTORE
+    ================================================================ */
+    public function page_pages_backup() {
+        $pages = get_posts( array(
+            'post_type'      => 'page',
+            'post_status'    => array( 'publish', 'draft', 'private' ),
+            'posts_per_page' => -1,
+        ) );
+        $total = count( $pages );
+        ?>
+        <div class="wrap hs-wrap">
+            <h1>📄 Seiten Backup &amp; Restore</h1>
+
+            <!-- ── BACKUP ── -->
+            <div class="hs-form-section">
+                <h2>⬇ Backup erstellen</h2>
+                <p>Erstellt eine ZIP-Datei mit allen WordPress-Seiten als JSON.<br>
+                   Aktuell: <strong><?php echo $total; ?> Seite(n)</strong> (veröffentlicht, Entwurf, privat).</p>
+                <form method="post" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>">
+                    <?php wp_nonce_field( 'handschelle_admin_action' ); ?>
+                    <input type="hidden" name="hs_action" value="backup_pages">
+                    <input type="hidden" name="page" value="handschelle-pages-backup">
+                    <button type="submit" class="button button-primary hs-btn">📦 Seiten-Backup herunterladen</button>
+                </form>
+            </div>
+
+            <!-- ── RESTORE ── -->
+            <div class="hs-form-section" style="margin-top:2rem;">
+                <h2>⬆ Backup wiederherstellen</h2>
+                <p>Seiten aus einer Backup-ZIP importieren. Bestehende Seiten werden anhand des Slugs erkannt und aktualisiert; neue Seiten werden angelegt.</p>
+                <form method="post" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>" enctype="multipart/form-data">
+                    <?php wp_nonce_field( 'handschelle_admin_action' ); ?>
+                    <input type="hidden" name="hs_action" value="restore_pages">
+                    <input type="hidden" name="page" value="handschelle-pages-backup">
+                    <div class="hs-field" style="max-width:420px;margin-bottom:.8rem;">
+                        <label>Backup-ZIP auswählen</label>
+                        <input type="file" name="pages_zip" accept=".zip" required>
+                    </div>
+                    <button type="submit" class="button button-primary hs-btn">⬆ Seiten importieren</button>
+                </form>
+            </div>
+            <?php echo $this->hs_footer(); ?>
+        </div>
+        <?php
+    }
+
+    /* ================================================================
+       BACKUP PAGES – ZIP mit pages.json
+    ================================================================ */
+    private function backup_pages() {
+        if ( ! class_exists( 'ZipArchive' ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-pages-backup' ), 'Fehler: PHP ZipArchive nicht verfügbar.' );
+            return;
+        }
+
+        $pages = get_posts( array(
+            'post_type'      => 'page',
+            'post_status'    => array( 'publish', 'draft', 'private' ),
+            'posts_per_page' => -1,
+            'orderby'        => 'menu_order',
+            'order'          => 'ASC',
+        ) );
+
+        $data = array();
+        foreach ( $pages as $page ) {
+            $parent_slug    = '';
+            if ( $page->post_parent ) {
+                $parent_obj  = get_post( $page->post_parent );
+                $parent_slug = $parent_obj ? $parent_obj->post_name : '';
+            }
+            $data[] = array(
+                'ID'            => $page->ID,
+                'post_title'    => $page->post_title,
+                'post_content'  => $page->post_content,
+                'post_excerpt'  => $page->post_excerpt,
+                'post_status'   => $page->post_status,
+                'post_name'     => $page->post_name,
+                'post_parent'   => $parent_slug,
+                'menu_order'    => $page->menu_order,
+                'page_template' => get_page_template_slug( $page->ID ),
+                'post_date'     => $page->post_date,
+            );
+        }
+
+        $zip_path = sys_get_temp_dir() . '/hs_pages_backup_' . time() . '.zip';
+        $zip      = new ZipArchive();
+        if ( $zip->open( $zip_path, ZipArchive::CREATE | ZipArchive::OVERWRITE ) !== true ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-pages-backup' ), 'Fehler: ZIP-Datei konnte nicht erstellt werden.' );
+            return;
+        }
+
+        $zip->addFromString( 'pages.json', wp_json_encode( $data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) );
+        $zip->close();
+
+        if ( ! file_exists( $zip_path ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-pages-backup' ), 'Fehler: Backup konnte nicht erstellt werden.' );
+            return;
+        }
+
+        $filename = 'wp-pages-backup-' . date( 'Y-m-d_His' ) . '.zip';
+        header( 'Content-Type: application/zip' );
+        header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+        header( 'Content-Length: ' . filesize( $zip_path ) );
+        header( 'Pragma: no-cache' );
+        readfile( $zip_path );
+        unlink( $zip_path );
+        exit;
+    }
+
+    /* ================================================================
+       RESTORE PAGES – aus Backup-ZIP wiederherstellen
+    ================================================================ */
+    private function restore_pages() {
+        if ( ! class_exists( 'ZipArchive' ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-pages-backup' ), 'Fehler: PHP ZipArchive nicht verfügbar.' );
+            return;
+        }
+        if ( empty( $_FILES['pages_zip']['tmp_name'] ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-pages-backup' ), 'Fehler: Keine Backup-Datei hochgeladen.' );
+            return;
+        }
+
+        $zip = new ZipArchive();
+        if ( $zip->open( $_FILES['pages_zip']['tmp_name'] ) !== true ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-pages-backup' ), 'Fehler: ZIP-Datei konnte nicht geöffnet werden.' );
+            return;
+        }
+
+        $temp_dir = trailingslashit( sys_get_temp_dir() ) . 'hs_pages_restore_' . time() . '/';
+        wp_mkdir_p( $temp_dir );
+        $zip->extractTo( $temp_dir );
+        $zip->close();
+
+        $json_file = $temp_dir . 'pages.json';
+        if ( ! file_exists( $json_file ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-pages-backup' ), 'Fehler: pages.json nicht in ZIP gefunden.' );
+            return;
+        }
+
+        $pages = json_decode( file_get_contents( $json_file ), true ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+        @unlink( $json_file );
+        @rmdir( $temp_dir );
+
+        if ( ! is_array( $pages ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-pages-backup' ), 'Fehler: Ungültiges JSON-Format.' );
+            return;
+        }
+
+        // First pass: build slug → new ID map (needed for parent resolution)
+        $slug_to_id = array();
+        foreach ( get_posts( array( 'post_type' => 'page', 'post_status' => 'any', 'posts_per_page' => -1 ) ) as $p ) {
+            $slug_to_id[ $p->post_name ] = $p->ID;
+        }
+
+        $created = 0;
+        $updated = 0;
+
+        foreach ( $pages as $page ) {
+            $slug       = sanitize_title( $page['post_name'] ?? '' );
+            $status     = in_array( $page['post_status'] ?? '', array( 'publish', 'draft', 'private' ), true )
+                          ? $page['post_status'] : 'draft';
+            $parent_id  = 0;
+            if ( ! empty( $page['post_parent'] ) ) {
+                $parent_id = $slug_to_id[ sanitize_title( $page['post_parent'] ) ] ?? 0;
+            }
+
+            $post_data = array(
+                'post_title'   => sanitize_text_field( $page['post_title'] ?? '' ),
+                'post_content' => wp_kses_post( $page['post_content'] ?? '' ),
+                'post_excerpt' => sanitize_textarea_field( $page['post_excerpt'] ?? '' ),
+                'post_status'  => $status,
+                'post_name'    => $slug,
+                'post_parent'  => $parent_id,
+                'menu_order'   => intval( $page['menu_order'] ?? 0 ),
+                'post_type'    => 'page',
+            );
+
+            if ( isset( $slug_to_id[ $slug ] ) ) {
+                $post_data['ID'] = $slug_to_id[ $slug ];
+                wp_update_post( $post_data );
+                $post_id = $slug_to_id[ $slug ];
+                $updated++;
+            } else {
+                $post_id = wp_insert_post( $post_data );
+                if ( $post_id && ! is_wp_error( $post_id ) ) {
+                    $slug_to_id[ $slug ] = $post_id;
+                    $created++;
+                }
+            }
+
+            if ( $post_id && ! is_wp_error( $post_id ) && ! empty( $page['page_template'] ) ) {
+                update_post_meta( $post_id, '_wp_page_template', sanitize_text_field( $page['page_template'] ) );
+            }
+        }
+
+        $this->redirect(
+            admin_url( 'admin.php?page=handschelle-pages-backup' ),
+            "{$created} Seite(n) erstellt, {$updated} aktualisiert."
+        );
+    }
+
 }
 
 new Handschelle_Admin();

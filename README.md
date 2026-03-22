@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | Final-12 |
+| **Version** | Final-13 |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
 | **Lizenz** | GPL-2.0+ |
@@ -146,6 +146,9 @@ Planned features for upcoming versions:
 ---
 
 ## Release Notes
+
+### Final-13 *(2026-03-22)*
+- **WordPress pages backup & restore**: New admin submenu **📄 Seiten Backup** (`handschelle-pages-backup`). Download a ZIP containing all WP pages (published, draft, private) as `pages.json`. Restore uploads a backup ZIP and creates or updates pages matched by slug — parent pages are resolved by slug, page template is preserved. Methods: `page_pages_backup()`, `backup_pages()`, `restore_pages()`.
 
 ### Final-12 *(2026-03-21)*
 - **Smart-form: link Straftat to existing person**: When a name is selected from the dropdown and data is loaded, submitting the `[handschelle-anzeige]` smart form now creates a new Straftat (offence row in `wp_die_handschelle_offences`) linked to the existing person via `entry_id`. No new person entry is created. Hidden field `hs_smart_entry_id` carries the resolved `entry_id`; the form handler branches on this value — `entry_id > 0` → `insert_offence()` only, `entry_id == 0` → full `insert()` as before.
