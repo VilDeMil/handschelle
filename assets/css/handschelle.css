@@ -152,8 +152,8 @@
 .hs-alert-info    { background:#d1ecf1; color:#0c5460; border-left-color:#17a2b8; display:flex; align-items:center; gap:.8rem; }
 .hs-btn-sm        { padding:.25rem .6rem; font-size:.8rem; }
 /* ── Read-only / disabled field styling (handschelle-smart locked state) ── */
-.hs-form input[readonly], .hs-form textarea[readonly] { background:#f3f3f3; color:#555; cursor:default; }
-.hs-form select:disabled, .hs-form input:disabled     { background:#f3f3f3; color:#555; cursor:default; opacity:1; }
+.hs-form input[readonly], .hs-form textarea[readonly] { background:#e0e0e0; color:#555; cursor:default; }
+.hs-form select:disabled, .hs-form input:disabled     { background:#e0e0e0; color:#555; cursor:default; opacity:1; }
 .hs-empty { color:var(--hs-muted); font-style:italic; text-align:center; padding:2.5rem; background:#f8f9fa; border-radius:var(--hs-radius); border:1px dashed var(--hs-border); }
 
 /* ── Admin-Tabelle ──────────────────────────────────────────── */
