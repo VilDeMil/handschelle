@@ -2441,6 +2441,11 @@ class Handschelle_Shortcodes {
                         </div>
                     </div>
 
+                    <!-- ── Suchlinks (erscheinen wenn Person geladen) ── -->
+                    <div class="hs-smart-search-links" style="display:none;">
+                        <div class="hs-search-buttons"></div>
+                    </div>
+
                     <!-- ── Social Media ──────────────────────── -->
                     <div class="hs-form-section hs-smart-social-section">
                         <h3>📱 Social-Media Links</h3>
