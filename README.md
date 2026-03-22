@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 12.Alpha.01 |
+| **Version** | 12.Alpha.02 |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
 | **Lizenz** | GPL-2.0+ |
@@ -123,6 +123,9 @@ Planned features for upcoming versions:
 ---
 
 ## Release Notes
+
+### 12.Alpha.02 *(2026-03-22)*
+- **Fix: Weitere Straftaten not saving (MySQL 8.0)**: Removed invalid `DEFAULT ''` from `TEXT NOT NULL` columns in `create_table()` and `create_offences_table()` — MySQL 8.0 strict mode rejects this syntax (Error 1101), causing the offences table to never be created and all `insert_offence()` calls to silently fail. `maybe_upgrade_table()` now always calls `create_offences_table()` before the version-check early-return so the table is self-healing. The `recreate` admin action now also creates the offences table.
 
 ### 12.Alpha.01 *(2026-03-22)*
 - **Version bump**: Bumped version from Final-11 to 12.Alpha.01; updated README.md and all .txt files to reflect the new version.

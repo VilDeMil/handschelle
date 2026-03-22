@@ -177,6 +177,7 @@ class Handschelle_Admin {
             case 'recreate':
                 Handschelle_Database::drop_table();
                 Handschelle_Database::create_table();
+                Handschelle_Database::create_offences_table();
                 $this->redirect( admin_url( 'admin.php?page=handschelle-db' ), 'Datenbank neu erstellt.' );
                 break;
 

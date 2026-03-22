@@ -19,4 +19,4 @@ die-handschelle/
 ```
 ---
 
-(c) 2026 - "Die-Handschelle" 12.Alpha.01 - www.die-handschelle.com
+(c) 2026 - "Die-Handschelle" 12.Alpha.02 - www.die-handschelle.com
