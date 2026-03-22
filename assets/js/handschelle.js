@@ -322,6 +322,17 @@
             // Hide image upload (person already exists in DB)
             $form.find('.hs-smart-image-section').hide();
 
+            // Show existing person's image read-only
+            var $imgPreview = $form.find('.hs-smart-image-preview');
+            if (data.bild_url) {
+                $imgPreview.find('.hs-smart-image-preview-inner').html(
+                    '<img src="' + $('<div>').text(data.bild_url).html() + '" style="max-height:140px;border-radius:6px;display:block;">'
+                );
+                $imgPreview.show();
+            } else {
+                $imgPreview.hide().find('.hs-smart-image-preview-inner').empty();
+            }
+
             // Show locked banner
             $form.find('.hs-smart-person-locked').show();
         }
@@ -337,6 +348,7 @@
             $form.find('[name="verstorben"]').prop('disabled', false);
             $form.find('#hs-smart-entry-id').val('');
             $form.find('.hs-smart-image-section').show();
+            $form.find('.hs-smart-image-preview').hide().find('.hs-smart-image-preview-inner').empty();
             $form.find('.hs-smart-person-locked').hide();
             $form.find('#hs-smart-person-select').val('');
         }

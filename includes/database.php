@@ -244,6 +244,16 @@ class Handschelle_Database {
             $wpdb->query( "ALTER TABLE `{$table}` MODIFY COLUMN `straftat` TEXT NOT NULL" );
         }
 
+        // v12.Alpha.04: add freigegeben column to offences table
+        if ( version_compare( $stored, '12.Alpha.04', '<' ) ) {
+            global $wpdb;
+            $off_table = $wpdb->prefix . HANDSCHELLE_DB_TABLE . '_offences';
+            $col_exists = $wpdb->get_var( "SHOW COLUMNS FROM `{$off_table}` LIKE 'freigegeben'" );
+            if ( ! $col_exists ) {
+                $wpdb->query( "ALTER TABLE `{$off_table}` ADD COLUMN `freigegeben` TINYINT(1) NOT NULL DEFAULT 0 AFTER `erstellt_am`" );
+            }
+        }
+
         update_option( 'handschelle_db_version', HANDSCHELLE_VERSION );
     }
 
@@ -266,19 +276,72 @@ class Handschelle_Database {
             `status_straftat` VARCHAR(50)      NOT NULL DEFAULT 'Ermittlungen laufen',
             `datum_eintrag`   DATE             NULL DEFAULT NULL,
             `erstellt_am`     DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            `freigegeben`     TINYINT(1)       NOT NULL DEFAULT 0,
             PRIMARY KEY (`id`),
-            KEY `idx_entry_id` (`entry_id`)
+            KEY `idx_entry_id`    (`entry_id`),
+            KEY `idx_freigegeben` (`freigegeben`)
         ) {$charset_collate};";
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
         dbDelta( $sql );
     }
 
-    public static function get_offences( $entry_id ) {
+    /**
+     * @param int        $entry_id
+     * @param int|string $freigegeben  1 = approved only (default), 0 = pending only, 'all' = no filter
+     */
+    public static function get_offences( $entry_id, $freigegeben = 1 ) {
         global $wpdb;
         $table = $wpdb->prefix . HANDSCHELLE_DB_TABLE . '_offences';
+        if ( $freigegeben === 'all' ) {
+            return $wpdb->get_results( $wpdb->prepare(
+                "SELECT * FROM `{$table}` WHERE entry_id = %d ORDER BY id ASC",
+                intval( $entry_id )
+            ) );
+        }
         return $wpdb->get_results( $wpdb->prepare(
-            "SELECT * FROM `{$table}` WHERE entry_id = %d ORDER BY id ASC",
-            intval( $entry_id )
+            "SELECT * FROM `{$table}` WHERE entry_id = %d AND freigegeben = %d ORDER BY id ASC",
+            intval( $entry_id ), intval( $freigegeben )
+        ) );
+    }
+
+    /**
+     * Returns all pending offences joined with person name and partei.
+     *
+     * @param int|string $freigegeben  0 = pending (default), 1 = approved, 'all' = all
+     * @return array
+     */
+    public static function get_offences_with_person( $freigegeben = 0 ) {
+        global $wpdb;
+        $off   = $wpdb->prefix . HANDSCHELLE_DB_TABLE . '_offences';
+        $main  = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
+        if ( $freigegeben === 'all' ) {
+            return $wpdb->get_results(
+                "SELECT o.*, e.name AS person_name, e.partei AS person_partei, e.bild AS person_bild
+                 FROM `{$off}` o
+                 LEFT JOIN `{$main}` e ON e.id = o.entry_id
+                 ORDER BY o.id DESC"
+            );
+        }
+        return $wpdb->get_results( $wpdb->prepare(
+            "SELECT o.*, e.name AS person_name, e.partei AS person_partei, e.bild AS person_bild
+             FROM `{$off}` o
+             LEFT JOIN `{$main}` e ON e.id = o.entry_id
+             WHERE o.freigegeben = %d
+             ORDER BY o.id DESC",
+            intval( $freigegeben )
+        ) );
+    }
+
+    /** Count offences by freigegeben status (0=pending, 1=approved, 'all'=all). */
+    public static function count_offences( $freigegeben = 0 ) {
+        global $wpdb;
+        $table = $wpdb->prefix . HANDSCHELLE_DB_TABLE . '_offences';
+        if ( $freigegeben === 'all' ) {
+            return (int) $wpdb->get_var( "SELECT COUNT(*) FROM `{$table}`" );
+        }
+        return (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT COUNT(*) FROM `{$table}` WHERE freigegeben = %d",
+            intval( $freigegeben )
         ) );
     }
 
