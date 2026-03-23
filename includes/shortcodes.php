@@ -2284,9 +2284,7 @@ class Handschelle_Shortcodes {
             <div class="hs-wanted-card">
 
                 <div class="hs-wanted-header">
-                    <div class="hs-wanted-header-authority">BUNDESKRIMINALAMT</div>
-                    <div class="hs-wanted-header-title">FAHNDUNGSPLAKAT</div>
-                    <div class="hs-wanted-header-gesucht">GESUCHT</div>
+                    <div class="hs-wanted-header-gesucht"><?php echo esc_html( $display_name ); ?></div>
                 </div>
 
                 <div class="hs-wanted-body">
@@ -2301,8 +2299,6 @@ class Handschelle_Shortcodes {
                     </div>
 
                     <div class="hs-wanted-info-col">
-                        <div class="hs-wanted-name"><?php echo esc_html( $display_name ); ?></div>
-
                         <?php if ( $e->partei ) : ?>
                         <div class="hs-wanted-row">
                             <span class="hs-wanted-label">Partei:</span>
