@@ -235,6 +235,8 @@ class Handschelle_Admin {
             case 'import_images_zip': $this->import_images_zip(); break;
             case 'backup_full':       $this->backup_full(); break;
             case 'restore_full':      $this->restore_full(); break;
+            case 'backup_pages':      $this->backup_pages(); break;
+            case 'restore_pages':     $this->restore_pages(); break;
 
             case 'truncate':
                 Handschelle_Database::truncate_table();
@@ -1310,6 +1312,43 @@ class Handschelle_Admin {
                     <button type="submit" class="button hs-btn-danger" onclick="return confirm('Wirklich wiederherstellen? Alle Einträge werden überschrieben!')">⬆ Backup einspielen</button>
                 </form>
             </div>
+            <!-- ── BACKUP PAGES ── -->
+            <div class="hs-form-section" style="margin-top:2rem;">
+                <h2>📄 Seiten-Backup</h2>
+                <?php
+                $page_count = wp_count_posts( 'page' );
+                $total_pages = array_sum( (array) $page_count );
+                ?>
+                <p>Exportiert alle WordPress-Seiten als JSON-Datei (Titel, Inhalt, Slug, Status, Meta).<br>
+                   Aktuell: <strong><?php echo intval( $total_pages ); ?> Seiten</strong> (alle Status).</p>
+                <form method="post" action="<?php echo esc_url( admin_url('admin.php') ); ?>">
+                    <?php wp_nonce_field( 'handschelle_admin_action' ); ?>
+                    <input type="hidden" name="hs_action" value="backup_pages">
+                    <input type="hidden" name="page" value="handschelle-backup">
+                    <button type="submit" class="button button-primary hs-btn">📄 Seiten exportieren</button>
+                </form>
+            </div>
+
+            <!-- ── RESTORE PAGES ── -->
+            <div class="hs-form-section" style="margin-top:2rem;">
+                <h2>⬆ Seiten wiederherstellen</h2>
+                <p style="color:#c0392b;font-weight:600;">⚠ Bestehende Seiten mit gleichem Slug werden überschrieben. Neue Seiten werden angelegt.</p>
+                <form method="post" action="<?php echo esc_url( admin_url('admin.php') ); ?>" enctype="multipart/form-data">
+                    <?php wp_nonce_field( 'handschelle_admin_action' ); ?>
+                    <input type="hidden" name="hs_action" value="restore_pages">
+                    <input type="hidden" name="page" value="handschelle-backup">
+                    <div class="hs-field" style="max-width:420px;margin-bottom:.8rem;">
+                        <label>Seiten-JSON auswählen</label>
+                        <input type="file" name="pages_json" accept=".json" required>
+                    </div>
+                    <label class="hs-checkbox-label" style="margin-bottom:.8rem;display:block;">
+                        <input type="checkbox" name="restore_pages_confirm" value="1" required>
+                        Ich verstehe, dass bestehende Seiten überschrieben werden können.
+                    </label>
+                    <button type="submit" class="button hs-btn-danger" onclick="return confirm('Seiten wirklich wiederherstellen?')">⬆ Seiten einspielen</button>
+                </form>
+            </div>
+
             <?php echo $this->hs_footer(); ?>
         </div>
         <?php
@@ -1608,6 +1647,125 @@ class Handschelle_Admin {
         $this->redirect(
             admin_url( 'admin.php?page=handschelle-backup' ),
             "Wiederherstellung abgeschlossen: {$entry_count} Einträge, {$offence_count} Weitere Straftaten, {$img_count} Bilder importiert."
+        );
+    }
+
+    /* ================================================================
+       BACKUP PAGES – alle WP-Seiten als JSON exportieren
+    ================================================================ */
+    private function backup_pages() {
+        $pages = get_posts( array(
+            'post_type'      => 'page',
+            'post_status'    => 'any',
+            'numberposts'    => -1,
+            'orderby'        => 'ID',
+            'order'          => 'ASC',
+        ) );
+
+        $data = array();
+        foreach ( $pages as $page ) {
+            $meta = get_post_meta( $page->ID );
+            // Remove internal WP meta keys
+            foreach ( array_keys( $meta ) as $key ) {
+                if ( strpos( $key, '_' ) === 0 ) unset( $meta[ $key ] );
+            }
+            $data[] = array(
+                'post_title'     => $page->post_title,
+                'post_name'      => $page->post_name,
+                'post_content'   => $page->post_content,
+                'post_excerpt'   => $page->post_excerpt,
+                'post_status'    => $page->post_status,
+                'post_date'      => $page->post_date,
+                'menu_order'     => $page->menu_order,
+                'comment_status' => $page->comment_status,
+                'ping_status'    => $page->ping_status,
+                'meta'           => $meta,
+            );
+        }
+
+        $json     = wp_json_encode( $data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE );
+        $filename = 'handschelle-pages-' . date( 'Y-m-d_His' ) . '.json';
+
+        header( 'Content-Type: application/json; charset=utf-8' );
+        header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+        header( 'Content-Length: ' . strlen( $json ) );
+        header( 'Pragma: no-cache' );
+        echo $json;
+        exit;
+    }
+
+    /* ================================================================
+       RESTORE PAGES – aus JSON-Datei wiederherstellen
+    ================================================================ */
+    private function restore_pages() {
+        if ( empty( $_FILES['pages_json']['tmp_name'] ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Fehler: Keine JSON-Datei hochgeladen.' );
+            return;
+        }
+        if ( empty( $_POST['restore_pages_confirm'] ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Bitte Bestätigung ankreuzen.' );
+            return;
+        }
+
+        $raw = file_get_contents( $_FILES['pages_json']['tmp_name'] );
+        if ( $raw === false ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Fehler: Datei konnte nicht gelesen werden.' );
+            return;
+        }
+
+        $pages = json_decode( $raw, true );
+        if ( ! is_array( $pages ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Fehler: Ungültiges JSON-Format.' );
+            return;
+        }
+
+        $created = 0;
+        $updated = 0;
+
+        foreach ( $pages as $p ) {
+            if ( empty( $p['post_title'] ) && empty( $p['post_name'] ) ) continue;
+
+            $post_data = array(
+                'post_type'      => 'page',
+                'post_title'     => sanitize_text_field( $p['post_title'] ?? '' ),
+                'post_name'      => sanitize_title( $p['post_name'] ?? '' ),
+                'post_content'   => wp_kses_post( $p['post_content'] ?? '' ),
+                'post_excerpt'   => sanitize_textarea_field( $p['post_excerpt'] ?? '' ),
+                'post_status'    => in_array( $p['post_status'] ?? '', array( 'publish', 'draft', 'private', 'pending' ), true ) ? $p['post_status'] : 'draft',
+                'post_date'      => sanitize_text_field( $p['post_date'] ?? '' ),
+                'menu_order'     => intval( $p['menu_order'] ?? 0 ),
+                'comment_status' => in_array( $p['comment_status'] ?? '', array( 'open', 'closed' ), true ) ? $p['comment_status'] : 'closed',
+                'ping_status'    => in_array( $p['ping_status'] ?? '', array( 'open', 'closed' ), true ) ? $p['ping_status'] : 'closed',
+            );
+
+            // Check if a page with this slug already exists
+            $existing = get_page_by_path( $post_data['post_name'], OBJECT, 'page' );
+            if ( $existing ) {
+                $post_data['ID'] = $existing->ID;
+                wp_update_post( $post_data );
+                $post_id = $existing->ID;
+                $updated++;
+            } else {
+                $post_id = wp_insert_post( $post_data );
+                $created++;
+            }
+
+            // Restore public meta
+            if ( ! empty( $p['meta'] ) && is_array( $p['meta'] ) && $post_id && ! is_wp_error( $post_id ) ) {
+                foreach ( $p['meta'] as $meta_key => $meta_values ) {
+                    $meta_key = sanitize_key( $meta_key );
+                    if ( empty( $meta_key ) ) continue;
+                    delete_post_meta( $post_id, $meta_key );
+                    foreach ( (array) $meta_values as $val ) {
+                        add_post_meta( $post_id, $meta_key, maybe_unserialize( $val ) );
+                    }
+                }
+            }
+        }
+
+        $this->redirect(
+            admin_url( 'admin.php?page=handschelle-backup' ),
+            "Seiten wiederhergestellt: {$created} neu angelegt, {$updated} aktualisiert."
         );
     }
 
