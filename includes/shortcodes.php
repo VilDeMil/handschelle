@@ -2453,7 +2453,7 @@ class Handschelle_Shortcodes {
                     <div class="hs-wanted-status hs-wanted-status--<?php echo esc_attr( $status_key ); ?>">
                         <?php echo esc_html( $e->status_straftat ); ?>
                     </div>
-                    <div class="hs-wanted-footer-hinweis">Hinweise bitte an die zuständigen Behörden melden.</div>
+                    <div class="hs-wanted-footer-hinweis">(c) 2026 - "Die-Handschelle.com"</div>
                 </div>
 
             </div>

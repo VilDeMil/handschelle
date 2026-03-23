@@ -1015,6 +1015,7 @@ a.hs-st-item { display: inline-block; }
     text-transform: uppercase;
     letter-spacing: .06em;
     font-style: italic;
+    text-align: center;
 }
 
 @media (max-width: 520px) {
