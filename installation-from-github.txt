@@ -51,4 +51,4 @@ var_dump(extension_loaded('gd')); // should print: bool(true)
 ```
 ---
 
-(c) 2026 - "Die-Handschelle" 14.1 - www.die-handschelle.com
+(c) 2026 - "Die-Handschelle" 14.3 - www.die-handschelle.com
