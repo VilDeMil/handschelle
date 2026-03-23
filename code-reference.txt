@@ -5,7 +5,7 @@
 Defined in `die-handschelle.php`:
 
 ```php
-HANDSCHELLE_VERSION     // '12.Alpha.02'
+HANDSCHELLE_VERSION     // '14.0'
 HANDSCHELLE_PLUGIN_DIR  // Absolute path to plugin directory
 HANDSCHELLE_PLUGIN_URL  // URL to plugin directory
 HANDSCHELLE_DB_TABLE    // Table name suffix, e.g. 'die_handschelle'
@@ -275,4 +275,4 @@ To import: **Admin → Import / Export → CSV-Datei hochladen → Importieren**
 ---
 ---
 
-(c) 2026 - "Die-Handschelle" 12.Alpha.02 - www.die-handschelle.com
+(c) 2026 - "Die-Handschelle" 14.0 - www.die-handschelle.com
