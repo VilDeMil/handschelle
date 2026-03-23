@@ -815,18 +815,14 @@ class Handschelle_Admin {
                 <h2>📱 Social-Media Links</h2>
                 <div class="hs-form-grid">
                     <?php foreach ( $sm_fields as $field => $label ) : ?>
+                        <?php $sm_val = $entry ? esc_url( $entry->$field ?? '' ) : ''; ?>
                         <div class="hs-field">
                             <label style="display:flex;align-items:center;gap:.4rem;">
                                 <?php echo $label; ?>
-                                <?php $sm_val = $entry ? esc_url( $entry->$field ?? '' ) : ''; ?>
-                                <?php if ( $sm_val ) : ?>
-                                    <a href="<?php echo $sm_val; ?>" target="_blank" rel="noopener noreferrer" title="Link öffnen" style="font-size:.85rem;line-height:1;opacity:.7;text-decoration:none;" id="sm-link-<?php echo esc_attr($field); ?>">🔗</a>
-                                <?php else : ?>
-                                    <a href="#" target="_blank" rel="noopener noreferrer" title="Link öffnen" style="font-size:.85rem;line-height:1;opacity:.3;text-decoration:none;pointer-events:none;" id="sm-link-<?php echo esc_attr($field); ?>">🔗</a>
-                                <?php endif; ?>
+                                <a href="<?php echo $sm_val ?: '#'; ?>" target="_blank" rel="noopener noreferrer" title="Link öffnen" style="font-size:.85rem;line-height:1;text-decoration:none;<?php echo $sm_val ? '' : 'visibility:hidden;'; ?>" id="sm-link-<?php echo esc_attr($field); ?>">🔗</a>
                             </label>
                             <input type="url" name="<?php echo esc_attr($field); ?>" id="sm-input-<?php echo esc_attr($field); ?>" value="<?php echo $v($field); ?>" placeholder="https://…"
-                                oninput="(function(i){var a=document.getElementById('sm-link-'+i.id.replace('sm-input-',''));if(i.value){a.href=i.value;a.style.opacity='.7';a.style.pointerEvents=''}else{a.href='#';a.style.opacity='.3';a.style.pointerEvents='none'}})(this)">
+                                oninput="(function(i){var a=document.getElementById('sm-link-'+i.id.replace('sm-input-',''));a.href=i.value||'#';a.style.visibility=i.value?'':'hidden';})(this)">
                         </div>
                     <?php endforeach; ?>
                 </div>
