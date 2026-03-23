@@ -675,8 +675,9 @@ class Handschelle_Admin {
                         </select>
                     </div>
                     <div class="hs-field"><label>Geburtsdatum</label><input type="date" name="geburtsdatum" value="<?php echo esc_attr( ( ! empty($entry->geburtsdatum) && $entry->geburtsdatum !== '0000-00-00' ) ? $entry->geburtsdatum : '' ); ?>"></div>
-                    <div class="hs-field"><label>Private E-Mail</label><input type="email" name="private_email" maxlength="200" value="<?php echo $v('private_email'); ?>" placeholder="privat@beispiel.de"></div>
-                    <div class="hs-field"><label>Öffentliche E-Mail</label><input type="email" name="oeffentliche_email" maxlength="200" value="<?php echo $v('oeffentliche_email'); ?>" placeholder="kontakt@beispiel.de"></div>
+                    <div class="hs-field hs-email-toggle" style="display:none;"><label>Private E-Mail</label><input type="email" name="private_email" maxlength="200" value="<?php echo $v('private_email'); ?>" placeholder="privat@beispiel.de"></div>
+                    <div class="hs-field hs-email-toggle" style="display:none;"><label>Öffentliche E-Mail</label><input type="email" name="oeffentliche_email" maxlength="200" value="<?php echo $v('oeffentliche_email'); ?>" placeholder="kontakt@beispiel.de"></div>
+                    <div class="hs-field"><label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;"><input type="checkbox" id="hs-email-show" onchange="document.querySelectorAll('.hs-email-toggle').forEach(function(el){el.style.display=this.checked?'':'none';}.bind(this))"> E-Mail-Felder anzeigen</label></div>
                     <div class="hs-field">
                         <label class="hs-checkbox-label"><input type="checkbox" name="verstorben" id="hs-verstorben" class="hs-verstorben-cb" value="1" <?php checked( intval($entry->verstorben ?? 0), 1 ); ?>> Verstorben</label>
                     </div>
