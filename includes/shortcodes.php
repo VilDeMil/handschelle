@@ -160,7 +160,7 @@ class Handschelle_Shortcodes {
 
                     <!-- ── Straftat ──────────────────────────── -->
                     <div class="hs-form-section">
-                        <h3>⚖ Details zur Straftat</h3>
+                        <h3 style="background:#c0392b;color:#fff;padding:.5rem 1rem;border-radius:4px;border-bottom:none;">⚖ Neue Straftat melden. (Neue Einträge werden vor Freigabe überprüft!)</h3>
                         <div class="hs-form-grid">
                             <div class="hs-field hs-field-full">
                                 <label>Straftat</label>
@@ -183,7 +183,7 @@ class Handschelle_Shortcodes {
 
                     <!-- ── Social Media ──────────────────────── -->
                     <div class="hs-form-section">
-                        <h3>📱 Social-Media Links</h3>
+                        <h3 style="background:#c0392b;color:#fff;padding:.5rem 1rem;border-radius:4px;border-bottom:none;">📱 Social-Media Links</h3>
                         <div class="hs-form-grid">
                             <?php foreach ( array( 'sm_facebook'=>'📘 Facebook','sm_youtube'=>'▶ YouTube','sm_personal'=>'👤 Persönliches Profil','sm_twitter'=>'🐦 Twitter / X','sm_homepage'=>'🌐 Persönliche Homepage','sm_wikipedia'=>'📖 Wikipedia','sm_linkedin'=>'💼 LinkedIn','sm_xing'=>'💼 Xing','sm_truth_social'=>'🗣 Truth Social','sm_sonstige'=>'🔗 Sonstige' ) as $field => $label ) : ?>
                                 <div class="hs-field"><label><?php echo $label; ?></label><input type="url" name="<?php echo esc_attr($field); ?>" placeholder="https://…"></div>
@@ -2489,7 +2489,7 @@ class Handschelle_Shortcodes {
                     <!-- ── Personen-Auswahl ───────────────────── -->
                     <div class="hs-form-section hs-smart-selector-section">
                         <h3>👤 Person auswählen</h3>
-                        <p class="hs-note">Wähle eine bereits bekannte Person aus dem Dropdown, um deren Daten zu übernehmen – oder lass das Feld leer, um eine neue Person einzutragen.</p>
+                        <p class="hs-note">Wähle eine bereits bekannte Person aus dem Dropdown, um deren Daten zu übernehmen.<br>Alle geladenen Felder werden schreibgeschützt!</p>
                         <div class="hs-form-grid">
                             <div class="hs-field hs-field-full">
                                 <label for="hs-smart-person-select">Bekannte Person</label>
@@ -2510,7 +2510,7 @@ class Handschelle_Shortcodes {
 
                     <!-- ── Personal ──────────────────────────── -->
                     <div class="hs-form-section hs-smart-personal-section">
-                        <h3>📋 Personal</h3>
+                        <h3 style="background:#c0392b;color:#fff;padding:.5rem 1rem;border-radius:4px;border-bottom:none;">📋 Personal</h3>
                         <div class="hs-form-grid hs-smart-personal-fields">
                             <div class="hs-field"><label>Name <span>(max. 50 Zeichen)</span></label><input type="text" name="name" maxlength="50" required placeholder="Vor- und Nachname"></div>
                             <div class="hs-field"><label>Beruf <span>(max. 50 Zeichen)</span></label><input type="text" name="beruf" maxlength="50" placeholder="z.B. Politiker, Unternehmer"></div>
@@ -2564,7 +2564,7 @@ class Handschelle_Shortcodes {
 
                     <!-- ── Social Media ──────────────────────── -->
                     <div class="hs-form-section hs-smart-social-section">
-                        <h3>📱 Social-Media Links</h3>
+                        <h3 style="background:#c0392b;color:#fff;padding:.5rem 1rem;border-radius:4px;border-bottom:none;">📱 Social-Media Links</h3>
                         <div class="hs-form-grid hs-smart-social-fields">
                             <?php foreach ( array( 'sm_facebook'=>'📘 Facebook','sm_youtube'=>'▶ YouTube','sm_personal'=>'👤 Persönliches Profil','sm_twitter'=>'🐦 Twitter / X','sm_homepage'=>'🌐 Persönliche Homepage','sm_wikipedia'=>'📖 Wikipedia','sm_linkedin'=>'💼 LinkedIn','sm_xing'=>'💼 Xing','sm_truth_social'=>'🗣 Truth Social','sm_sonstige'=>'🔗 Sonstige' ) as $field => $label ) : ?>
                                 <div class="hs-field"><label><?php echo $label; ?></label><input type="url" name="<?php echo esc_attr($field); ?>" placeholder="https://…"></div>
@@ -2574,7 +2574,7 @@ class Handschelle_Shortcodes {
 
                     <!-- ── Politik ───────────────────────────── -->
                     <div class="hs-form-section hs-smart-politik-section">
-                        <h3>🏛 Politik</h3>
+                        <h3 style="background:#c0392b;color:#fff;padding:.5rem 1rem;border-radius:4px;border-bottom:none;">🏛 Politik</h3>
                         <div class="hs-form-grid hs-smart-politik-fields">
                             <div class="hs-field"><label>Partei <span>(max. 50 Zeichen)</span></label><input type="text" name="partei" maxlength="50" placeholder="z.B. CDU, SPD, Grüne …"></div>
                             <div class="hs-field"><label>Aufgabe in der Partei</label><input type="text" name="aufgabe_partei" maxlength="100" placeholder="z.B. Vorsitzender, MdB …"></div>
@@ -2594,7 +2594,7 @@ class Handschelle_Shortcodes {
 
                     <!-- ── Straftat ──────────────────────────── -->
                     <div class="hs-form-section">
-                        <h3>⚖ Details zur Straftat</h3>
+                        <h3 style="background:#c0392b;color:#fff;padding:.5rem 1rem;border-radius:4px;border-bottom:none;">⚖ Neue Straftat melden. (Neue Einträge werden vor Freigabe überprüft!)</h3>
                         <div class="hs-form-grid">
                             <div class="hs-field hs-field-full">
                                 <label>Straftat</label>

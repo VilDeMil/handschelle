@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 14.1 |
+| **Version** | 14.2 |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
 | **Lizenz** | GPL-2.0+ |
@@ -123,6 +123,11 @@ Planned features for upcoming versions:
 ---
 
 ## Release Notes
+
+### 14.2 *(2026-03-23)*
+- **`[handschelle-smart]` – section headings styled red**: `⚖ Neue Straftat melden`, `🏛 Politik`, `📱 Social-Media Links`, and `📋 Personal` headings now display with a red background and white text to visually distinguish form sections.
+- **`[handschelle-smart]` – renamed Straftat heading**: "⚖ Details zur Straftat" renamed to "⚖ Neue Straftat melden. (Neue Einträge werden vor Freigabe überprüft!)" to inform users that new entries are reviewed before approval.
+- **`[handschelle-smart]` – person-selector note updated**: Hint text updated to "Wähle eine bereits bekannte Person aus dem Dropdown, um deren Daten zu übernehmen. Alle geladenen Felder werden schreibgeschützt!".
 
 ### 14.1 *(2026-03-23)*
 - **New shortcode `[handschelle-pie-partei-filter]`**: Pie chart showing entries per party (same as `[handschelle-pie-partei]`) with an "Nur Aktive anzeigen" checkbox; when checked, the chart filters to only entries where `status_aktiv = 1`.
