@@ -126,6 +126,7 @@ Planned features for upcoming versions:
 
 ### 14.1 *(2026-03-23)*
 - **New shortcode `[handschelle-pie-partei-filter]`**: Pie chart showing entries per party (same as `[handschelle-pie-partei]`) with an "Nur Aktive anzeigen" checkbox; when checked, the chart filters to only entries where `status_aktiv = 1`.
+- **`[handschelle-wanted]` – exclude iNAKTIV persons**: The wanted-poster shortcode now adds `AND status_aktiv = 1` to its query so persons marked as inactive are never selected for display.
 
 ### 14.0 *(2026-03-23)*
 - **Version bump**: Bumped version from 12.Alpha.04 to 14.0; updated README.md and all .txt files to reflect the new version.

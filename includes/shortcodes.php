@@ -2380,7 +2380,7 @@ class Handschelle_Shortcodes {
         $table = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
 
         $e = $wpdb->get_row(
-            "SELECT * FROM `{$table}` WHERE freigegeben = 1 AND status_straftat = 'Verurteilt' ORDER BY RAND() LIMIT 1"
+            "SELECT * FROM `{$table}` WHERE freigegeben = 1 AND status_straftat = 'Verurteilt' AND status_aktiv = 1 ORDER BY RAND() LIMIT 1"
         );
 
         if ( ! $e ) {
