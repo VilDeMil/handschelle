@@ -57,7 +57,8 @@ class Handschelle_Shortcodes {
         add_shortcode( 'handschelle-ticker-icons',     array( $this, 'sc_ticker_icons' ) );
         add_shortcode( 'handschelle-login',            array( $this, 'sc_login' ) );
         add_shortcode( 'handschelle-register',         array( $this, 'sc_register' ) );
-        add_shortcode( 'handschelle-pie-partei',       array( $this, 'sc_pie_partei' ) );
+        add_shortcode( 'handschelle-pie-partei',        array( $this, 'sc_pie_partei' ) );
+        add_shortcode( 'handschelle-pie-partei-filter', array( $this, 'sc_pie_partei_filter' ) );
         add_shortcode( 'handschelle-privacy',          array( $this, 'sc_privacy' ) );
         add_shortcode( 'handschelle-wanted',           array( $this, 'sc_wanted' ) );
 
@@ -2185,6 +2186,125 @@ class Handschelle_Shortcodes {
                 document.addEventListener( 'DOMContentLoaded', loadPie );
             } else {
                 loadPie();
+            }
+        })();
+        </script>
+        <?php
+        wp_enqueue_script(
+            'chartjs',
+            'https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js',
+            array(),
+            '4',
+            true
+        );
+        return ob_get_clean();
+    }
+
+    /* ================================================================
+       [handschelle-pie-partei-filter] – Pie-Chart je Partei + Aktiv/Inaktiv-Filter
+    ================================================================ */
+    public function sc_pie_partei_filter( $atts ) {
+        global $wpdb;
+        $table = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
+
+        // All approved entries grouped by partei
+        $rows_all = $wpdb->get_results(
+            "SELECT partei, COUNT(*) AS anzahl FROM `{$table}`
+             WHERE freigegeben = 1 AND partei != ''
+             GROUP BY partei ORDER BY anzahl DESC, partei ASC"
+        );
+
+        // Only status_aktiv = 1
+        $rows_aktiv = $wpdb->get_results(
+            "SELECT partei, COUNT(*) AS anzahl FROM `{$table}`
+             WHERE freigegeben = 1 AND partei != '' AND status_aktiv = 1
+             GROUP BY partei ORDER BY anzahl DESC, partei ASC"
+        );
+
+        if ( empty( $rows_all ) ) {
+            return '<p class="hs-empty">Noch keine freigegebenen Einträge vorhanden.</p>';
+        }
+
+        $id = 'hs-pie-partei-filter-' . wp_unique_id();
+
+        $labels_all   = array();
+        $data_all     = array();
+        foreach ( $rows_all as $r ) {
+            $labels_all[] = $r->partei;
+            $data_all[]   = (int) $r->anzahl;
+        }
+
+        $labels_aktiv = array();
+        $data_aktiv   = array();
+        foreach ( $rows_aktiv as $r ) {
+            $labels_aktiv[] = $r->partei;
+            $data_aktiv[]   = (int) $r->anzahl;
+        }
+
+        ob_start();
+        ?>
+        <div class="hs-frontend hs-pie-wrap">
+            <label class="hs-pie-filter-label" style="display:inline-flex;align-items:center;gap:.5em;margin-bottom:.75em;cursor:pointer;">
+                <input type="checkbox" id="<?php echo esc_attr( $id ); ?>-aktiv" class="hs-pie-filter-cb">
+                <span>Nur Aktive anzeigen</span>
+            </label>
+            <canvas id="<?php echo esc_attr( $id ); ?>" style="max-width:520px;width:100%;"></canvas>
+        </div>
+        <script>
+        (function(){
+            var colours = [
+                '#e63946','#457b9d','#2a9d8f','#e9c46a','#f4a261',
+                '#264653','#8338ec','#06d6a0','#fb5607','#3a86ff',
+                '#ffbe0b','#8ecae6','#219ebc','#023047','#ff006e'
+            ];
+            var dataAll   = { labels: <?php echo wp_json_encode( $labels_all ); ?>,   data: <?php echo wp_json_encode( $data_all ); ?> };
+            var dataAktiv = { labels: <?php echo wp_json_encode( $labels_aktiv ); ?>, data: <?php echo wp_json_encode( $data_aktiv ); ?> };
+            var chartInst = null;
+
+            function buildChart( source ) {
+                var ctx = document.getElementById( <?php echo wp_json_encode( $id ); ?> );
+                if ( ! ctx ) return;
+                if ( chartInst ) { chartInst.destroy(); }
+                chartInst = new Chart( ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: source.labels,
+                        datasets: [{
+                            data: source.data,
+                            backgroundColor: colours.slice( 0, source.data.length )
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { position: 'right' },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(ctx) {
+                                        var total = ctx.dataset.data.reduce(function(a,b){return a+b;},0);
+                                        var pct   = total ? Math.round( ctx.parsed / total * 1000 ) / 10 : 0;
+                                        return ' ' + ctx.label + ': ' + ctx.parsed + ' (' + pct + '%)';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function init() {
+                if ( typeof Chart === 'undefined' ) { setTimeout( init, 100 ); return; }
+                var cb = document.getElementById( <?php echo wp_json_encode( $id . '-aktiv' ); ?> );
+                buildChart( dataAll );
+                cb.addEventListener( 'change', function() {
+                    buildChart( this.checked ? dataAktiv : dataAll );
+                } );
+            }
+
+            if ( document.readyState === 'loading' ) {
+                document.addEventListener( 'DOMContentLoaded', init );
+            } else {
+                init();
             }
         })();
         </script>
