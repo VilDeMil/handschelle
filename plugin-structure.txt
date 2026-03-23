@@ -19,4 +19,4 @@ die-handschelle/
 ```
 ---
 
-(c) 2026 - "Die-Handschelle" 14.0 - www.die-handschelle.com
+(c) 2026 - "Die-Handschelle" 14.1 - www.die-handschelle.com

@@ -14,4 +14,4 @@
 - **Database auto-migration:** After updating the plugin, `maybe_upgrade_table()` runs on `plugins_loaded` and adds any missing columns via `dbDelta()`. No data is ever lost.
 ---
 
-(c) 2026 - "Die-Handschelle" 14.0 - www.die-handschelle.com
+(c) 2026 - "Die-Handschelle" 14.1 - www.die-handschelle.com

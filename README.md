@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 14.0 |
+| **Version** | 14.1 |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
 | **Lizenz** | GPL-2.0+ |
@@ -123,6 +123,9 @@ Planned features for upcoming versions:
 ---
 
 ## Release Notes
+
+### 14.1 *(2026-03-23)*
+- **New shortcode `[handschelle-pie-partei-filter]`**: Pie chart showing entries per party (same as `[handschelle-pie-partei]`) with an "Nur Aktive anzeigen" checkbox; when checked, the chart filters to only entries where `status_aktiv = 1`.
 
 ### 14.0 *(2026-03-23)*
 - **Version bump**: Bumped version from 12.Alpha.04 to 14.0; updated README.md and all .txt files to reflect the new version.
