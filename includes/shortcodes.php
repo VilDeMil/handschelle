@@ -160,7 +160,7 @@ class Handschelle_Shortcodes {
 
                     <!-- ── Straftat ──────────────────────────── -->
                     <div class="hs-form-section">
-                        <h3>⚖ Details zur Straftat</h3>
+                        <h3 style="background:#c0392b;color:#fff;padding:.5rem 1rem;border-radius:4px;border-bottom:none;">⚖ Details zur Straftat</h3>
                         <div class="hs-form-grid">
                             <div class="hs-field hs-field-full">
                                 <label>Straftat</label>
@@ -2489,7 +2489,7 @@ class Handschelle_Shortcodes {
                     <!-- ── Personen-Auswahl ───────────────────── -->
                     <div class="hs-form-section hs-smart-selector-section">
                         <h3>👤 Person auswählen</h3>
-                        <p class="hs-note">Wähle eine bereits bekannte Person aus dem Dropdown, um deren Daten zu übernehmen – oder lass das Feld leer, um eine neue Person einzutragen.</p>
+                        <p class="hs-note">Wähle eine bereits bekannte Person aus dem Dropdown, um deren Daten zu übernehmen.<br>Alle geladenen Felder werden schreibgeschützt!</p>
                         <div class="hs-form-grid">
                             <div class="hs-field hs-field-full">
                                 <label for="hs-smart-person-select">Bekannte Person</label>
@@ -2594,7 +2594,7 @@ class Handschelle_Shortcodes {
 
                     <!-- ── Straftat ──────────────────────────── -->
                     <div class="hs-form-section">
-                        <h3>⚖ Details zur Straftat</h3>
+                        <h3 style="background:#c0392b;color:#fff;padding:.5rem 1rem;border-radius:4px;border-bottom:none;">⚖ Details zur Straftat</h3>
                         <div class="hs-form-grid">
                             <div class="hs-field hs-field-full">
                                 <label>Straftat</label>
