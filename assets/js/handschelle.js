@@ -354,6 +354,21 @@
 
             // Show locked banner
             $form.find('.hs-smart-person-locked').show();
+
+            // Add clickable links next to social media URL fields that have values
+            SMART_SOCIAL_FIELDS.forEach(function(f) {
+                var val = data[f] || '';
+                var $el = $form.find('[name="' + f + '"]');
+                if (val && $el.length) {
+                    $('<a>', {
+                        href: val,
+                        target: '_blank',
+                        rel: 'noopener noreferrer',
+                        'class': 'hs-sm-link',
+                        title: val
+                    }).text('🔗').insertAfter($el);
+                }
+            });
         }
 
         function hsSmartClear($form) {
@@ -371,6 +386,7 @@
             $form.find('.hs-smart-image-preview').hide().find('.hs-smart-image-preview-inner').empty();
             $form.find('.hs-smart-search-links').hide().find('.hs-search-buttons').empty();
             $form.find('.hs-smart-person-locked').hide();
+            $form.find('.hs-sm-link').remove();
             $form.find('#hs-smart-person-select').val('');
 
             // Reset entry-specific fields
