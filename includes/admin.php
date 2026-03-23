@@ -675,8 +675,9 @@ class Handschelle_Admin {
                         </select>
                     </div>
                     <div class="hs-field"><label>Geburtsdatum</label><input type="date" name="geburtsdatum" value="<?php echo esc_attr( ( ! empty($entry->geburtsdatum) && $entry->geburtsdatum !== '0000-00-00' ) ? $entry->geburtsdatum : '' ); ?>"></div>
-                    <div class="hs-field"><label>Private E-Mail</label><input type="email" name="private_email" maxlength="200" value="<?php echo $v('private_email'); ?>" placeholder="privat@beispiel.de"></div>
-                    <div class="hs-field"><label>Öffentliche E-Mail</label><input type="email" name="oeffentliche_email" maxlength="200" value="<?php echo $v('oeffentliche_email'); ?>" placeholder="kontakt@beispiel.de"></div>
+                    <div class="hs-field hs-email-toggle" style="display:none;"><label>Private E-Mail</label><input type="email" name="private_email" maxlength="200" value="<?php echo $v('private_email'); ?>" placeholder="privat@beispiel.de"></div>
+                    <div class="hs-field hs-email-toggle" style="display:none;"><label>Öffentliche E-Mail</label><input type="email" name="oeffentliche_email" maxlength="200" value="<?php echo $v('oeffentliche_email'); ?>" placeholder="kontakt@beispiel.de"></div>
+                    <div class="hs-field"><label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;"><input type="checkbox" id="hs-email-show" onchange="document.querySelectorAll('.hs-email-toggle').forEach(function(el){el.style.display=this.checked?'':'none';}.bind(this))"> E-Mail-Felder anzeigen</label></div>
                     <div class="hs-field">
                         <label class="hs-checkbox-label"><input type="checkbox" name="verstorben" id="hs-verstorben" class="hs-verstorben-cb" value="1" <?php checked( intval($entry->verstorben ?? 0), 1 ); ?>> Verstorben</label>
                     </div>
@@ -815,7 +816,15 @@ class Handschelle_Admin {
                 <h2>📱 Social-Media Links</h2>
                 <div class="hs-form-grid">
                     <?php foreach ( $sm_fields as $field => $label ) : ?>
-                        <div class="hs-field"><label><?php echo $label; ?></label><input type="url" name="<?php echo esc_attr($field); ?>" value="<?php echo $v($field); ?>" placeholder="https://…"></div>
+                        <?php $sm_val = $entry ? esc_url( $entry->$field ?? '' ) : ''; ?>
+                        <div class="hs-field">
+                            <label style="display:flex;align-items:center;gap:.4rem;">
+                                <?php echo $label; ?>
+                                <a href="<?php echo $sm_val ?: '#'; ?>" target="_blank" rel="noopener noreferrer" title="Link öffnen" style="font-size:.85rem;line-height:1;text-decoration:none;<?php echo $sm_val ? '' : 'visibility:hidden;'; ?>" id="sm-link-<?php echo esc_attr($field); ?>">🔗</a>
+                            </label>
+                            <input type="url" name="<?php echo esc_attr($field); ?>" id="sm-input-<?php echo esc_attr($field); ?>" value="<?php echo $v($field); ?>" placeholder="https://…"
+                                oninput="(function(i){var a=document.getElementById('sm-link-'+i.id.replace('sm-input-',''));a.href=i.value||'#';a.style.visibility=i.value?'':'hidden';})(this)">
+                        </div>
                     <?php endforeach; ?>
                 </div>
             </div>
