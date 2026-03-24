@@ -7,7 +7,12 @@ moero
 
 add Links to AI
 
+when a user is NOT logged in 
+use a captcha before sending / submitting data
 
+
+
+add crypto to donate
 
 Share Links from cards
 
