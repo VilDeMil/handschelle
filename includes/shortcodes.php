@@ -2140,7 +2140,7 @@ class Handschelle_Shortcodes {
         ob_start();
         ?>
         <div class="hs-frontend hs-pie-wrap">
-            <canvas id="<?php echo esc_attr( $id ); ?>" style="max-width:520px;width:100%;"></canvas>
+            <canvas id="<?php echo esc_attr( $id ); ?>" style="width:100%;"></canvas>
         </div>
         <script>
         (function(){
@@ -2248,7 +2248,7 @@ class Handschelle_Shortcodes {
                 <input type="checkbox" id="<?php echo esc_attr( $id ); ?>-aktiv" class="hs-pie-filter-cb">
                 <span>Nur Aktive anzeigen</span>
             </label>
-            <canvas id="<?php echo esc_attr( $id ); ?>" style="max-width:520px;width:100%;"></canvas>
+            <canvas id="<?php echo esc_attr( $id ); ?>" style="width:100%;"></canvas>
         </div>
         <script>
         (function(){

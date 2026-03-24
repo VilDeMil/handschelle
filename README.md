@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 14.4 |
+| **Version** | 14.5 |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
 | **Lizenz** | GPL-2.0+ |
@@ -122,6 +122,9 @@ Planned features for upcoming versions:
 ---
 
 ## Release Notes
+
+### 14.5 *(2026-03-24)*
+- **CSS – removed shortcode output width restrictions**: Removed `max-width: 440px` from `.hs-login-wrap` and `.hs-register-wrap`; removed `max-width: 600px` from `.hs-wanted-card`; removed `max-width: 520px` from pie-chart canvas elements (`[handschelle-pie-partei]`, `[handschelle-pie-partei-filter]`). All shortcode outputs now expand to the full available container width.
 
 ### 14.4 *(2026-03-24)*
 - **README – txt files as chapters**: Replaced flat "Links to Documentation" list with individual `##` chapter sections for each `.txt` file (`build-package.txt`, `code-reference.txt`, `fields-database-schema.txt`, `Next-Commands.txt`, `plugin-structure.txt`, `prompt.txt`, `shortcodes.txt`). `important-notes.txt` and `instructions-for-ai-llm.txt` retain their inline content but now include a link to the txt file. Table of Contents updated accordingly.
