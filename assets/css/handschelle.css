@@ -681,7 +681,6 @@ a.hs-st-item { display: inline-block; }
    Login-Formular  [handschelle-login]
 ================================================================ */
 .hs-login-wrap {
-    max-width: 440px;
     margin: 0 auto;
     font-family: var(--hs-font);
     color: #222;
@@ -781,7 +780,6 @@ a.hs-st-item { display: inline-block; }
    Registrierungs-Formular  [handschelle-register]
 ================================================================ */
 .hs-register-wrap {
-    max-width: 440px;
     margin: 0 auto;
     font-family: var(--hs-font);
     color: #222;
@@ -862,7 +860,6 @@ a.hs-st-item { display: inline-block; }
     border-radius: 0;
     overflow: hidden;
     box-shadow: 6px 6px 0 #1a1a1a, 0 0 0 1px #1a1a1a;
-    max-width: 600px;
 }
 
 /* Header */
