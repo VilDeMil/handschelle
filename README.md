@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 14.3 |
+| **Version** | 14.4 |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
 | **Lizenz** | GPL-2.0+ |
@@ -51,7 +51,13 @@
   - [`[wordcloud-name]`](#wordcloud-name)
   - [`[wordcloud-urteil]`](#wordcloud-urteil)
   - [Typical Page Setup](#typical-page-setup)
-- [Links to Documentation](#links-to-documentation)
+- [Build Package](#build-package)
+- [Code Reference](#code-reference)
+- [Fields & Database Schema](#fields--database-schema)
+- [Next Commands](#next-commands)
+- [Plugin Structure](#plugin-structure)
+- [Prompt](#prompt)
+- [Shortcodes Reference](#shortcodes-reference)
 - [Instructions for AI / LLM](#instructions-for-ai--llm)
   - [Version Bumping](#version-bumping)
   - [Adding a Release Note](#adding-a-release-note)
@@ -111,9 +117,14 @@ Planned features for upcoming versions:
 - The **admin image field** supports two workflows: (1) pick from the WP Media Library via the `wp.media` modal, or (2) upload a new file directly.
 - **Database auto-migration:** After updating the plugin, `maybe_upgrade_table()` runs on `plugins_loaded` and adds any missing columns via `dbDelta()`. No data is ever lost.
 
+> Full notes: [important-notes.txt](important-notes.txt)
+
 ---
 
 ## Release Notes
+
+### 14.4 *(2026-03-24)*
+- **README – txt files as chapters**: Replaced flat "Links to Documentation" list with individual `##` chapter sections for each `.txt` file (`build-package.txt`, `code-reference.txt`, `fields-database-schema.txt`, `Next-Commands.txt`, `plugin-structure.txt`, `prompt.txt`, `shortcodes.txt`). `important-notes.txt` and `instructions-for-ai-llm.txt` retain their inline content but now include a link to the txt file. Table of Contents updated accordingly.
 
 ### 14.3 *(2026-03-23)*
 - **`[handschelle-smart]` – selector heading black**: "👤 Person auswählen" heading changed to "Bekannte Personendaten laden!" with black background and white text.
@@ -863,24 +874,52 @@ Word cloud of all distinct verdicts (`urteil`). Font size is proportional to fre
 
 ---
 
-## Links to Documentation
+## Build Package
 
-- [build-package.txt](build-package.txt)
-- [code-reference.txt](code-reference.txt)
-- [fields-database-schema.txt](fields-database-schema.txt)
-- [important-notes.txt](important-notes.txt)
-- [installation-from-github.txt](installation-from-github.txt)
-- [instructions-for-ai-llm.txt](instructions-for-ai-llm.txt)
-- [Next-Commands.txt](Next-Commands.txt)
-- [plugin-structure.txt](plugin-structure.txt)
-- [prompt.txt](prompt.txt)
-- [shortcodes.txt](shortcodes.txt)
+See [build-package.txt](build-package.txt)
+
+---
+
+## Code Reference
+
+See [code-reference.txt](code-reference.txt)
+
+---
+
+## Fields & Database Schema
+
+See [fields-database-schema.txt](fields-database-schema.txt)
+
+---
+
+## Next Commands
+
+See [Next-Commands.txt](Next-Commands.txt)
+
+---
+
+## Plugin Structure
+
+See [plugin-structure.txt](plugin-structure.txt)
+
+---
+
+## Prompt
+
+See [prompt.txt](prompt.txt)
+
+---
+
+## Shortcodes Reference
+
+See [shortcodes.txt](shortcodes.txt)
 
 ---
 
 ## Instructions for AI / LLM
 
 > This section is written for AI assistants (Claude, GPT, Gemini, etc.) that contribute to this codebase. Follow these rules every time you make changes.
+> Full instructions: [instructions-for-ai-llm.txt](instructions-for-ai-llm.txt)
 
 ### Version Bumping
 
