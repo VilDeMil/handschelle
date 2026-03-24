@@ -41,7 +41,7 @@ function handschelle_parlaments() {
 }
 
 function handschelle_status_straftat_options() {
-    return array( 'Ermittlungen laufen', 'Verurteilt', 'Eingestellt' );
+    return array( 'Ermittlungen laufen', 'Verurteilt', 'Eingestellt', 'Berufung' );
 }
 
 function handschelle_laender() {

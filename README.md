@@ -123,6 +123,9 @@ Planned features for upcoming versions:
 
 ## Release Notes
 
+### 14.6 *(2026-03-24)*
+- **"Status der Straftat" – added "Berufung" option**: Extended the status dropdown for offences with a fourth option "Berufung" (appeal). Available choices are now: "Ermittlungen laufen", "Verurteilt", "Eingestellt", "Berufung".
+
 ### 14.5 *(2026-03-24)*
 - **CSS – removed shortcode output width restrictions**: Removed `max-width: 440px` from `.hs-login-wrap` and `.hs-register-wrap`; removed `max-width: 600px` from `.hs-wanted-card`; removed `max-width: 520px` from pie-chart canvas elements (`[handschelle-pie-partei]`, `[handschelle-pie-partei-filter]`). All shortcode outputs now expand to the full available container width.
 
