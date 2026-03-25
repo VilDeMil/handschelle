@@ -51,6 +51,7 @@ class Handschelle_Shortcodes {
         add_shortcode( 'wordcloud-urteil',             array( $this, 'sc_wordcloud_urteil' ) );
         add_shortcode( 'wordcloud-straftat',           array( $this, 'sc_wordcloud_straftat' ) );
         add_shortcode( 'handschelle-ticker',           array( $this, 'sc_ticker' ) );
+        add_shortcode( 'handschelle-straftaten',       array( $this, 'sc_straftaten' ) );
         add_shortcode( 'handschelle-straftat',         array( $this, 'sc_straftat_ticker' ) );
         add_shortcode( 'handschelle-straftat-link',    array( $this, 'sc_straftat_ticker_link' ) );
         add_shortcode( 'handschelle-result',           array( $this, 'sc_result' ) );
@@ -1594,6 +1595,44 @@ class Handschelle_Shortcodes {
        Attribute:
          speed  – Scrollgeschwindigkeit in Sekunden (Standard: 40)
     ================================================================ */
+    /* ================================================================
+       [handschelle-straftaten] – Straftat-Dropdown → zeigt Namen
+    ================================================================ */
+    public function sc_straftaten( $atts ) {
+        $straftaten = Handschelle_Database::get_distinct_straftaten();
+        $selected   = sanitize_text_field( wp_unslash( $_GET['hs_straftat'] ?? '' ) );
+        ob_start();
+        ?>
+        <div class="hs-frontend hs-full-width">
+            <div class="hs-search-box">
+                <h3 class="hs-search-title">⚖ Nach Straftat suchen</h3>
+                <form method="get" action="<?php echo esc_url( get_permalink() ); ?>" class="hs-search-form">
+                    <select name="hs_straftat" class="hs-select" onchange="this.form.submit()">
+                        <option value="">-- Straftat auswählen --</option>
+                        <?php foreach ( $straftaten as $s ) : ?>
+                            <option value="<?php echo esc_attr( $s ); ?>" <?php selected( $selected, $s ); ?>><?php echo esc_html( $s ); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <noscript><button type="submit" class="hs-btn">Suchen</button></noscript>
+                </form>
+                <?php if ( ! empty( $selected ) ) :
+                    $entries = Handschelle_Database::get_entries_by_straftat( $selected );
+                ?>
+                    <div class="hs-search-results">
+                        <h4>Personen mit Straftat: <em><?php echo esc_html( $selected ); ?></em> <span class="hs-count">(<?php echo count( $entries ); ?>)</span></h4>
+                        <?php if ( empty( $entries ) ) : ?>
+                            <p class="hs-empty">Keine Einträge für diese Straftat.</p>
+                        <?php else : ?>
+                            <div class="hs-cards-grid"><?php foreach ( $entries as $e ) echo $this->render_card( $e ); ?></div>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
     public function sc_straftat_ticker( $atts ) {
         global $wpdb;
         $atts = shortcode_atts( array(

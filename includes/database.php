@@ -155,6 +155,35 @@ class Handschelle_Database {
         return $wpdb->get_col( "SELECT DISTINCT name FROM `{$table}` WHERE freigegeben=1 AND name != '' ORDER BY name ASC" );
     }
 
+    public static function get_distinct_straftaten() {
+        global $wpdb;
+        $main = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
+        $off  = $wpdb->prefix . HANDSCHELLE_DB_TABLE . '_offences';
+        return $wpdb->get_col(
+            "SELECT DISTINCT straftat FROM `{$main}` WHERE freigegeben=1 AND straftat != ''
+             UNION
+             SELECT DISTINCT o.straftat FROM `{$off}` o
+             INNER JOIN `{$main}` e ON e.id = o.entry_id
+             WHERE o.freigegeben=1 AND o.straftat != ''
+             ORDER BY straftat ASC"
+        );
+    }
+
+    public static function get_entries_by_straftat( $straftat ) {
+        global $wpdb;
+        $main = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
+        $off  = $wpdb->prefix . HANDSCHELLE_DB_TABLE . '_offences';
+        // Entries where main straftat matches OR any approved offence straftat matches
+        return $wpdb->get_results( $wpdb->prepare(
+            "SELECT DISTINCT e.* FROM `{$main}` e
+             LEFT JOIN `{$off}` o ON o.entry_id = e.id AND o.freigegeben = 1
+             WHERE e.freigegeben = 1
+               AND (e.straftat = %s OR o.straftat = %s)
+             ORDER BY e.name ASC",
+            $straftat, $straftat
+        ) );
+    }
+
     /**
      * Returns one representative row (highest ID) per unique person name.
      * Used for the [handschelle-smart] dropdown.
