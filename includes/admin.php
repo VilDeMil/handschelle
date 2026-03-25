@@ -20,6 +20,7 @@ class Handschelle_Admin {
         add_action( 'admin_notices', array( $this, 'show_notice' ) );
         add_action( 'admin_head',    array( $this, 'hide_edit_menu_item' ) );
         add_filter( 'authenticate',  array( $this, 'block_pending_users' ), 30, 3 );
+        add_action( 'user_register', array( $this, 'set_new_user_pending' ), 10, 1 );
     }
 
     /* ── Bearbeitungsseite aus Menü ausblenden (bleibt aber erreichbar) ── */
@@ -1779,6 +1780,17 @@ class Handschelle_Admin {
     }
 
     /* ================================================================
+       NEUE BENUTZER: automatisch auf "ausstehend" setzen
+    ================================================================ */
+    public function set_new_user_pending( $user_id ) {
+        // Only set pending if no status has been assigned yet (e.g. via shortcode handler)
+        if ( ! get_user_meta( $user_id, 'hs_user_status', true ) ) {
+            update_user_meta( $user_id, 'hs_user_status', 'pending' );
+            wp_new_user_notification( $user_id, null, 'admin' );
+        }
+    }
+
+    /* ================================================================
        LOGIN-SPERRE: ausstehende / deaktivierte Benutzer
     ================================================================ */
     public function block_pending_users( $user, $username, $password ) {
@@ -1846,7 +1858,7 @@ class Handschelle_Admin {
                         </td>
                         <td class="hs-actions">
                             <?php if ( ! $is_admin ) : ?>
-                                <?php if ( $status !== 'active' && $status !== '' ) : ?>
+                                <?php if ( $status !== 'active' ) : ?>
                                     <a href="<?php echo esc_url( admin_url( "admin.php?page=handschelle-users&hs_action=activate_user&uid={$u->ID}&_wpnonce={$nonce}" ) ); ?>"
                                        class="button button-small button-primary">✅ Freischalten</a>
                                 <?php endif; ?>
