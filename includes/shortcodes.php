@@ -1221,6 +1221,12 @@ class Handschelle_Shortcodes {
                         <div class="hs-field hs-field-full">
                             <label>Straftat</label>
                             <textarea name="straftat" rows="3" required><?php echo esc_textarea($e->straftat); ?></textarea>
+                            <div class="hs-search-buttons">
+                                <small>Mehr infos:</small>
+                                <a href="<?php echo esc_url( 'https://www.google.com/search?q=' . urlencode( $e->name . ' ' . $e->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Google</a>
+                                <a href="<?php echo esc_url( 'https://www.qwant.com/?l=de&q=' . urlencode( $e->name . ' ' . $e->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Qwant</a>
+                                <a href="<?php echo esc_url( 'https://duckduckgo.com/?q=' . urlencode( $e->name . ' ' . $e->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 DDG</a>
+                            </div>
                         </div>
                         <div class="hs-field"><label>Urteil <span>(max. 200)</span></label><input type="text" name="urteil" maxlength="200" value="<?php echo esc_attr($e->urteil); ?>"></div>
                         <div class="hs-field"><label>Link zur Quelle</label><input type="url" name="link_quelle" value="<?php echo esc_attr($e->link_quelle); ?>"></div>
@@ -1250,7 +1256,14 @@ class Handschelle_Shortcodes {
                                 </div>
                                 <input type="hidden" name="hs_offences[<?php echo $oi; ?>][id]"     value="<?php echo intval($off->id); ?>">
                                 <input type="hidden" name="hs_offences[<?php echo $oi; ?>][delete]" value="0" class="hs-offence-delete-flag">
-                                <div class="hs-field hs-field-full"><label>Straftat <?php echo $oi + 2; ?></label><textarea name="hs_offences[<?php echo $oi; ?>][straftat]" rows="3"><?php echo esc_textarea($off->straftat); ?></textarea></div>
+                                <div class="hs-field hs-field-full"><label>Straftat <?php echo $oi + 2; ?></label><textarea name="hs_offences[<?php echo $oi; ?>][straftat]" rows="3"><?php echo esc_textarea($off->straftat); ?></textarea>
+                                    <div class="hs-search-buttons">
+                                        <small>Mehr infos:</small>
+                                        <a href="<?php echo esc_url( 'https://www.google.com/search?q=' . urlencode( $e->name . ' ' . $off->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Google</a>
+                                        <a href="<?php echo esc_url( 'https://www.qwant.com/?l=de&q=' . urlencode( $e->name . ' ' . $off->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Qwant</a>
+                                        <a href="<?php echo esc_url( 'https://duckduckgo.com/?q=' . urlencode( $e->name . ' ' . $off->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 DDG</a>
+                                    </div>
+                                </div>
                                 <div class="hs-field"><label>Urteil</label><input type="text" name="hs_offences[<?php echo $oi; ?>][urteil]" maxlength="200" value="<?php echo esc_attr($off->urteil); ?>"></div>
                                 <div class="hs-field"><label>Link zur Quelle</label><input type="url" name="hs_offences[<?php echo $oi; ?>][link_quelle]" value="<?php echo esc_attr($off->link_quelle ?? ''); ?>"></div>
                                 <div class="hs-field"><label>Aktenzeichen</label><input type="text" name="hs_offences[<?php echo $oi; ?>][aktenzeichen]" maxlength="50" value="<?php echo esc_attr($off->aktenzeichen); ?>"></div>
