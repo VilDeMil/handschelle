@@ -160,10 +160,6 @@
 @media (max-width:700px) { .hs-personal-columns { flex-direction:column; } .hs-personal-left { flex:none; width:100%; } }
 .hs-sm-link { display:inline-block; margin-left:6px; font-size:14px; vertical-align:middle; text-decoration:none; }
 .hs-empty { color:var(--hs-muted); font-style:italic; text-align:center; padding:2.5rem; background:#f8f9fa; border-radius:var(--hs-radius); border:1px dashed var(--hs-border); }
-.hs-straftaten-list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.5rem; }
-.hs-straftaten-item { display:flex; align-items:center; gap:.6rem; padding:.5rem .75rem; background:#f8f9fa; border-radius:var(--hs-radius); border:1px solid var(--hs-border); }
-.hs-straftaten-name { font-weight:600; color:var(--hs-primary); }
-.hs-straftaten-partei { font-size:.82rem; color:var(--hs-muted); background:var(--hs-border); padding:.15rem .5rem; border-radius:20px; }
 
 /* ── Admin-Tabelle ──────────────────────────────────────────── */
 .hs-admin-table th { background:var(--hs-primary) !important; color:#fff !important; font-weight:600; white-space:nowrap; }

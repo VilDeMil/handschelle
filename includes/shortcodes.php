@@ -1616,23 +1616,14 @@ class Handschelle_Shortcodes {
                     <noscript><button type="submit" class="hs-btn">Suchen</button></noscript>
                 </form>
                 <?php if ( ! empty( $selected ) ) :
-                    $personen = Handschelle_Database::get_namen_by_straftat( $selected );
+                    $entries = Handschelle_Database::get_entries_by_straftat( $selected );
                 ?>
                     <div class="hs-search-results">
-                        <h4>Personen mit Straftat: <em><?php echo esc_html( $selected ); ?></em> <span class="hs-count">(<?php echo count( $personen ); ?>)</span></h4>
-                        <?php if ( empty( $personen ) ) : ?>
+                        <h4>Personen mit Straftat: <em><?php echo esc_html( $selected ); ?></em> <span class="hs-count">(<?php echo count( $entries ); ?>)</span></h4>
+                        <?php if ( empty( $entries ) ) : ?>
                             <p class="hs-empty">Keine Einträge für diese Straftat.</p>
                         <?php else : ?>
-                            <ul class="hs-straftaten-list">
-                                <?php foreach ( $personen as $p ) : ?>
-                                    <li class="hs-straftaten-item">
-                                        <span class="hs-straftaten-name"><?php echo esc_html( hs_display_name( $p->name ) ); ?></span>
-                                        <?php if ( ! empty( $p->partei ) ) : ?>
-                                            <span class="hs-straftaten-partei"><?php echo esc_html( $p->partei ); ?></span>
-                                        <?php endif; ?>
-                                    </li>
-                                <?php endforeach; ?>
-                            </ul>
+                            <div class="hs-cards-grid"><?php foreach ( $entries as $e ) echo $this->render_card( $e ); ?></div>
                         <?php endif; ?>
                     </div>
                 <?php endif; ?>

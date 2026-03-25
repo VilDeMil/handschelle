@@ -161,11 +161,11 @@ class Handschelle_Database {
         return $wpdb->get_col( "SELECT DISTINCT straftat FROM `{$table}` WHERE freigegeben=1 AND straftat != '' ORDER BY straftat ASC" );
     }
 
-    public static function get_namen_by_straftat( $straftat ) {
+    public static function get_entries_by_straftat( $straftat ) {
         global $wpdb;
         $table = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
         return $wpdb->get_results( $wpdb->prepare(
-            "SELECT DISTINCT name, partei FROM `{$table}` WHERE freigegeben=1 AND straftat = %s ORDER BY name ASC",
+            "SELECT * FROM `{$table}` WHERE freigegeben=1 AND straftat = %s ORDER BY name ASC",
             $straftat
         ) );
     }
