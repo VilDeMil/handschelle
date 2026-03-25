@@ -171,6 +171,10 @@ class Handschelle_Shortcodes {
                                     <button type="button" onclick="hsSearchStraftat(this,'google')" class="hs-search-btn">🔍 Google</button>
                                     <button type="button" onclick="hsSearchStraftat(this,'qwant')"  class="hs-search-btn">🔍 Qwant</button>
                                     <button type="button" onclick="hsSearchStraftat(this,'ddg')"    class="hs-search-btn">🔍 DDG</button>
+                                    <button type="button" onclick="hsSearchStraftat(this,'bing')"   class="hs-search-btn">🔍 Bing</button>
+                                    <button type="button" onclick="hsSearchStraftat(this,'ecosia')" class="hs-search-btn">🔍 Ecosia</button>
+                                    <button type="button" onclick="hsSearchStraftat(this,'baidu')"  class="hs-search-btn">🔍 Baidu</button>
+                                    <button type="button" onclick="hsSearchStraftat(this,'yandex')" class="hs-search-btn">🔍 Yandex</button>
                                 </div>
                             </div>
                             <div class="hs-field"><label>Urteil <span>(max. 200 Zeichen)</span></label><input type="text" name="urteil" maxlength="200" placeholder="z.B. 2 Jahre auf Bewährung"></div>
@@ -1096,6 +1100,10 @@ class Handschelle_Shortcodes {
                         $social_links[] = '<a href="'.esc_url( 'https://www.google.com/search?q=' . $q_straftat ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="google-straftat" title="Google: Mehr infos zur Straftat">🔍 Google (Straftat)</a>';
                         $social_links[] = '<a href="'.esc_url( 'https://www.qwant.com/?l=de&q=' . $q_straftat ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="qwant-straftat" title="Qwant: Mehr infos zur Straftat">🔍 Qwant (Straftat)</a>';
                         $social_links[] = '<a href="'.esc_url( 'https://duckduckgo.com/?q=' . $q_straftat ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="ddg-straftat" title="DuckDuckGo: Mehr infos zur Straftat">🔍 DDG (Straftat)</a>';
+                        $social_links[] = '<a href="'.esc_url( 'https://www.bing.com/search?q=' . $q_straftat ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="bing-straftat" title="Bing: Mehr infos zur Straftat">🔍 Bing (Straftat)</a>';
+                        $social_links[] = '<a href="'.esc_url( 'https://www.ecosia.org/search?q=' . $q_straftat ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="ecosia-straftat" title="Ecosia: Mehr infos zur Straftat">🔍 Ecosia (Straftat)</a>';
+                        $social_links[] = '<a href="'.esc_url( 'https://www.baidu.com/s?wd=' . $q_straftat ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="baidu-straftat" title="Baidu: Mehr infos zur Straftat">🔍 Baidu (Straftat)</a>';
+                        $social_links[] = '<a href="'.esc_url( 'https://yandex.com/search/?text=' . $q_straftat ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="yandex-straftat" title="Yandex: Mehr infos zur Straftat">🔍 Yandex (Straftat)</a>';
                     }
                     $melden_subject = 'Meldung - ' . $e->name . ' - ' . $e->partei;
                     $melden_href    = 'mailto:info@die-handschelle.com?subject=' . rawurlencode( $melden_subject );
@@ -1124,6 +1132,10 @@ class Handschelle_Shortcodes {
                         <a href="<?php echo esc_url( 'https://www.google.com/search?q=' . urlencode( $e->name . ' ' . $e->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Google</a>
                         <a href="<?php echo esc_url( 'https://www.qwant.com/?l=de&q=' . urlencode( $e->name . ' ' . $e->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Qwant</a>
                         <a href="<?php echo esc_url( 'https://duckduckgo.com/?q=' . urlencode( $e->name . ' ' . $e->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 DDG</a>
+                        <a href="<?php echo esc_url( 'https://www.bing.com/search?q=' . urlencode( $e->name . ' ' . $e->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Bing</a>
+                        <a href="<?php echo esc_url( 'https://www.ecosia.org/search?q=' . urlencode( $e->name . ' ' . $e->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Ecosia</a>
+                        <a href="<?php echo esc_url( 'https://www.baidu.com/s?wd=' . urlencode( $e->name . ' ' . $e->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Baidu</a>
+                        <a href="<?php echo esc_url( 'https://yandex.com/search/?text=' . urlencode( $e->name . ' ' . $e->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Yandex</a>
                     </div>
                     <?php endif; ?>
                 </div>
@@ -1150,6 +1162,10 @@ class Handschelle_Shortcodes {
                         <a href="<?php echo esc_url( 'https://www.google.com/search?q=' . urlencode( $e->name . ' ' . $off->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Google</a>
                         <a href="<?php echo esc_url( 'https://www.qwant.com/?l=de&q=' . urlencode( $e->name . ' ' . $off->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Qwant</a>
                         <a href="<?php echo esc_url( 'https://duckduckgo.com/?q=' . urlencode( $e->name . ' ' . $off->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 DDG</a>
+                        <a href="<?php echo esc_url( 'https://www.bing.com/search?q=' . urlencode( $e->name . ' ' . $off->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Bing</a>
+                        <a href="<?php echo esc_url( 'https://www.ecosia.org/search?q=' . urlencode( $e->name . ' ' . $off->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Ecosia</a>
+                        <a href="<?php echo esc_url( 'https://www.baidu.com/s?wd=' . urlencode( $e->name . ' ' . $off->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Baidu</a>
+                        <a href="<?php echo esc_url( 'https://yandex.com/search/?text=' . urlencode( $e->name . ' ' . $off->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Yandex</a>
                     </div>
                     <?php endif; ?>
                 </div>
@@ -1254,6 +1270,10 @@ class Handschelle_Shortcodes {
                                 <a href="<?php echo esc_url( 'https://www.google.com/search?q=' . urlencode( $e->name . ' ' . $e->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Google</a>
                                 <a href="<?php echo esc_url( 'https://www.qwant.com/?l=de&q=' . urlencode( $e->name . ' ' . $e->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Qwant</a>
                                 <a href="<?php echo esc_url( 'https://duckduckgo.com/?q=' . urlencode( $e->name . ' ' . $e->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 DDG</a>
+                                <a href="<?php echo esc_url( 'https://www.bing.com/search?q=' . urlencode( $e->name . ' ' . $e->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Bing</a>
+                                <a href="<?php echo esc_url( 'https://www.ecosia.org/search?q=' . urlencode( $e->name . ' ' . $e->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Ecosia</a>
+                                <a href="<?php echo esc_url( 'https://www.baidu.com/s?wd=' . urlencode( $e->name . ' ' . $e->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Baidu</a>
+                                <a href="<?php echo esc_url( 'https://yandex.com/search/?text=' . urlencode( $e->name . ' ' . $e->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Yandex</a>
                             </div>
                         </div>
                         <div class="hs-field"><label>Urteil <span>(max. 200)</span></label><input type="text" name="urteil" maxlength="200" value="<?php echo esc_attr($e->urteil); ?>"></div>
@@ -1290,6 +1310,10 @@ class Handschelle_Shortcodes {
                                         <a href="<?php echo esc_url( 'https://www.google.com/search?q=' . urlencode( $e->name . ' ' . $off->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Google</a>
                                         <a href="<?php echo esc_url( 'https://www.qwant.com/?l=de&q=' . urlencode( $e->name . ' ' . $off->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Qwant</a>
                                         <a href="<?php echo esc_url( 'https://duckduckgo.com/?q=' . urlencode( $e->name . ' ' . $off->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 DDG</a>
+                                        <a href="<?php echo esc_url( 'https://www.bing.com/search?q=' . urlencode( $e->name . ' ' . $off->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Bing</a>
+                                        <a href="<?php echo esc_url( 'https://www.ecosia.org/search?q=' . urlencode( $e->name . ' ' . $off->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Ecosia</a>
+                                        <a href="<?php echo esc_url( 'https://www.baidu.com/s?wd=' . urlencode( $e->name . ' ' . $off->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Baidu</a>
+                                        <a href="<?php echo esc_url( 'https://yandex.com/search/?text=' . urlencode( $e->name . ' ' . $off->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Yandex</a>
                                     </div>
                                 </div>
                                 <div class="hs-field"><label>Urteil</label><input type="text" name="hs_offences[<?php echo $oi; ?>][urteil]" maxlength="200" value="<?php echo esc_attr($off->urteil); ?>"></div>
@@ -2690,6 +2714,10 @@ class Handschelle_Shortcodes {
                                     <button type="button" onclick="hsSearchStraftat(this,'google')" class="hs-search-btn">🔍 Google</button>
                                     <button type="button" onclick="hsSearchStraftat(this,'qwant')"  class="hs-search-btn">🔍 Qwant</button>
                                     <button type="button" onclick="hsSearchStraftat(this,'ddg')"    class="hs-search-btn">🔍 DDG</button>
+                                    <button type="button" onclick="hsSearchStraftat(this,'bing')"   class="hs-search-btn">🔍 Bing</button>
+                                    <button type="button" onclick="hsSearchStraftat(this,'ecosia')" class="hs-search-btn">🔍 Ecosia</button>
+                                    <button type="button" onclick="hsSearchStraftat(this,'baidu')"  class="hs-search-btn">🔍 Baidu</button>
+                                    <button type="button" onclick="hsSearchStraftat(this,'yandex')" class="hs-search-btn">🔍 Yandex</button>
                                 </div>
                             </div>
                             <div class="hs-field"><label>Urteil <span>(max. 200 Zeichen)</span></label><input type="text" name="urteil" maxlength="200" placeholder="z.B. 2 Jahre auf Bewährung"></div>
