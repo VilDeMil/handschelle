@@ -604,6 +604,9 @@ class Handschelle_Shortcodes {
                             <a href="<?php echo esc_url( 'https://www.qwant.com/?l=de&q=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 Qwant</a>
                             <a href="<?php echo esc_url( 'https://duckduckgo.com/?q=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 DuckDuckGo</a>
                             <a href="<?php echo esc_url( 'https://www.bing.com/search?q=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 Bing</a>
+                            <a href="<?php echo esc_url( 'https://www.ecosia.org/search?q=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 Ecosia</a>
+                            <a href="<?php echo esc_url( 'https://www.baidu.com/s?wd=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 Baidu</a>
+                            <a href="<?php echo esc_url( 'https://yandex.com/search/?text=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 Yandex</a>
                             <a href="<?php echo esc_url( 'https://www.abgeordnetenwatch.de/profile?politician_search_keys=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🏛 Abgeordnetenwatch</a>
                         </div>
                         <?php endif; ?>
@@ -980,6 +983,9 @@ class Handschelle_Shortcodes {
                         <a href="<?php echo esc_url( 'https://www.qwant.com/?l=de&q=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 Qwant</a>
                         <a href="<?php echo esc_url( 'https://duckduckgo.com/?q=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 DuckDuckGo</a>
                         <a href="<?php echo esc_url( 'https://www.bing.com/search?q=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 Bing</a>
+                        <a href="<?php echo esc_url( 'https://www.ecosia.org/search?q=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 Ecosia</a>
+                        <a href="<?php echo esc_url( 'https://www.baidu.com/s?wd=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 Baidu</a>
+                        <a href="<?php echo esc_url( 'https://yandex.com/search/?text=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🔍 Yandex</a>
                         <a href="<?php echo esc_url( 'https://www.abgeordnetenwatch.de/profile?politician_search_keys=' . urlencode( $selected ) ); ?>" target="_blank" rel="noopener" class="hs-btn hs-search-btn">🏛 Abgeordnetenwatch</a>
                     </div>
                     <?php endif; ?>
@@ -1094,6 +1100,9 @@ class Handschelle_Shortcodes {
                     $social_links[] = '<a href="'.esc_url( 'https://www.qwant.com/?l=de&q=' . urlencode( $e->name ) ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="qwant" title="Qwant-Suche">🔍 Qwant</a>';
                     $social_links[] = '<a href="'.esc_url( 'https://duckduckgo.com/?q=' . urlencode( $e->name ) ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="duckduckgo" title="DuckDuckGo-Suche">🔍 DuckDuckGo</a>';
                     $social_links[] = '<a href="'.esc_url( 'https://www.bing.com/search?q=' . urlencode( $e->name ) ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="bing" title="Bing-Suche">🔍 Bing</a>';
+                    $social_links[] = '<a href="'.esc_url( 'https://www.ecosia.org/search?q=' . urlencode( $e->name ) ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="ecosia" title="Ecosia-Suche">🔍 Ecosia</a>';
+                    $social_links[] = '<a href="'.esc_url( 'https://www.baidu.com/s?wd=' . urlencode( $e->name ) ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="baidu" title="Baidu-Suche">🔍 Baidu</a>';
+                    $social_links[] = '<a href="'.esc_url( 'https://yandex.com/search/?text=' . urlencode( $e->name ) ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="yandex" title="Yandex-Suche">🔍 Yandex</a>';
                     $social_links[] = '<a href="'.esc_url( 'https://www.abgeordnetenwatch.de/profile?politician_search_keys=' . urlencode( $e->name ) ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="abgeordnetenwatch" title="Abgeordnetenwatch">🏛 Abgeordnetenwatch</a>';
                     $melden_subject = 'Meldung - ' . $e->name . ' - ' . $e->partei;
                     $melden_href    = 'mailto:info@die-handschelle.com?subject=' . rawurlencode( $melden_subject );
@@ -1192,6 +1201,9 @@ class Handschelle_Shortcodes {
                                 <a href="<?php echo esc_url( 'https://www.qwant.com/?l=de&q=' . urlencode( $e->name ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Qwant</a>
                                 <a href="<?php echo esc_url( 'https://duckduckgo.com/?q=' . urlencode( $e->name ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 DDG</a>
                                 <a href="<?php echo esc_url( 'https://www.bing.com/search?q=' . urlencode( $e->name ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Bing</a>
+                                <a href="<?php echo esc_url( 'https://www.ecosia.org/search?q=' . urlencode( $e->name ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Ecosia</a>
+                                <a href="<?php echo esc_url( 'https://www.baidu.com/s?wd=' . urlencode( $e->name ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Baidu</a>
+                                <a href="<?php echo esc_url( 'https://yandex.com/search/?text=' . urlencode( $e->name ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Yandex</a>
                                 <a href="<?php echo esc_url( 'https://www.abgeordnetenwatch.de/profile?politician_search_keys=' . urlencode( $e->name ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🏛 Abgeordnetenwatch</a>
                             </div>
                         </div>
