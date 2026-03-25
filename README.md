@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 14.5 |
+| **Version** | 14.8 |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
 | **Lizenz** | GPL-2.0+ |
@@ -45,6 +45,7 @@
   - [`[handschelle-statistik-partei]`](#handschelle-statistik-partei)
   - [`[handschelle-straftat]`](#handschelle-straftat)
   - [`[handschelle-straftat-link]`](#handschelle-straftat-link)
+  - [`[handschelle-straftaten]`](#handschelle-straftaten)
   - [`[handschelle-suche]`](#handschelle-suche)
   - [`[handschelle-ticker]`](#handschelle-ticker)
   - [`[handschelle-ticker-icons]`](#handschelle-ticker-icons)
@@ -122,6 +123,14 @@ Planned features for upcoming versions:
 ---
 
 ## Release Notes
+
+### 14.8 *(2026-03-25)*
+- **New shortcode `[handschelle-straftaten]`**: Dropdown listing all distinct Straftat values (from both the main table and the approved offences table). Selecting a crime displays full entry cards (`render_card()`) for every person linked to that crime — main straftat field and any additional offence in `wp_die_handschelle_offences` are both searched. Query parameter: `hs_straftat`.
+- **`Handschelle_Database::get_distinct_straftaten()`**: New DB method — UNION of `straftat` from main table and `straftat` from offences table (both `freigegeben=1`, ordered A-Z).
+- **`Handschelle_Database::get_entries_by_straftat()`**: New DB method — returns full rows (`SELECT *`) for all approved entries where `straftat` matches in the main table or in any approved offence row.
+
+### 14.7 *(2026-03-25)*
+- **Version bump**: Bumped version from 14.6 to 14.7.
 
 ### 14.6 *(2026-03-24)*
 - **"Status der Straftat" – added "Berufung" option**: Extended the status dropdown for offences with a fourth option "Berufung" (appeal). Available choices are now: "Ermittlungen laufen", "Verurteilt", "Eingestellt", "Berufung".
@@ -400,6 +409,7 @@ All shortcodes output HTML and can be placed on any WordPress page or post.
 | `[handschelle-statistik-partei]` | Table: party / entry count (party links to filter) |
 | `[handschelle-straftat]` | Scrolling ticker: Partei · Name · full Straftat · Status — white background, black border, black crime text |
 | `[handschelle-straftat-link]` | Same as `[handschelle-straftat]` but Name is a link (`?hs_name_name=`) and Partei is a link (`?hs_name_partei=`); optional `page` attribute to set target URL |
+| `[handschelle-straftaten]` | Straftat dropdown — select a crime to show full entry cards for all matching persons (searches main table and offences table) |
 | `[handschelle-suche]` | Full-text search field + Party and Person dropdowns |
 | `[handschelle-ticker]` | Scrolling news ticker: Name · Party · full Straftat text |
 | `[handschelle-ticker-icons]` | Wie `[handschelle-straftat-link]` mit Profilbild-Icon (oder Initial-Platzhalter) vor dem Namen |
@@ -795,6 +805,20 @@ Same as `[handschelle-straftat]` but **Name** and **Partei** are clickable links
 |---|---|
 | Name | `?hs_name_name=<name>` (read by `[handschelle-name-anzeige]`) |
 | Partei | `?hs_name_partei=<partei>` (read by `[handschelle-name-partei]`) |
+
+---
+
+### `[handschelle-straftaten]`
+
+Dropdown of all distinct **Straftat** values. Selecting one shows full entry cards for every person linked to that crime. Searches both the main `straftat` field and additional offences in `wp_die_handschelle_offences`.
+
+```
+[handschelle-straftaten]
+```
+
+| URL Parameter | Description |
+|---|---|
+| `?hs_straftat=<value>` | Pre-selects the matching crime in the dropdown and displays results |
 
 ---
 
