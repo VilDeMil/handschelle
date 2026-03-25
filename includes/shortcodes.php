@@ -166,6 +166,12 @@ class Handschelle_Shortcodes {
                             <div class="hs-field hs-field-full">
                                 <label>Straftat</label>
                                 <textarea name="straftat" rows="3" placeholder="Kurze Beschreibung der Straftat …" required></textarea>
+                                <div class="hs-search-buttons">
+                                    <small>Mehr infos:</small>
+                                    <button type="button" onclick="hsSearchStraftat(this,'google')" class="hs-search-btn">🔍 Google</button>
+                                    <button type="button" onclick="hsSearchStraftat(this,'qwant')"  class="hs-search-btn">🔍 Qwant</button>
+                                    <button type="button" onclick="hsSearchStraftat(this,'ddg')"    class="hs-search-btn">🔍 DDG</button>
+                                </div>
                             </div>
                             <div class="hs-field"><label>Urteil <span>(max. 200 Zeichen)</span></label><input type="text" name="urteil" maxlength="200" placeholder="z.B. 2 Jahre auf Bewährung"></div>
                             <div class="hs-field"><label>Link zur Quelle</label><input type="url" name="link_quelle" placeholder="https://…"></div>
@@ -1105,6 +1111,12 @@ class Handschelle_Shortcodes {
                     <?php if ( $is_logged_in ) : ?>
                         <?php if ( $e->aktenzeichen ) : ?><div class="hs-card-row"><span class="hs-label">📁 Aktenzeichen:</span> <?php echo esc_html($e->aktenzeichen); ?></div><?php endif; ?>
                         <?php if ( $e->bemerkung ) : ?><div class="hs-card-bemerkung"><span class="hs-label">💬 Bemerkung:</span><p><?php echo nl2br(esc_html($e->bemerkung)); ?></p></div><?php endif; ?>
+                        <div class="hs-search-buttons">
+                            <small>Mehr infos:</small>
+                            <a href="<?php echo esc_url( 'https://www.google.com/search?q=' . urlencode( $e->name . ' ' . $e->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Google</a>
+                            <a href="<?php echo esc_url( 'https://www.qwant.com/?l=de&q=' . urlencode( $e->name . ' ' . $e->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Qwant</a>
+                            <a href="<?php echo esc_url( 'https://duckduckgo.com/?q=' . urlencode( $e->name . ' ' . $e->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 DDG</a>
+                        </div>
                     <?php endif; ?>
                 </div>
 
@@ -1124,6 +1136,14 @@ class Handschelle_Shortcodes {
                     <div class="hs-card-row"><a href="<?php echo esc_url($off->link_quelle); ?>" target="_blank" rel="noopener noreferrer" class="hs-sm-link">🔗 Quelle</a></div>
                     <?php endif; ?>
                     <?php if ( $off->bemerkung ) : ?><div class="hs-card-bemerkung"><span class="hs-label">💬 Bemerkung:</span><p><?php echo nl2br(esc_html($off->bemerkung)); ?></p></div><?php endif; ?>
+                    <?php if ( $is_logged_in ) : ?>
+                    <div class="hs-search-buttons">
+                        <small>Mehr infos:</small>
+                        <a href="<?php echo esc_url( 'https://www.google.com/search?q=' . urlencode( $e->name . ' ' . $off->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Google</a>
+                        <a href="<?php echo esc_url( 'https://www.qwant.com/?l=de&q=' . urlencode( $e->name . ' ' . $off->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Qwant</a>
+                        <a href="<?php echo esc_url( 'https://duckduckgo.com/?q=' . urlencode( $e->name . ' ' . $off->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 DDG</a>
+                    </div>
+                    <?php endif; ?>
                 </div>
                 <?php endforeach; ?>
             </div>
@@ -2657,6 +2677,12 @@ class Handschelle_Shortcodes {
                             <div class="hs-field hs-field-full">
                                 <label>Straftat</label>
                                 <textarea name="straftat" rows="3" placeholder="Kurze Beschreibung der Straftat …" required></textarea>
+                                <div class="hs-search-buttons">
+                                    <small>Mehr infos:</small>
+                                    <button type="button" onclick="hsSearchStraftat(this,'google')" class="hs-search-btn">🔍 Google</button>
+                                    <button type="button" onclick="hsSearchStraftat(this,'qwant')"  class="hs-search-btn">🔍 Qwant</button>
+                                    <button type="button" onclick="hsSearchStraftat(this,'ddg')"    class="hs-search-btn">🔍 DDG</button>
+                                </div>
                             </div>
                             <div class="hs-field"><label>Urteil <span>(max. 200 Zeichen)</span></label><input type="text" name="urteil" maxlength="200" placeholder="z.B. 2 Jahre auf Bewährung"></div>
                             <div class="hs-field"><label>Link zur Quelle</label><input type="url" name="link_quelle" placeholder="https://…"></div>
