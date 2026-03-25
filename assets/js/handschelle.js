@@ -5,6 +5,24 @@
 (function ($) {
     'use strict';
 
+    /* ── Globale Funktion: Straftat-Suche (Formular-Kontext) ── */
+    window.hsSearchStraftat = function (btn, engine) {
+        var form     = btn.closest('form');
+        var nameEl   = form ? form.querySelector('[name="name"]') : null;
+        var strafEl  = form ? form.querySelector('[name="straftat"]') : null;
+        var q        = encodeURIComponent( ((nameEl ? nameEl.value : '') + ' ' + (strafEl ? strafEl.value : '')).trim() );
+        var urls     = {
+            google : 'https://www.google.com/search?q=' + q,
+            qwant  : 'https://www.qwant.com/?l=de&q=' + q,
+            ddg    : 'https://duckduckgo.com/?q=' + q,
+            bing   : 'https://www.bing.com/search?q=' + q,
+            ecosia : 'https://www.ecosia.org/search?q=' + q,
+            baidu  : 'https://www.baidu.com/s?wd=' + q,
+            yandex : 'https://yandex.com/search/?text=' + q
+        };
+        if ( urls[engine] ) window.open( urls[engine], '_blank' );
+    };
+
     /* ── Globale Funktion: Edit-Panel ein-/ausklappen ───────── */
     window.hsToggleEdit = function (id) {
         var $panel = $('#hs-edit-panel-' + id);
