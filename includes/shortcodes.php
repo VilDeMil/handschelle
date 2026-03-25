@@ -1095,16 +1095,6 @@ class Handschelle_Shortcodes {
                     $social_links[] = '<a href="'.esc_url( 'https://duckduckgo.com/?q=' . urlencode( $e->name ) ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="duckduckgo" title="DuckDuckGo-Suche">🔍 DuckDuckGo</a>';
                     $social_links[] = '<a href="'.esc_url( 'https://www.bing.com/search?q=' . urlencode( $e->name ) ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="bing" title="Bing-Suche">🔍 Bing</a>';
                     $social_links[] = '<a href="'.esc_url( 'https://www.abgeordnetenwatch.de/profile?politician_search_keys=' . urlencode( $e->name ) ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="abgeordnetenwatch" title="Abgeordnetenwatch">🏛 Abgeordnetenwatch</a>';
-                    if ( ! empty( $e->straftat ) ) {
-                        $q_straftat = urlencode( $e->name . ' ' . $e->straftat );
-                        $social_links[] = '<a href="'.esc_url( 'https://www.google.com/search?q=' . $q_straftat ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="google-straftat" title="Google: Mehr infos zur Straftat">🔍 Google (Straftat)</a>';
-                        $social_links[] = '<a href="'.esc_url( 'https://www.qwant.com/?l=de&q=' . $q_straftat ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="qwant-straftat" title="Qwant: Mehr infos zur Straftat">🔍 Qwant (Straftat)</a>';
-                        $social_links[] = '<a href="'.esc_url( 'https://duckduckgo.com/?q=' . $q_straftat ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="ddg-straftat" title="DuckDuckGo: Mehr infos zur Straftat">🔍 DDG (Straftat)</a>';
-                        $social_links[] = '<a href="'.esc_url( 'https://www.bing.com/search?q=' . $q_straftat ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="bing-straftat" title="Bing: Mehr infos zur Straftat">🔍 Bing (Straftat)</a>';
-                        $social_links[] = '<a href="'.esc_url( 'https://www.ecosia.org/search?q=' . $q_straftat ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="ecosia-straftat" title="Ecosia: Mehr infos zur Straftat">🔍 Ecosia (Straftat)</a>';
-                        $social_links[] = '<a href="'.esc_url( 'https://www.baidu.com/s?wd=' . $q_straftat ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="baidu-straftat" title="Baidu: Mehr infos zur Straftat">🔍 Baidu (Straftat)</a>';
-                        $social_links[] = '<a href="'.esc_url( 'https://yandex.com/search/?text=' . $q_straftat ).'" target="_blank" rel="noopener" class="hs-sm-link" data-sm="yandex-straftat" title="Yandex: Mehr infos zur Straftat">🔍 Yandex (Straftat)</a>';
-                    }
                     $melden_subject = 'Meldung - ' . $e->name . ' - ' . $e->partei;
                     $melden_href    = 'mailto:info@die-handschelle.com?subject=' . rawurlencode( $melden_subject );
                     $social_links[] = '<a href="' . esc_attr( $melden_href ) . '" class="hs-sm-link hs-melden-link" data-sm="melden" title="Straftat melden / Änderung">⚠️ Straftat melden / Änderung</a>';
