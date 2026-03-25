@@ -267,12 +267,13 @@ class Handschelle_Admin {
     private function export_csv() {
         $entries = Handschelle_Database::get_all( array( 'freigegeben' => 'all' ) );
         header( 'Content-Type: text/csv; charset=utf-8' );
+        // cols updated below – spitzname, geburtsland, private_email, oeffentliche_email added
         header( 'Content-Disposition: attachment; filename=handschelle-export-' . date( 'Y-m-d' ) . '.csv' );
         header( 'Pragma: no-cache' );
         $out  = fopen( 'php://output', 'w' );
         fputs( $out, "\xEF\xBB\xBF" );
 
-        $cols = array( 'id','datum_eintrag','name','beruf','geburtsort','geburtsdatum','verstorben','dod','bild','partei','aufgabe_partei','parlament','parlament_name','status_aktiv','straftat','urteil','link_quelle','aktenzeichen','bemerkung_person','bemerkung','status_straftat','sm_facebook','sm_youtube','sm_personal','sm_twitter','sm_homepage','sm_wikipedia','sm_sonstige','sm_linkedin','sm_xing','sm_truth_social','freigegeben','erstellt_am','geaendert_am' );
+        $cols = array( 'id','datum_eintrag','name','spitzname','beruf','geburtsort','geburtsland','geburtsdatum','verstorben','dod','bild','partei','aufgabe_partei','parlament','parlament_name','status_aktiv','private_email','oeffentliche_email','straftat','urteil','link_quelle','aktenzeichen','bemerkung_person','bemerkung','status_straftat','sm_facebook','sm_youtube','sm_personal','sm_twitter','sm_homepage','sm_wikipedia','sm_sonstige','sm_linkedin','sm_xing','sm_truth_social','freigegeben','erstellt_am','geaendert_am' );
         // Offence-specific columns (subset of $cols reused)
         $off_cols = array( 'straftat','urteil','link_quelle','aktenzeichen','bemerkung','status_straftat','datum_eintrag' );
 
@@ -373,8 +374,10 @@ class Handschelle_Admin {
                 $new_id = Handschelle_Database::insert( array(
                     'datum_eintrag'    => sanitize_text_field( $g('datum_eintrag') ) ?: date('Y-m-d'),
                     'name'             => substr( sanitize_text_field( $g('name') ), 0, 50 ),
+                    'spitzname'        => substr( sanitize_text_field( $g('spitzname') ), 0, 100 ),
                     'beruf'            => substr( sanitize_text_field( $g('beruf') ), 0, 50 ),
                     'geburtsort'       => substr( sanitize_text_field( $g('geburtsort') ), 0, 100 ),
+                    'geburtsland'      => substr( sanitize_text_field( $g('geburtsland') ), 0, 100 ),
                     'geburtsdatum'     => $geburtsdatum,
                     'verstorben'       => intval( $g('verstorben') ),
                     'dod'              => $dod_val_csv,
@@ -384,6 +387,8 @@ class Handschelle_Admin {
                     'parlament'        => sanitize_text_field( $g('parlament') ),
                     'parlament_name'   => substr( sanitize_text_field( $g('parlament_name') ), 0, 50 ),
                     'status_aktiv'     => intval( $g('status_aktiv') ),
+                    'private_email'    => substr( sanitize_email( $g('private_email') ), 0, 200 ),
+                    'oeffentliche_email' => substr( sanitize_email( $g('oeffentliche_email') ), 0, 200 ),
                     'straftat'         => sanitize_textarea_field( $g('straftat') ),
                     'urteil'           => substr( sanitize_text_field( $g('urteil') ), 0, 200 ),
                     'link_quelle'      => esc_url_raw( $g('link_quelle') ),
@@ -1376,7 +1381,7 @@ class Handschelle_Admin {
         $entries = Handschelle_Database::get_all( array( 'freigegeben' => 'all' ) );
 
         // Build in-memory CSV
-        $cols = array( 'id','datum_eintrag','name','beruf','geburtsort','geburtsdatum','verstorben','dod','bild','partei','aufgabe_partei','parlament','parlament_name','status_aktiv','straftat','urteil','link_quelle','aktenzeichen','bemerkung_person','bemerkung','status_straftat','sm_facebook','sm_youtube','sm_personal','sm_twitter','sm_homepage','sm_wikipedia','sm_sonstige','sm_linkedin','sm_xing','sm_truth_social','freigegeben','erstellt_am','geaendert_am' );
+        $cols = array( 'id','datum_eintrag','name','spitzname','beruf','geburtsort','geburtsland','geburtsdatum','verstorben','dod','bild','partei','aufgabe_partei','parlament','parlament_name','status_aktiv','private_email','oeffentliche_email','straftat','urteil','link_quelle','aktenzeichen','bemerkung_person','bemerkung','status_straftat','sm_facebook','sm_youtube','sm_personal','sm_twitter','sm_homepage','sm_wikipedia','sm_sonstige','sm_linkedin','sm_xing','sm_truth_social','freigegeben','erstellt_am','geaendert_am' );
         $csv  = "\xEF\xBB\xBF"; // UTF-8 BOM
         $csv .= implode( ';', $cols ) . "\r\n";
         foreach ( $entries as $e ) {
