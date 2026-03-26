@@ -64,6 +64,7 @@ class Handschelle_Shortcodes {
         add_shortcode( 'handschelle-wanted',           array( $this, 'sc_wanted' ) );
 
         add_shortcode( 'handschelle-smart',            array( $this, 'sc_smart_eingabe' ) );
+        add_shortcode( 'handschelle-chat',             array( $this, 'sc_chat' ) );
 
         // Submit früh verarbeiten – BEVOR Header gesendet werden
         add_action( 'init', array( $this, 'early_frontend_submit' ) );
@@ -75,6 +76,12 @@ class Handschelle_Shortcodes {
         // AJAX: Personendaten für [handschelle-smart] laden
         add_action( 'wp_ajax_hs_get_person_data',        array( $this, 'ajax_get_person_data' ) );
         add_action( 'wp_ajax_nopriv_hs_get_person_data', array( $this, 'ajax_get_person_data' ) );
+
+        // AJAX: Ollama-Chat
+        add_action( 'wp_ajax_hs_chat',              array( $this, 'ajax_chat' ) );
+        add_action( 'wp_ajax_nopriv_hs_chat',       array( $this, 'ajax_chat' ) );
+        add_action( 'wp_ajax_hs_chat_models',        array( $this, 'ajax_chat_models' ) );
+        add_action( 'wp_ajax_nopriv_hs_chat_models', array( $this, 'ajax_chat_models' ) );
     }
 
     /* ================================================================
@@ -2856,6 +2863,174 @@ class Handschelle_Shortcodes {
             wp_safe_redirect( add_query_arg( 'hs_smart_error', '1', $this->return_url() ) );
         }
         exit;
+    }
+
+    /* ================================================================
+       [handschelle-chat] – Ollama Chatbot
+    ================================================================ */
+
+    /**
+     * Shortcode: [handschelle-chat model="llama3.2" placeholder="Deine Frage …"]
+     *
+     * Attributes:
+     *   model       – Ollama model name (default: llama3.2)
+     *   placeholder – Input placeholder text
+     *   title       – Chat widget title
+     *   system      – System prompt for the AI
+     */
+    public function sc_chat( $atts ) {
+        $atts = shortcode_atts( array(
+            'model'       => get_option( 'hs_ollama_default_model', 'llama3.2' ) ?: 'llama3.2',
+            'placeholder' => 'Schreibe eine Nachricht …',
+            'title'       => 'KI-Assistent',
+            'system'      => get_option( 'hs_ollama_system_prompt', 'Du bist ein hilfreicher Assistent.' ) ?: 'Du bist ein hilfreicher Assistent.',
+        ), $atts, 'handschelle-chat' );
+
+        $uid   = 'hs-chat-' . wp_rand( 1000, 9999 );
+        $nonce = wp_create_nonce( 'hs_chat_nonce' );
+
+        ob_start();
+        ?>
+        <div class="hs-chat-widget" id="<?php echo esc_attr( $uid ); ?>"
+             data-model="<?php echo esc_attr( $atts['model'] ); ?>"
+             data-system="<?php echo esc_attr( $atts['system'] ); ?>"
+             data-nonce="<?php echo esc_attr( $nonce ); ?>"
+             data-ajax="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>">
+
+            <div class="hs-chat-header">
+                <span class="hs-chat-title"><?php echo esc_html( $atts['title'] ); ?></span>
+                <select class="hs-chat-model-select" aria-label="Modell auswählen" title="Modell auswählen">
+                    <option value="<?php echo esc_attr( $atts['model'] ); ?>" selected>
+                        <?php echo esc_html( $atts['model'] ); ?>
+                    </option>
+                </select>
+                <button type="button" class="hs-chat-clear-btn" title="Verlauf löschen">&#10006;</button>
+            </div>
+
+            <div class="hs-chat-messages" role="log" aria-live="polite"></div>
+
+            <div class="hs-chat-input-row">
+                <textarea
+                    class="hs-chat-input"
+                    rows="1"
+                    placeholder="<?php echo esc_attr( $atts['placeholder'] ); ?>"
+                    aria-label="Nachricht eingeben"
+                    maxlength="4000"
+                ></textarea>
+                <button type="button" class="hs-chat-send-btn" aria-label="Senden">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                </button>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * AJAX handler – proxies a message to the local Ollama API.
+     * Expects POST fields: message, model, history (JSON), system, _nonce
+     */
+    public function ajax_chat() {
+        check_ajax_referer( 'hs_chat_nonce', '_nonce' );
+
+        $message = sanitize_text_field( wp_unslash( $_POST['message'] ?? '' ) );
+        $model   = sanitize_text_field( wp_unslash( $_POST['model']   ?? 'llama3.2' ) );
+        $system  = sanitize_textarea_field( wp_unslash( $_POST['system'] ?? '' ) );
+        $history = json_decode( wp_unslash( $_POST['history'] ?? '[]' ), true );
+        if ( ! is_array( $history ) ) {
+            $history = array();
+        }
+
+        if ( empty( $message ) ) {
+            wp_send_json_error( array( 'message' => 'Leere Nachricht.' ), 400 );
+        }
+
+        // Build messages array
+        $messages = array();
+        if ( ! empty( $system ) ) {
+            $messages[] = array( 'role' => 'system', 'content' => $system );
+        }
+        foreach ( $history as $entry ) {
+            if ( isset( $entry['role'], $entry['content'] ) ) {
+                $messages[] = array(
+                    'role'    => sanitize_text_field( $entry['role'] ),
+                    'content' => sanitize_textarea_field( $entry['content'] ),
+                );
+            }
+        }
+        $messages[] = array( 'role' => 'user', 'content' => $message );
+
+        $ollama_url = get_option( 'hs_ollama_url', 'http://localhost:11434' );
+        $endpoint   = trailingslashit( $ollama_url ) . 'api/chat';
+
+        $body = wp_json_encode( array(
+            'model'    => $model,
+            'messages' => $messages,
+            'stream'   => false,
+        ) );
+
+        $timeout = max( 10, intval( get_option( 'hs_ollama_timeout', 120 ) ) );
+
+        $response = wp_remote_post( $endpoint, array(
+            'timeout'     => $timeout,
+            'headers'     => array( 'Content-Type' => 'application/json' ),
+            'body'        => $body,
+            'data_format' => 'body',
+        ) );
+
+        if ( is_wp_error( $response ) ) {
+            wp_send_json_error( array(
+                'message' => 'Ollama nicht erreichbar: ' . $response->get_error_message(),
+            ), 502 );
+        }
+
+        $code = wp_remote_retrieve_response_code( $response );
+        $raw  = wp_remote_retrieve_body( $response );
+        $data = json_decode( $raw, true );
+
+        if ( $code !== 200 || empty( $data['message']['content'] ) ) {
+            wp_send_json_error( array(
+                'message' => 'Fehler von Ollama (HTTP ' . intval( $code ) . ').',
+            ), 502 );
+        }
+
+        wp_send_json_success( array(
+            'reply' => $data['message']['content'],
+        ) );
+    }
+
+    /**
+     * AJAX handler – returns the list of locally available Ollama models.
+     */
+    public function ajax_chat_models() {
+        check_ajax_referer( 'hs_chat_nonce', '_nonce' );
+
+        $ollama_url = get_option( 'hs_ollama_url', 'http://localhost:11434' );
+        $endpoint   = trailingslashit( $ollama_url ) . 'api/tags';
+
+        $response = wp_remote_get( $endpoint, array( 'timeout' => 10 ) );
+
+        if ( is_wp_error( $response ) ) {
+            wp_send_json_error( array(
+                'message' => 'Ollama nicht erreichbar: ' . $response->get_error_message(),
+            ), 502 );
+        }
+
+        $code = wp_remote_retrieve_response_code( $response );
+        $data = json_decode( wp_remote_retrieve_body( $response ), true );
+
+        if ( $code !== 200 || ! isset( $data['models'] ) ) {
+            wp_send_json_error( array(
+                'message' => 'Keine Modellliste erhalten (HTTP ' . intval( $code ) . ').',
+            ), 502 );
+        }
+
+        $models = array_map( function ( $m ) {
+            return $m['name'];
+        }, $data['models'] );
+
+        sort( $models );
+        wp_send_json_success( array( 'models' => $models ) );
     }
 
 }
