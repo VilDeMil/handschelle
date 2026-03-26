@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 15.2 |
+| **Version** | 15.3 |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
 | **Lizenz** | GPL-2.0+ |
@@ -123,6 +123,9 @@ Planned features for upcoming versions:
 ---
 
 ## Release Notes
+
+### 15.3 *(2026-03-26)*
+- **`[handschelle-chat]` – Multi-LLM mode**: New columns icon (⊟) button in the chat header activates multi-model mode. When active, the settings panel reveals a checkbox list of all locally available Ollama models. Checking two or more models and sending a message fires parallel AJAX requests; responses appear side-by-side in labelled columns (single column on mobile). The first successful reply is used to maintain conversation history for follow-up questions. Version bump 15.2 → 15.3.
 
 ### 15.2 *(2026-03-26)*
 - **`[handschelle-chat]` – Repost with different LLM**: Each assistant response now shows a "↻ Repost" button in the status line. Clicking it reveals an inline model selector populated from the local Ollama instance; confirming re-sends the same user message (with full conversation context up to that point) to the chosen model. The alternative response appears directly below the original, visually marked with an accent border. No PHP changes required — the existing `hs_chat` AJAX endpoint handles any model.

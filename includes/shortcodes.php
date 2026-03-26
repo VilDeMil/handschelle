@@ -2959,6 +2959,9 @@ class Handschelle_Shortcodes {
                 <button type="button" class="hs-chat-settings-btn" title="Einstellungen" aria-expanded="false">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                 </button>
+                <button type="button" class="hs-chat-multi-btn" title="Mehrere Modelle gleichzeitig befragen" aria-pressed="false">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="18" rx="1"/></svg>
+                </button>
                 <button type="button" class="hs-chat-clear-btn" title="Verlauf löschen">&#10006;</button>
             </div>
 
@@ -2983,6 +2986,12 @@ class Handschelle_Shortcodes {
                         </div>
                         <span class="hs-chat-settings-url-hint">Nur localhost / 127.0.0.1 erlaubt</span>
                     </label>
+                    <div class="hs-chat-settings-label hs-chat-settings-multi-row" id="hs-multi-panel-<?php echo esc_attr( $uid ); ?>" hidden>
+                        Mehrere Modelle gleichzeitig
+                        <div class="hs-chat-multi-models">
+                            <em class="hs-chat-multi-hint">Modelle werden geladen …</em>
+                        </div>
+                    </div>
                 </div>
             </div>
 
