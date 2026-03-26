@@ -268,6 +268,7 @@ class Handschelle_Admin {
                 update_option( 'hs_ollama_default_model',  sanitize_text_field( wp_unslash( $_POST['hs_ollama_default_model']  ?? '' ) ) );
                 update_option( 'hs_ollama_system_prompt',  sanitize_textarea_field( wp_unslash( $_POST['hs_ollama_system_prompt'] ?? '' ) ) );
                 update_option( 'hs_ollama_timeout',        max( 10, intval( $_POST['hs_ollama_timeout'] ?? 120 ) ) );
+                update_option( 'hs_ollama_chat_page',      sanitize_text_field( wp_unslash( $_POST['hs_ollama_chat_page']      ?? '' ) ) );
                 $this->redirect( admin_url( 'admin.php?page=handschelle-ollama' ), 'Ollama-Einstellungen gespeichert.' );
                 break;
         }
@@ -2624,6 +2625,7 @@ class Handschelle_Admin {
         $default_model  = get_option( 'hs_ollama_default_model', '' );
         $system_prompt  = get_option( 'hs_ollama_system_prompt', 'Du bist ein hilfreicher Assistent.' );
         $timeout        = intval( get_option( 'hs_ollama_timeout', 120 ) );
+        $chat_page      = get_option( 'hs_ollama_chat_page',     '/chat/' );
         ?>
         <div class="wrap hs-wrap">
             <h1>🤖 Ollama KI-Konfiguration</h1>
@@ -2642,6 +2644,17 @@ class Handschelle_Admin {
                                        value="<?php echo esc_attr( $ollama_url ); ?>"
                                        placeholder="http://localhost:11434">
                                 <span class="description">Adresse des lokalen oder remote Ollama-Servers.</span>
+                            </div>
+                            <div class="hs-field">
+                                <label for="hs_ollama_chat_page">Chat-Seiten-URL</label>
+                                <input type="text" id="hs_ollama_chat_page" name="hs_ollama_chat_page"
+                                       value="<?php echo esc_attr( $chat_page ); ?>"
+                                       placeholder="/chat/">
+                                <span class="description">
+                                    Pfad zur Seite mit dem <code>[handschelle-chat urlparam="frage"]</code>-Shortcode.
+                                    Wird für den „🤖 KI-Analyse"-Link in den Eintrags-Karten verwendet.
+                                    Leer lassen, um den Link zu deaktivieren.
+                                </span>
                             </div>
                             <div class="hs-field">
                                 <label for="hs_ollama_timeout">Timeout (Sekunden)</label>
