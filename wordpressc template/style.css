@@ -74,3 +74,20 @@ h1, h2, h3, h4, h5, h6, blockquote, caption, figcaption, p {
 :where(pre) {
 	overflow-x: auto;
 }
+
+/*
+ * Responsive content width.
+ * Mobile: 95% of viewport, Desktop (≥782px): 90% of viewport.
+ * Uses root padding variables so alignfull blocks can still break out correctly.
+ */
+:root {
+	--wp--style--root--padding-left: 2.5%;
+	--wp--style--root--padding-right: 2.5%;
+}
+
+@media (min-width: 782px) {
+	:root {
+		--wp--style--root--padding-left: 5%;
+		--wp--style--root--padding-right: 5%;
+	}
+}
