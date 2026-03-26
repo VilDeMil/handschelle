@@ -19,3 +19,5 @@ build/
 
 # Secret files
 .env
+
+!Die-Handschelle/
