@@ -238,6 +238,12 @@ class Handschelle_Admin {
             case 'restore_full':      $this->restore_full(); break;
             case 'backup_pages':      $this->backup_pages(); break;
             case 'restore_pages':     $this->restore_pages(); break;
+            case 'backup_posts':      $this->backup_posts(); break;
+            case 'restore_posts':     $this->restore_posts(); break;
+            case 'backup_theme':      $this->backup_theme(); break;
+            case 'restore_theme':     $this->restore_theme(); break;
+            case 'backup_all':        $this->backup_all(); break;
+            case 'restore_all':       $this->restore_all(); break;
 
             case 'truncate':
                 Handschelle_Database::truncate_table();
@@ -1295,6 +1301,91 @@ class Handschelle_Admin {
         <div class="wrap hs-wrap">
             <h1>💾 Backup &amp; Restore</h1>
 
+            <!-- ── OVERVIEW ── -->
+            <div class="hs-form-section" style="background:#f0f6fc;border-left:4px solid #2271b1;">
+                <h2 style="margin-top:0;">ℹ Übersicht der Funktionen</h2>
+                <table style="border-collapse:collapse;width:100%;font-size:.92em;">
+                    <thead>
+                        <tr style="border-bottom:2px solid #c3c4c7;">
+                            <th style="text-align:left;padding:.4rem .8rem;">Funktion</th>
+                            <th style="text-align:left;padding:.4rem .8rem;">Was wird gesichert?</th>
+                            <th style="text-align:left;padding:.4rem .8rem;">Format</th>
+                            <th style="text-align:left;padding:.4rem .8rem;">Beim Wiederherstellen</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="border-bottom:1px solid #e0e0e0;">
+                            <td style="padding:.4rem .8rem;white-space:nowrap;">📦 Vollständiges Backup</td>
+                            <td style="padding:.4rem .8rem;">Alle Personen-Einträge (inkl. Straftaten) + zugehörige Bilder aus der Medienbibliothek</td>
+                            <td style="padding:.4rem .8rem;">ZIP (CSV + Bilder)</td>
+                            <td style="padding:.4rem .8rem;">Alle bestehenden Einträge werden <strong>gelöscht</strong> und neu eingelesen; Bilder werden hinzugefügt</td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #e0e0e0;">
+                            <td style="padding:.4rem .8rem;white-space:nowrap;">📄 Seiten-Backup</td>
+                            <td style="padding:.4rem .8rem;">Alle WordPress-Seiten (Titel, Inhalt, Slug, Status, Veröffentlichungsdatum, benutzerdefinierte Felder)</td>
+                            <td style="padding:.4rem .8rem;">JSON</td>
+                            <td style="padding:.4rem .8rem;">Seiten werden per Slug abgeglichen – bestehende werden aktualisiert, neue werden angelegt</td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #e0e0e0;">
+                            <td style="padding:.4rem .8rem;white-space:nowrap;">📝 Beitrags-Backup</td>
+                            <td style="padding:.4rem .8rem;">Alle WordPress-Beiträge (Titel, Inhalt, Slug, Status, Kategorien, Tags, benutzerdefinierte Felder)</td>
+                            <td style="padding:.4rem .8rem;">JSON</td>
+                            <td style="padding:.4rem .8rem;">Beiträge werden per Slug abgeglichen – bestehende werden aktualisiert, neue werden angelegt; Kategorien/Tags werden bei Bedarf neu erstellt</td>
+                        </tr>
+                        <tr>
+                            <td style="padding:.4rem .8rem;white-space:nowrap;">🎨 Theme-Backup</td>
+                            <td style="padding:.4rem .8rem;">Alle Dateien des aktuell aktiven Themes (Templates, CSS, JS, Bilder, functions.php usw.)</td>
+                            <td style="padding:.4rem .8rem;">ZIP</td>
+                            <td style="padding:.4rem .8rem;">Das Theme-Verzeichnis wird vollständig ersetzt; das Theme bleibt aktiv, falls es bereits aktiv war</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ── ONE-CLICK-ALL BACKUP ── -->
+            <div class="hs-form-section" style="margin-top:2rem;border:2px solid #2271b1;background:#f6f9ff;">
+                <h2 style="margin-top:0;">🚀 One-Klick-All! – Komplettes WordPress-Backup</h2>
+                <p>Erstellt <strong>ein einziges ZIP-Archiv</strong> mit dem vollständigen Zustand dieser WordPress-Installation:</p>
+                <ul style="margin:.4rem 0 .8rem 1.5rem;line-height:1.8;">
+                    <li>🗄 <strong>Datenbank</strong> – alle WordPress-Tabellen als SQL-Dump</li>
+                    <li>🖼 <strong>Medien</strong> – alle Dateien aus <code>wp-content/uploads/</code></li>
+                    <li>🎨 <strong>Theme</strong> – alle Dateien des aktuell aktiven Themes</li>
+                    <li>📝 <strong>Beiträge</strong> – alle WordPress-Beiträge inkl. Kategorien, Tags und Meta-Felder</li>
+                    <li>📄 <strong>Seiten</strong> – alle WordPress-Seiten inkl. Meta-Felder</li>
+                    <li>📋 <strong>Manifest</strong> – Metadaten (Datum, WP-Version, Site-URL, PHP-Version)</li>
+                </ul>
+                <p style="color:#555;">Das Archiv kann auf demselben oder einem anderen WordPress-Server vollständig wiederhergestellt werden.</p>
+                <form method="post" action="<?php echo esc_url( admin_url('admin.php') ); ?>">
+                    <?php wp_nonce_field( 'handschelle_admin_action' ); ?>
+                    <input type="hidden" name="hs_action" value="backup_all">
+                    <input type="hidden" name="page" value="handschelle-backup">
+                    <button type="submit" class="button button-primary hs-btn" style="font-size:1.05em;padding:.5em 1.4em;">🚀 One-Klick-All! Backup herunterladen</button>
+                </form>
+            </div>
+
+            <!-- ── ONE-CLICK-ALL RESTORE ── -->
+            <div class="hs-form-section" style="margin-top:1rem;border:2px solid #b32d2e;background:#fff6f6;">
+                <h2 style="margin-top:0;">⬆ One-Klick-All! – Komplette Wiederherstellung</h2>
+                <p>Stellt Datenbank, Medien, Theme, Beiträge und Seiten aus einem zuvor erstellten One-Klick-All-Archiv wieder her.</p>
+                <p style="color:#c0392b;font-weight:600;">⚠ Alle betroffenen Bereiche werden vollständig überschrieben. Diese Aktion kann nicht rückgängig gemacht werden.</p>
+                <form method="post" action="<?php echo esc_url( admin_url('admin.php') ); ?>" enctype="multipart/form-data">
+                    <?php wp_nonce_field( 'handschelle_admin_action' ); ?>
+                    <input type="hidden" name="hs_action" value="restore_all">
+                    <input type="hidden" name="page" value="handschelle-backup">
+                    <div class="hs-field" style="max-width:420px;margin-bottom:.8rem;">
+                        <label>One-Klick-All ZIP auswählen</label>
+                        <input type="file" name="all_backup_zip" accept=".zip" required>
+                    </div>
+                    <label class="hs-checkbox-label" style="margin-bottom:.8rem;display:block;">
+                        <input type="checkbox" name="restore_all_confirm" value="1" required>
+                        Ich verstehe, dass Datenbank, Medien, Theme, Beiträge und Seiten vollständig überschrieben werden.
+                    </label>
+                    <button type="submit" class="button hs-btn-danger" style="font-size:1.05em;padding:.5em 1.4em;" onclick="return confirm('WordPress wirklich komplett wiederherstellen? Alle Daten werden überschrieben!')">⬆ One-Klick-All! Wiederherstellen</button>
+                </form>
+            </div>
+
+            <hr style="margin:2rem 0;border:none;border-top:2px solid #ddd;">
+
             <!-- ── BACKUP ── -->
             <div class="hs-form-section">
                 <h2>⬇ Vollständiges Backup erstellen</h2>
@@ -1347,6 +1438,9 @@ class Handschelle_Admin {
             <!-- ── RESTORE PAGES ── -->
             <div class="hs-form-section" style="margin-top:2rem;">
                 <h2>⬆ Seiten wiederherstellen</h2>
+                <p>Spielt eine zuvor exportierte JSON-Datei ein. Für jede Seite wird der Slug als Schlüssel verwendet:
+                   bereits vorhandene Seiten werden aktualisiert (Inhalt, Titel, Status, Meta), nicht vorhandene werden neu angelegt.
+                   Andere Seiten, die nicht in der Datei enthalten sind, bleiben unverändert.</p>
                 <p style="color:#c0392b;font-weight:600;">⚠ Bestehende Seiten mit gleichem Slug werden überschrieben. Neue Seiten werden angelegt.</p>
                 <form method="post" action="<?php echo esc_url( admin_url('admin.php') ); ?>" enctype="multipart/form-data">
                     <?php wp_nonce_field( 'handschelle_admin_action' ); ?>
@@ -1361,6 +1455,91 @@ class Handschelle_Admin {
                         Ich verstehe, dass bestehende Seiten überschrieben werden können.
                     </label>
                     <button type="submit" class="button hs-btn-danger" onclick="return confirm('Seiten wirklich wiederherstellen?')">⬆ Seiten einspielen</button>
+                </form>
+            </div>
+
+            <!-- ── BACKUP POSTS ── -->
+            <div class="hs-form-section" style="margin-top:2rem;">
+                <h2>📝 Beitrags-Backup</h2>
+                <?php
+                $post_count = wp_count_posts( 'post' );
+                $total_posts = array_sum( (array) $post_count );
+                ?>
+                <p>Exportiert alle WordPress-Beiträge als JSON-Datei (Titel, Inhalt, Slug, Status, Kategorien, Tags, Meta).<br>
+                   Aktuell: <strong><?php echo intval( $total_posts ); ?> Beiträge</strong> (alle Status).</p>
+                <form method="post" action="<?php echo esc_url( admin_url('admin.php') ); ?>">
+                    <?php wp_nonce_field( 'handschelle_admin_action' ); ?>
+                    <input type="hidden" name="hs_action" value="backup_posts">
+                    <input type="hidden" name="page" value="handschelle-backup">
+                    <button type="submit" class="button button-primary hs-btn">📝 Beiträge exportieren</button>
+                </form>
+            </div>
+
+            <!-- ── RESTORE POSTS ── -->
+            <div class="hs-form-section" style="margin-top:2rem;">
+                <h2>⬆ Beiträge wiederherstellen</h2>
+                <p>Spielt eine zuvor exportierte JSON-Datei ein. Für jeden Beitrag wird der Slug als Schlüssel verwendet:
+                   bereits vorhandene Beiträge werden aktualisiert (Inhalt, Titel, Status, Meta), nicht vorhandene werden neu angelegt.
+                   Kategorien und Tags werden automatisch erstellt, falls sie noch nicht existieren.
+                   Andere Beiträge, die nicht in der Datei enthalten sind, bleiben unverändert.</p>
+                <p style="color:#c0392b;font-weight:600;">⚠ Bestehende Beiträge mit gleichem Slug werden überschrieben. Neue Beiträge werden angelegt.</p>
+                <form method="post" action="<?php echo esc_url( admin_url('admin.php') ); ?>" enctype="multipart/form-data">
+                    <?php wp_nonce_field( 'handschelle_admin_action' ); ?>
+                    <input type="hidden" name="hs_action" value="restore_posts">
+                    <input type="hidden" name="page" value="handschelle-backup">
+                    <div class="hs-field" style="max-width:420px;margin-bottom:.8rem;">
+                        <label>Beitrags-JSON auswählen</label>
+                        <input type="file" name="posts_json" accept=".json" required>
+                    </div>
+                    <label class="hs-checkbox-label" style="margin-bottom:.8rem;display:block;">
+                        <input type="checkbox" name="restore_posts_confirm" value="1" required>
+                        Ich verstehe, dass bestehende Beiträge überschrieben werden können.
+                    </label>
+                    <button type="submit" class="button hs-btn-danger" onclick="return confirm('Beiträge wirklich wiederherstellen?')">⬆ Beiträge einspielen</button>
+                </form>
+            </div>
+
+            <!-- ── BACKUP THEME ── -->
+            <div class="hs-form-section" style="margin-top:2rem;">
+                <h2>🎨 Theme-Backup</h2>
+                <?php
+                $theme      = wp_get_theme();
+                $theme_name = $theme->get( 'Name' );
+                $theme_ver  = $theme->get( 'Version' );
+                ?>
+                <p>Exportiert alle Dateien des aktuell aktiven Themes als ZIP-Archiv – inklusive Templates, Stylesheet, JavaScript,
+                   Bilddateien und <code>functions.php</code>. Das Archiv kann als Sicherung oder zur Übertragung auf eine andere
+                   WordPress-Installation verwendet werden.<br>
+                   Aktuelles Theme: <strong><?php echo esc_html( $theme_name ); ?></strong>
+                   (Version <?php echo esc_html( $theme_ver ); ?>).</p>
+                <form method="post" action="<?php echo esc_url( admin_url('admin.php') ); ?>">
+                    <?php wp_nonce_field( 'handschelle_admin_action' ); ?>
+                    <input type="hidden" name="hs_action" value="backup_theme">
+                    <input type="hidden" name="page" value="handschelle-backup">
+                    <button type="submit" class="button button-primary hs-btn">🎨 Theme exportieren</button>
+                </form>
+            </div>
+
+            <!-- ── RESTORE THEME ── -->
+            <div class="hs-form-section" style="margin-top:2rem;">
+                <h2>⬆ Theme wiederherstellen</h2>
+                <p>Spielt ein zuvor exportiertes Theme-ZIP ein. Der Theme-Ordner im ZIP bestimmt den Zielordner unter
+                   <code>wp-content/themes/</code>. Ein eventuell vorhandenes Verzeichnis gleichen Namens wird dabei vollständig
+                   gelöscht und neu entpackt. War das Theme bereits aktiv, bleibt es nach der Wiederherstellung aktiv.</p>
+                <p style="color:#c0392b;font-weight:600;">⚠ Das bestehende Theme-Verzeichnis wird vollständig überschrieben.</p>
+                <form method="post" action="<?php echo esc_url( admin_url('admin.php') ); ?>" enctype="multipart/form-data">
+                    <?php wp_nonce_field( 'handschelle_admin_action' ); ?>
+                    <input type="hidden" name="hs_action" value="restore_theme">
+                    <input type="hidden" name="page" value="handschelle-backup">
+                    <div class="hs-field" style="max-width:420px;margin-bottom:.8rem;">
+                        <label>Theme-ZIP auswählen</label>
+                        <input type="file" name="theme_zip" accept=".zip" required>
+                    </div>
+                    <label class="hs-checkbox-label" style="margin-bottom:.8rem;display:block;">
+                        <input type="checkbox" name="restore_theme_confirm" value="1" required>
+                        Ich verstehe, dass das bestehende Theme überschrieben wird.
+                    </label>
+                    <button type="submit" class="button hs-btn-danger" onclick="return confirm('Theme wirklich wiederherstellen?')">⬆ Theme einspielen</button>
                 </form>
             </div>
 
@@ -1669,36 +1848,7 @@ class Handschelle_Admin {
        BACKUP PAGES – alle WP-Seiten als JSON exportieren
     ================================================================ */
     private function backup_pages() {
-        $pages = get_posts( array(
-            'post_type'      => 'page',
-            'post_status'    => 'any',
-            'numberposts'    => -1,
-            'orderby'        => 'ID',
-            'order'          => 'ASC',
-        ) );
-
-        $data = array();
-        foreach ( $pages as $page ) {
-            $meta = get_post_meta( $page->ID );
-            // Remove internal WP meta keys
-            foreach ( array_keys( $meta ) as $key ) {
-                if ( strpos( $key, '_' ) === 0 ) unset( $meta[ $key ] );
-            }
-            $data[] = array(
-                'post_title'     => $page->post_title,
-                'post_name'      => $page->post_name,
-                'post_content'   => $page->post_content,
-                'post_excerpt'   => $page->post_excerpt,
-                'post_status'    => $page->post_status,
-                'post_date'      => $page->post_date,
-                'menu_order'     => $page->menu_order,
-                'comment_status' => $page->comment_status,
-                'ping_status'    => $page->ping_status,
-                'meta'           => $meta,
-            );
-        }
-
-        $json     = wp_json_encode( $data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE );
+        $json     = $this->build_pages_export_json();
         $filename = 'handschelle-pages-' . date( 'Y-m-d_His' ) . '.json';
 
         header( 'Content-Type: application/json; charset=utf-8' );
@@ -1734,27 +1884,579 @@ class Handschelle_Admin {
             return;
         }
 
+        $counts = $this->import_posts_from_array( $pages, 'page' );
+        $this->redirect(
+            admin_url( 'admin.php?page=handschelle-backup' ),
+            "Seiten wiederhergestellt: {$counts['created']} neu angelegt, {$counts['updated']} aktualisiert."
+        );
+    }
+
+    /* ================================================================
+       BACKUP POSTS – alle WP-Beiträge als JSON exportieren
+    ================================================================ */
+    private function backup_posts() {
+        $json     = $this->build_posts_export_json();
+        $filename = 'handschelle-posts-' . date( 'Y-m-d_His' ) . '.json';
+
+        header( 'Content-Type: application/json; charset=utf-8' );
+        header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+        header( 'Content-Length: ' . strlen( $json ) );
+        header( 'Pragma: no-cache' );
+        echo $json;
+        exit;
+    }
+
+    /* ================================================================
+       RESTORE POSTS – aus JSON-Datei wiederherstellen
+    ================================================================ */
+    private function restore_posts() {
+        if ( empty( $_FILES['posts_json']['tmp_name'] ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Fehler: Keine JSON-Datei hochgeladen.' );
+            return;
+        }
+        if ( empty( $_POST['restore_posts_confirm'] ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Bitte Bestätigung ankreuzen.' );
+            return;
+        }
+
+        $raw = file_get_contents( $_FILES['posts_json']['tmp_name'] );
+        if ( $raw === false ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Fehler: Datei konnte nicht gelesen werden.' );
+            return;
+        }
+
+        $posts = json_decode( $raw, true );
+        if ( ! is_array( $posts ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Fehler: Ungültiges JSON-Format.' );
+            return;
+        }
+
+        $counts = $this->import_posts_from_array( $posts, 'post' );
+        $this->redirect(
+            admin_url( 'admin.php?page=handschelle-backup' ),
+            "Beiträge wiederhergestellt: {$counts['created']} neu angelegt, {$counts['updated']} aktualisiert."
+        );
+    }
+
+    /* ================================================================
+       BACKUP THEME – aktives Theme als ZIP exportieren
+    ================================================================ */
+    private function backup_theme() {
+        if ( ! class_exists( 'ZipArchive' ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Fehler: PHP ZipArchive nicht verfügbar.' );
+            return;
+        }
+
+        $theme      = wp_get_theme();
+        $theme_slug = $theme->get_stylesheet();
+        $theme_dir  = get_stylesheet_directory();
+
+        if ( ! is_dir( $theme_dir ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Fehler: Theme-Verzeichnis nicht gefunden.' );
+            return;
+        }
+
+        $zip_path = sys_get_temp_dir() . '/hs-theme-backup-' . time() . '.zip';
+        $zip      = new ZipArchive();
+        if ( $zip->open( $zip_path, ZipArchive::CREATE | ZipArchive::OVERWRITE ) !== true ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Fehler: ZIP-Datei konnte nicht erstellt werden.' );
+            return;
+        }
+
+        $base_len = strlen( dirname( $theme_dir ) ) + 1;
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator( $theme_dir, RecursiveDirectoryIterator::SKIP_DOTS ),
+            RecursiveIteratorIterator::SELF_FIRST
+        );
+        foreach ( $iterator as $file ) {
+            $local_path = substr( $file->getRealPath(), $base_len );
+            if ( $file->isDir() ) {
+                $zip->addEmptyDir( $local_path );
+            } else {
+                $zip->addFile( $file->getRealPath(), $local_path );
+            }
+        }
+        $zip->close();
+
+        if ( ! file_exists( $zip_path ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Fehler: Theme-Backup konnte nicht erstellt werden.' );
+            return;
+        }
+
+        $filename = 'theme-' . sanitize_file_name( $theme_slug ) . '-' . date( 'Y-m-d_His' ) . '.zip';
+        header( 'Content-Type: application/zip' );
+        header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+        header( 'Content-Length: ' . filesize( $zip_path ) );
+        header( 'Pragma: no-cache' );
+        readfile( $zip_path );
+        unlink( $zip_path );
+        exit;
+    }
+
+    /* ================================================================
+       RESTORE THEME – Theme aus ZIP-Datei wiederherstellen
+    ================================================================ */
+    private function restore_theme() {
+        if ( ! class_exists( 'ZipArchive' ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Fehler: PHP ZipArchive nicht verfügbar.' );
+            return;
+        }
+        if ( empty( $_FILES['theme_zip']['tmp_name'] ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Fehler: Keine ZIP-Datei hochgeladen.' );
+            return;
+        }
+        if ( empty( $_POST['restore_theme_confirm'] ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Bitte Bestätigung ankreuzen.' );
+            return;
+        }
+
+        $zip = new ZipArchive();
+        if ( $zip->open( $_FILES['theme_zip']['tmp_name'] ) !== true ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Fehler: ZIP-Datei konnte nicht geöffnet werden.' );
+            return;
+        }
+
+        // Determine the top-level folder inside the ZIP (the theme slug)
+        $first_entry = $zip->getNameIndex( 0 );
+        $parts       = explode( '/', $first_entry );
+        $theme_slug  = $parts[0];
+
+        if ( empty( $theme_slug ) ) {
+            $zip->close();
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Fehler: Ungültige ZIP-Struktur (kein Theme-Verzeichnis gefunden).' );
+            return;
+        }
+
+        $themes_dir  = get_theme_root();
+        $target_dir  = $themes_dir . '/' . $theme_slug;
+
+        // Remove existing theme directory before extracting
+        if ( is_dir( $target_dir ) ) {
+            $this->delete_directory( $target_dir );
+        }
+
+        $zip->extractTo( $themes_dir );
+        $zip->close();
+
+        // Activate the restored theme if it matches the currently active one
+        $active_slug = get_stylesheet();
+        $msg = "Theme \"{$theme_slug}\" erfolgreich wiederhergestellt.";
+        if ( $active_slug === $theme_slug ) {
+            switch_theme( $theme_slug );
+            $msg .= ' Theme ist weiterhin aktiv.';
+        }
+
+        $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), $msg );
+    }
+
+    /* Helper: recursively delete a directory */
+    private function delete_directory( $dir ) {
+        if ( ! is_dir( $dir ) ) return;
+        $items = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator( $dir, RecursiveDirectoryIterator::SKIP_DOTS ),
+            RecursiveIteratorIterator::CHILD_FIRST
+        );
+        foreach ( $items as $item ) {
+            $item->isDir() ? rmdir( $item->getRealPath() ) : unlink( $item->getRealPath() );
+        }
+        rmdir( $dir );
+    }
+
+    /* Helper: recursively copy a directory */
+    private function copy_directory( $src, $dst ) {
+        wp_mkdir_p( $dst );
+        $items = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator( $src, RecursiveDirectoryIterator::SKIP_DOTS ),
+            RecursiveIteratorIterator::SELF_FIRST
+        );
+        foreach ( $items as $item ) {
+            $target = $dst . '/' . $items->getSubPathname();
+            if ( $item->isDir() ) {
+                wp_mkdir_p( $target );
+            } else {
+                copy( $item->getRealPath(), $target );
+            }
+        }
+    }
+
+    /* ================================================================
+       BACKUP ALL – komplettes WordPress-Backup als ZIP
+    ================================================================ */
+    private function backup_all() {
+        global $wpdb;
+
+        if ( ! class_exists( 'ZipArchive' ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Fehler: PHP ZipArchive nicht verfügbar.' );
+            return;
+        }
+
+        $zip_path = sys_get_temp_dir() . '/hs-all-backup-' . time() . '.zip';
+        $zip      = new ZipArchive();
+        if ( $zip->open( $zip_path, ZipArchive::CREATE | ZipArchive::OVERWRITE ) !== true ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Fehler: ZIP-Datei konnte nicht erstellt werden.' );
+            return;
+        }
+
+        // ── 1. Manifest ──────────────────────────────────────────────
+        $manifest = array(
+            'type'         => 'wordpress-complete-backup',
+            'created'      => date( 'Y-m-d H:i:s' ),
+            'site_url'     => get_bloginfo( 'url' ),
+            'wp_version'   => get_bloginfo( 'version' ),
+            'php_version'  => PHP_VERSION,
+            'db_prefix'    => $wpdb->prefix,
+            'active_theme' => get_stylesheet(),
+            'contents'     => array( 'database', 'uploads', 'theme', 'posts', 'pages' ),
+        );
+        $zip->addFromString( 'manifest.json', wp_json_encode( $manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) );
+
+        // ── 2. Datenbank-Dump ────────────────────────────────────────
+        $sql = $this->generate_sql_dump();
+        $zip->addFromString( 'database/wordpress.sql', $sql );
+
+        // ── 3. Mediendateien (wp-content/uploads/) ───────────────────
+        $upload_info = wp_upload_dir();
+        $upload_base = $upload_info['basedir'];
+        if ( is_dir( $upload_base ) ) {
+            $base_parent_len = strlen( $upload_base ) + 1;
+            $iter = new RecursiveIteratorIterator(
+                new RecursiveDirectoryIterator( $upload_base, RecursiveDirectoryIterator::SKIP_DOTS ),
+                RecursiveIteratorIterator::SELF_FIRST
+            );
+            foreach ( $iter as $file ) {
+                $local = 'uploads/' . substr( $file->getRealPath(), $base_parent_len );
+                if ( $file->isDir() ) {
+                    $zip->addEmptyDir( $local );
+                } else {
+                    $zip->addFile( $file->getRealPath(), $local );
+                }
+            }
+        }
+
+        // ── 4. Aktives Theme ─────────────────────────────────────────
+        $theme_dir  = get_stylesheet_directory();
+        $theme_slug = get_stylesheet();
+        if ( is_dir( $theme_dir ) ) {
+            $theme_parent_len = strlen( dirname( $theme_dir ) ) + 1;
+            $iter = new RecursiveIteratorIterator(
+                new RecursiveDirectoryIterator( $theme_dir, RecursiveDirectoryIterator::SKIP_DOTS ),
+                RecursiveIteratorIterator::SELF_FIRST
+            );
+            foreach ( $iter as $file ) {
+                $local = 'theme/' . substr( $file->getRealPath(), $theme_parent_len );
+                if ( $file->isDir() ) {
+                    $zip->addEmptyDir( $local );
+                } else {
+                    $zip->addFile( $file->getRealPath(), $local );
+                }
+            }
+        }
+
+        // ── 5. Beiträge ───────────────────────────────────────────────
+        $zip->addFromString( 'posts.json', $this->build_posts_export_json() );
+
+        // ── 6. Seiten ─────────────────────────────────────────────────
+        $zip->addFromString( 'pages.json', $this->build_pages_export_json() );
+
+        $zip->close();
+
+        if ( ! file_exists( $zip_path ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Fehler: Backup konnte nicht erstellt werden.' );
+            return;
+        }
+
+        $filename = 'wordpress-complete-backup-' . date( 'Y-m-d_His' ) . '.zip';
+        header( 'Content-Type: application/zip' );
+        header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+        header( 'Content-Length: ' . filesize( $zip_path ) );
+        header( 'Pragma: no-cache' );
+        readfile( $zip_path );
+        unlink( $zip_path );
+        exit;
+    }
+
+    /* ================================================================
+       RESTORE ALL – komplette Wiederherstellung aus ZIP
+    ================================================================ */
+    private function restore_all() {
+        if ( ! class_exists( 'ZipArchive' ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Fehler: PHP ZipArchive nicht verfügbar.' );
+            return;
+        }
+        if ( empty( $_FILES['all_backup_zip']['tmp_name'] ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Fehler: Keine ZIP-Datei hochgeladen.' );
+            return;
+        }
+        if ( empty( $_POST['restore_all_confirm'] ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Bitte Bestätigung ankreuzen.' );
+            return;
+        }
+
+        $zip = new ZipArchive();
+        if ( $zip->open( $_FILES['all_backup_zip']['tmp_name'] ) !== true ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Fehler: ZIP-Datei konnte nicht geöffnet werden.' );
+            return;
+        }
+
+        $temp_dir = trailingslashit( sys_get_temp_dir() ) . 'hs_all_restore_' . time() . '/';
+        wp_mkdir_p( $temp_dir );
+        $zip->extractTo( $temp_dir );
+        $zip->close();
+
+        $log = array();
+
+        // ── Manifest prüfen ──────────────────────────────────────────
+        $manifest_file = $temp_dir . 'manifest.json';
+        if ( file_exists( $manifest_file ) ) {
+            $manifest = json_decode( file_get_contents( $manifest_file ), true );
+            if ( ! empty( $manifest['type'] ) && $manifest['type'] !== 'wordpress-complete-backup' ) {
+                $this->delete_directory( $temp_dir );
+                $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Fehler: Kein gültiges One-Klick-All-Archiv.' );
+                return;
+            }
+            if ( $manifest ) {
+                $log[] = 'Backup vom ' . ( $manifest['created'] ?? '?' ) . ' (' . ( $manifest['site_url'] ?? '?' ) . ').';
+            }
+        }
+
+        // ── 1. Datenbank ─────────────────────────────────────────────
+        $sql_file = $temp_dir . 'database/wordpress.sql';
+        if ( file_exists( $sql_file ) ) {
+            $db_errors = $this->execute_sql_dump( file_get_contents( $sql_file ) );
+            $log[] = "Datenbank importiert ($db_errors Fehler).";
+        }
+
+        // ── 2. Mediendateien ─────────────────────────────────────────
+        $uploads_src  = $temp_dir . 'uploads/';
+        $upload_info  = wp_upload_dir();
+        $upload_base  = $upload_info['basedir'];
+        if ( is_dir( $uploads_src ) ) {
+            $this->delete_directory( $upload_base );
+            $this->copy_directory( $uploads_src, $upload_base );
+            $log[] = 'Mediendateien wiederhergestellt.';
+        }
+
+        // ── 3. Theme ─────────────────────────────────────────────────
+        $theme_src  = $temp_dir . 'theme/';
+        $themes_dir = get_theme_root();
+        if ( is_dir( $theme_src ) ) {
+            foreach ( scandir( $theme_src ) as $entry ) {
+                if ( $entry === '.' || $entry === '..' ) continue;
+                $src = $theme_src . $entry;
+                $dst = $themes_dir . '/' . $entry;
+                if ( is_dir( $src ) ) {
+                    if ( is_dir( $dst ) ) $this->delete_directory( $dst );
+                    $this->copy_directory( $src, $dst );
+                }
+            }
+            // Re-activate if this was the active theme
+            $active_slug = get_stylesheet();
+            if ( file_exists( $themes_dir . '/' . $active_slug . '/style.css' ) ) {
+                switch_theme( $active_slug );
+            }
+            $log[] = 'Theme wiederhergestellt.';
+        }
+
+        // ── 4. Beiträge ───────────────────────────────────────────────
+        $posts_file = $temp_dir . 'posts.json';
+        if ( file_exists( $posts_file ) ) {
+            $posts = json_decode( file_get_contents( $posts_file ), true );
+            if ( is_array( $posts ) ) {
+                $counts = $this->import_posts_from_array( $posts, 'post' );
+                $log[] = "Beiträge: {$counts['created']} neu, {$counts['updated']} aktualisiert.";
+            }
+        }
+
+        // ── 5. Seiten ─────────────────────────────────────────────────
+        $pages_file = $temp_dir . 'pages.json';
+        if ( file_exists( $pages_file ) ) {
+            $pages = json_decode( file_get_contents( $pages_file ), true );
+            if ( is_array( $pages ) ) {
+                $counts = $this->import_posts_from_array( $pages, 'page' );
+                $log[] = "Seiten: {$counts['created']} neu, {$counts['updated']} aktualisiert.";
+            }
+        }
+
+        $this->delete_directory( $temp_dir );
+
+        $this->redirect(
+            admin_url( 'admin.php?page=handschelle-backup' ),
+            'Komplette Wiederherstellung abgeschlossen. ' . implode( ' ', $log )
+        );
+    }
+
+    /* ================================================================
+       HELPER – SQL-Dump aller WP-Tabellen erzeugen
+    ================================================================ */
+    private function generate_sql_dump() {
+        global $wpdb;
+
+        $sql  = "-- WordPress Complete Database Backup\n";
+        $sql .= "-- Generated: " . date( 'Y-m-d H:i:s' ) . "\n";
+        $sql .= "-- Site: " . get_bloginfo( 'url' ) . "\n";
+        $sql .= "-- WP Version: " . get_bloginfo( 'version' ) . "\n\n";
+        $sql .= "SET FOREIGN_KEY_CHECKS=0;\n\n";
+
+        $tables = $wpdb->get_col( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $wpdb->prefix ) . '%' ) );
+
+        foreach ( $tables as $table ) {
+            // Table structure
+            $create_row = $wpdb->get_row( "SHOW CREATE TABLE `{$table}`", ARRAY_N ); // phpcs:ignore
+            $sql .= "-- Table: `{$table}`\n";
+            $sql .= "DROP TABLE IF EXISTS `{$table}`;\n";
+            $sql .= $create_row[1] . ";\n\n";
+
+            // Table data in chunks of 500 rows
+            $offset = 0;
+            $chunk  = 500;
+            do {
+                $rows = $wpdb->get_results( // phpcs:ignore
+                    "SELECT * FROM `{$table}` LIMIT {$chunk} OFFSET {$offset}",
+                    ARRAY_A
+                );
+                foreach ( $rows as $row ) {
+                    $values = array();
+                    foreach ( $row as $val ) {
+                        if ( $val === null ) {
+                            $values[] = 'NULL';
+                        } else {
+                            $values[] = "'" . addslashes( $val ) . "'";
+                        }
+                    }
+                    $sql .= 'INSERT INTO `' . $table . '` VALUES (' . implode( ', ', $values ) . ");\n";
+                }
+                $offset += $chunk;
+            } while ( count( $rows ) === $chunk );
+
+            $sql .= "\n";
+        }
+
+        $sql .= "SET FOREIGN_KEY_CHECKS=1;\n";
+        return $sql;
+    }
+
+    /* ================================================================
+       HELPER – SQL-Dump ausführen
+    ================================================================ */
+    private function execute_sql_dump( $sql_content ) {
+        global $wpdb;
+
+        $errors  = 0;
+        $current = '';
+
+        foreach ( explode( "\n", $sql_content ) as $line ) {
+            $line = rtrim( $line );
+            // Skip comments and empty lines
+            if ( $line === '' || strncmp( $line, '--', 2 ) === 0 || strncmp( $line, '/*', 2 ) === 0 ) continue;
+
+            $current .= $line . "\n";
+
+            if ( substr( rtrim( $line ), -1 ) === ';' ) {
+                $stmt = trim( $current );
+                if ( $stmt !== '' ) {
+                    $wpdb->query( $stmt ); // phpcs:ignore
+                    if ( $wpdb->last_error ) $errors++;
+                }
+                $current = '';
+            }
+        }
+
+        return $errors;
+    }
+
+    /* ================================================================
+       HELPER – Posts/Pages-Export als JSON-String
+    ================================================================ */
+    private function build_posts_export_json() {
+        $posts = get_posts( array(
+            'post_type'   => 'post',
+            'post_status' => 'any',
+            'numberposts' => -1,
+            'orderby'     => 'ID',
+            'order'       => 'ASC',
+        ) );
+        $data = array();
+        foreach ( $posts as $post ) {
+            $meta = get_post_meta( $post->ID );
+            foreach ( array_keys( $meta ) as $key ) {
+                if ( strpos( $key, '_' ) === 0 ) unset( $meta[ $key ] );
+            }
+            $categories = wp_get_post_terms( $post->ID, 'category', array( 'fields' => 'names' ) );
+            $tags       = wp_get_post_terms( $post->ID, 'post_tag', array( 'fields' => 'names' ) );
+            $data[]     = array(
+                'post_title'     => $post->post_title,
+                'post_name'      => $post->post_name,
+                'post_content'   => $post->post_content,
+                'post_excerpt'   => $post->post_excerpt,
+                'post_status'    => $post->post_status,
+                'post_date'      => $post->post_date,
+                'comment_status' => $post->comment_status,
+                'ping_status'    => $post->ping_status,
+                'categories'     => is_array( $categories ) ? $categories : array(),
+                'tags'           => is_array( $tags ) ? $tags : array(),
+                'meta'           => $meta,
+            );
+        }
+        return wp_json_encode( $data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE );
+    }
+
+    private function build_pages_export_json() {
+        $pages = get_posts( array(
+            'post_type'   => 'page',
+            'post_status' => 'any',
+            'numberposts' => -1,
+            'orderby'     => 'ID',
+            'order'       => 'ASC',
+        ) );
+        $data = array();
+        foreach ( $pages as $page ) {
+            $meta = get_post_meta( $page->ID );
+            foreach ( array_keys( $meta ) as $key ) {
+                if ( strpos( $key, '_' ) === 0 ) unset( $meta[ $key ] );
+            }
+            $data[] = array(
+                'post_title'     => $page->post_title,
+                'post_name'      => $page->post_name,
+                'post_content'   => $page->post_content,
+                'post_excerpt'   => $page->post_excerpt,
+                'post_status'    => $page->post_status,
+                'post_date'      => $page->post_date,
+                'menu_order'     => $page->menu_order,
+                'comment_status' => $page->comment_status,
+                'ping_status'    => $page->ping_status,
+                'meta'           => $meta,
+            );
+        }
+        return wp_json_encode( $data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE );
+    }
+
+    /* ================================================================
+       HELPER – Posts oder Pages aus Array importieren
+    ================================================================ */
+    private function import_posts_from_array( $items, $post_type ) {
         $created = 0;
         $updated = 0;
 
-        foreach ( $pages as $p ) {
+        foreach ( $items as $p ) {
             if ( empty( $p['post_title'] ) && empty( $p['post_name'] ) ) continue;
 
-            $post_data = array(
-                'post_type'      => 'page',
+            $allowed_statuses = array( 'publish', 'draft', 'private', 'pending' );
+            $post_data        = array(
+                'post_type'      => $post_type,
                 'post_title'     => sanitize_text_field( $p['post_title'] ?? '' ),
                 'post_name'      => sanitize_title( $p['post_name'] ?? '' ),
                 'post_content'   => wp_kses_post( $p['post_content'] ?? '' ),
                 'post_excerpt'   => sanitize_textarea_field( $p['post_excerpt'] ?? '' ),
-                'post_status'    => in_array( $p['post_status'] ?? '', array( 'publish', 'draft', 'private', 'pending' ), true ) ? $p['post_status'] : 'draft',
+                'post_status'    => in_array( $p['post_status'] ?? '', $allowed_statuses, true ) ? $p['post_status'] : 'draft',
                 'post_date'      => sanitize_text_field( $p['post_date'] ?? '' ),
-                'menu_order'     => intval( $p['menu_order'] ?? 0 ),
                 'comment_status' => in_array( $p['comment_status'] ?? '', array( 'open', 'closed' ), true ) ? $p['comment_status'] : 'closed',
                 'ping_status'    => in_array( $p['ping_status'] ?? '', array( 'open', 'closed' ), true ) ? $p['ping_status'] : 'closed',
             );
+            if ( $post_type === 'page' ) {
+                $post_data['menu_order'] = intval( $p['menu_order'] ?? 0 );
+            }
 
-            // Check if a page with this slug already exists
-            $existing = get_page_by_path( $post_data['post_name'], OBJECT, 'page' );
+            $existing = get_page_by_path( $post_data['post_name'], OBJECT, $post_type );
             if ( $existing ) {
                 $post_data['ID'] = $existing->ID;
                 wp_update_post( $post_data );
@@ -1765,8 +2467,30 @@ class Handschelle_Admin {
                 $created++;
             }
 
-            // Restore public meta
-            if ( ! empty( $p['meta'] ) && is_array( $p['meta'] ) && $post_id && ! is_wp_error( $post_id ) ) {
+            if ( ! $post_id || is_wp_error( $post_id ) ) continue;
+
+            // Categories and tags (posts only)
+            if ( $post_type === 'post' ) {
+                if ( ! empty( $p['categories'] ) && is_array( $p['categories'] ) ) {
+                    $cat_ids = array();
+                    foreach ( $p['categories'] as $cat_name ) {
+                        $cat = get_term_by( 'name', $cat_name, 'category' );
+                        if ( $cat ) {
+                            $cat_ids[] = $cat->term_id;
+                        } else {
+                            $new_cat = wp_insert_term( $cat_name, 'category' );
+                            if ( ! is_wp_error( $new_cat ) ) $cat_ids[] = $new_cat['term_id'];
+                        }
+                    }
+                    if ( $cat_ids ) wp_set_post_categories( $post_id, $cat_ids );
+                }
+                if ( ! empty( $p['tags'] ) && is_array( $p['tags'] ) ) {
+                    wp_set_post_tags( $post_id, $p['tags'] );
+                }
+            }
+
+            // Meta fields
+            if ( ! empty( $p['meta'] ) && is_array( $p['meta'] ) ) {
                 foreach ( $p['meta'] as $meta_key => $meta_values ) {
                     $meta_key = sanitize_key( $meta_key );
                     if ( empty( $meta_key ) ) continue;
@@ -1778,10 +2502,7 @@ class Handschelle_Admin {
             }
         }
 
-        $this->redirect(
-            admin_url( 'admin.php?page=handschelle-backup' ),
-            "Seiten wiederhergestellt: {$created} neu angelegt, {$updated} aktualisiert."
-        );
+        return array( 'created' => $created, 'updated' => $updated );
     }
 
     /* ================================================================
