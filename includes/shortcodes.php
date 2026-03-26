@@ -2880,10 +2880,10 @@ class Handschelle_Shortcodes {
      */
     public function sc_chat( $atts ) {
         $atts = shortcode_atts( array(
-            'model'       => 'llama3.2',
+            'model'       => get_option( 'hs_ollama_default_model', 'llama3.2' ) ?: 'llama3.2',
             'placeholder' => 'Schreibe eine Nachricht …',
             'title'       => 'KI-Assistent',
-            'system'      => 'Du bist ein hilfreicher Assistent.',
+            'system'      => get_option( 'hs_ollama_system_prompt', 'Du bist ein hilfreicher Assistent.' ) ?: 'Du bist ein hilfreicher Assistent.',
         ), $atts, 'handschelle-chat' );
 
         $uid   = 'hs-chat-' . wp_rand( 1000, 9999 );
@@ -2969,8 +2969,10 @@ class Handschelle_Shortcodes {
             'stream'   => false,
         ) );
 
+        $timeout = max( 10, intval( get_option( 'hs_ollama_timeout', 120 ) ) );
+
         $response = wp_remote_post( $endpoint, array(
-            'timeout'     => 120,
+            'timeout'     => $timeout,
             'headers'     => array( 'Content-Type' => 'application/json' ),
             'body'        => $body,
             'data_format' => 'body',

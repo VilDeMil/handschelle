@@ -46,6 +46,7 @@ class Handschelle_Admin {
         $pending_count = count( get_users( array( 'meta_key' => 'hs_user_status', 'meta_value' => 'pending' ) ) );
         $users_label   = '👥 Benutzer' . ( $pending_count ? ' <span class="awaiting-mod">' . $pending_count . '</span>' : '' );
         add_submenu_page( 'handschelle', 'Benutzer',           $users_label,      'manage_options', 'handschelle-users',          array( $this, 'page_users' ) );
+        add_submenu_page( 'handschelle', 'Ollama KI',          'Ollama KI',        'manage_options', 'handschelle-ollama',         array( $this, 'page_ollama' ) );
     }
 
     /* ================================================================
@@ -260,6 +261,14 @@ class Handschelle_Admin {
             case 'drop':
                 Handschelle_Database::drop_table();
                 $this->redirect( admin_url( 'admin.php?page=handschelle-db' ), 'Datenbanktabelle gelöscht.' );
+                break;
+
+            case 'save_ollama':
+                update_option( 'hs_ollama_url',            sanitize_text_field( wp_unslash( $_POST['hs_ollama_url']            ?? 'http://localhost:11434' ) ) );
+                update_option( 'hs_ollama_default_model',  sanitize_text_field( wp_unslash( $_POST['hs_ollama_default_model']  ?? '' ) ) );
+                update_option( 'hs_ollama_system_prompt',  sanitize_textarea_field( wp_unslash( $_POST['hs_ollama_system_prompt'] ?? '' ) ) );
+                update_option( 'hs_ollama_timeout',        max( 10, intval( $_POST['hs_ollama_timeout'] ?? 120 ) ) );
+                $this->redirect( admin_url( 'admin.php?page=handschelle-ollama' ), 'Ollama-Einstellungen gespeichert.' );
                 break;
         }
     }
@@ -2609,6 +2618,172 @@ class Handschelle_Admin {
     /* ================================================================
        SEITE: DATENBANK
     ================================================================ */
+    public function page_ollama() {
+        $nonce          = wp_create_nonce( 'handschelle_admin_action' );
+        $ollama_url     = get_option( 'hs_ollama_url',           'http://localhost:11434' );
+        $default_model  = get_option( 'hs_ollama_default_model', '' );
+        $system_prompt  = get_option( 'hs_ollama_system_prompt', 'Du bist ein hilfreicher Assistent.' );
+        $timeout        = intval( get_option( 'hs_ollama_timeout', 120 ) );
+        ?>
+        <div class="wrap hs-wrap">
+            <h1>🤖 Ollama KI-Konfiguration</h1>
+
+            <form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=handschelle-ollama' ) ); ?>">
+                <?php wp_nonce_field( 'handschelle_admin_action' ); ?>
+                <input type="hidden" name="hs_action" value="save_ollama">
+
+                <div class="hs-form">
+                    <div class="hs-form-section">
+                        <h3>Verbindung</h3>
+                        <div class="hs-form-grid">
+                            <div class="hs-field">
+                                <label for="hs_ollama_url">Ollama Server-URL</label>
+                                <input type="text" id="hs_ollama_url" name="hs_ollama_url"
+                                       value="<?php echo esc_attr( $ollama_url ); ?>"
+                                       placeholder="http://localhost:11434">
+                                <span class="description">Adresse des lokalen oder remote Ollama-Servers.</span>
+                            </div>
+                            <div class="hs-field">
+                                <label for="hs_ollama_timeout">Timeout (Sekunden)</label>
+                                <input type="number" id="hs_ollama_timeout" name="hs_ollama_timeout"
+                                       value="<?php echo esc_attr( $timeout ); ?>"
+                                       min="10" max="600" style="width:120px;">
+                                <span class="description">Max. Wartezeit auf eine Antwort (10–600 s).</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="hs-form-section">
+                        <h3>Standard-Einstellungen</h3>
+                        <div class="hs-form-grid">
+                            <div class="hs-field">
+                                <label for="hs_ollama_default_model">Standard-Modell</label>
+                                <div style="display:flex;gap:.5rem;align-items:center;">
+                                    <input type="text" id="hs_ollama_default_model" name="hs_ollama_default_model"
+                                           value="<?php echo esc_attr( $default_model ); ?>"
+                                           placeholder="llama3.2" style="flex:1;">
+                                    <button type="button" id="hs-ollama-load-models" class="button">
+                                        ↻ Modelle laden
+                                    </button>
+                                </div>
+                                <span class="description">
+                                    Wird als Vorgabe im <code>[handschelle-chat]</code>-Shortcode verwendet, wenn kein <code>model=""</code>-Attribut angegeben ist.
+                                </span>
+                            </div>
+                            <div class="hs-field hs-field-full">
+                                <label for="hs_ollama_system_prompt">Standard System-Prompt</label>
+                                <textarea id="hs_ollama_system_prompt" name="hs_ollama_system_prompt"
+                                          rows="4" maxlength="2000"><?php echo esc_textarea( $system_prompt ); ?></textarea>
+                                <span class="description">Systemanweisung an die KI. Wird verwendet, wenn kein <code>system=""</code>-Attribut im Shortcode gesetzt ist.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="hs-form-section">
+                        <h3>Verbindungstest</h3>
+                        <button type="button" id="hs-ollama-test-btn" class="button button-secondary">
+                            🔌 Verbindung testen
+                        </button>
+                        <span id="hs-ollama-test-result" style="margin-left:.75rem;font-weight:600;"></span>
+                        <p class="description" style="margin-top:.5rem;">
+                            Prüft, ob der Ollama-Server erreichbar ist, und listet verfügbare Modelle auf.
+                        </p>
+                        <ul id="hs-ollama-model-list" style="margin-top:.5rem;display:none;"></ul>
+                    </div>
+
+                    <div class="hs-form-section">
+                        <h3>Shortcode-Referenz</h3>
+                        <p>Füge den Chatbot mit folgendem Shortcode in eine Seite ein:</p>
+                        <code>[handschelle-chat]</code>
+                        <p style="margin-top:.75rem;">Alle verfügbaren Attribute:</p>
+                        <table class="widefat striped" style="max-width:640px;">
+                            <thead><tr><th>Attribut</th><th>Standard</th><th>Beschreibung</th></tr></thead>
+                            <tbody>
+                                <tr><td><code>model</code></td><td><em>Standard-Modell (s.o.)</em></td><td>Ollama-Modellname</td></tr>
+                                <tr><td><code>title</code></td><td><code>KI-Assistent</code></td><td>Titel im Chat-Header</td></tr>
+                                <tr><td><code>system</code></td><td><em>Standard-Prompt (s.o.)</em></td><td>Systemanweisung an die KI</td></tr>
+                                <tr><td><code>placeholder</code></td><td><code>Schreibe eine Nachricht …</code></td><td>Platzhalter im Eingabefeld</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <p class="submit">
+                    <button type="submit" class="button button-primary">💾 Einstellungen speichern</button>
+                </p>
+            </form>
+            <?php echo $this->hs_footer(); ?>
+        </div>
+
+        <script>
+        (function($){
+            var ajaxUrl = '<?php echo esc_js( admin_url( 'admin-ajax.php' ) ); ?>';
+            var nonce   = '<?php echo esc_js( wp_create_nonce( 'hs_chat_nonce' ) ); ?>';
+
+            function fetchModels(onSuccess) {
+                return $.post(ajaxUrl, { action: 'hs_chat_models', _nonce: nonce })
+                    .done(function(res) {
+                        if (res.success && res.data && res.data.models) {
+                            onSuccess(res.data.models);
+                        } else {
+                            onSuccess(null);
+                        }
+                    })
+                    .fail(function() { onSuccess(null); });
+            }
+
+            $('#hs-ollama-test-btn').on('click', function() {
+                var $result = $('#hs-ollama-test-result');
+                var $list   = $('#hs-ollama-model-list');
+                $result.text('Teste …').css('color', '#7f8c8d');
+                $list.hide().empty();
+
+                fetchModels(function(models) {
+                    if (models) {
+                        $result.text('✅ Verbunden – ' + models.length + ' Modell(e) gefunden.').css('color', '#27ae60');
+                        $.each(models, function(_, m) {
+                            $list.append('<li style="font-family:monospace;">' + $('<span>').text(m).html() + '</li>');
+                        });
+                        $list.show();
+                    } else {
+                        $result.text('❌ Verbindung fehlgeschlagen.').css('color', '#c0392b');
+                    }
+                });
+            });
+
+            $('#hs-ollama-load-models').on('click', function() {
+                var $btn   = $(this);
+                var $input = $('#hs_ollama_default_model');
+                $btn.prop('disabled', true).text('Lade …');
+
+                fetchModels(function(models) {
+                    $btn.prop('disabled', false).text('↻ Modelle laden');
+                    if (!models || !models.length) {
+                        alert('Keine Modelle gefunden – ist Ollama aktiv?');
+                        return;
+                    }
+                    // Build a quick picker
+                    var $picker = $('<select style="margin-left:.5rem;max-width:220px;">');
+                    $picker.append('<option value="">— Modell wählen —</option>');
+                    $.each(models, function(_, m) {
+                        var sel = (m === $input.val()) ? ' selected' : '';
+                        $picker.append('<option value="' + $('<span>').text(m).html() + '"' + sel + '>' + $('<span>').text(m).html() + '</option>');
+                    });
+                    $picker.on('change', function() {
+                        if ($(this).val()) {
+                            $input.val($(this).val());
+                            $picker.remove();
+                        }
+                    });
+                    $input.after($picker);
+                    $picker.focus();
+                });
+            });
+        })(jQuery);
+        </script>
+        <?php
+    }
+
     public function page_database() {
         $nonce = wp_create_nonce( 'handschelle_admin_action' );
         ?>
