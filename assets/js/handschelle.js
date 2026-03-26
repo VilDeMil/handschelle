@@ -469,7 +469,7 @@
             $widget.data('hs-chat-history', []);
         });
 
-        // Show empty state on init
+        // Init each chat widget: empty state + load model list
         $('.hs-chat-widget').each(function () {
             var $w = $(this);
             if (!$w.data('hs-chat-history')) {
@@ -480,9 +480,44 @@
                     '<div class="hs-chat-empty">Stelle eine Frage!</div>'
                 );
             }
+            hsChatLoadModels($w);
+        });
+
+        // Update active model when user changes the select
+        $(document).on('change', '.hs-chat-model-select', function () {
+            var $widget = $(this).closest('.hs-chat-widget');
+            $widget.data('model', $(this).val());
         });
 
     });
+
+    function hsChatLoadModels($widget) {
+        var $select  = $widget.find('.hs-chat-model-select');
+        var current  = $widget.data('model') || $select.val();
+        var nonce    = $widget.data('nonce');
+        var ajaxUrl  = $widget.data('ajax');
+
+        $select.prop('disabled', true);
+
+        $.post(ajaxUrl, { action: 'hs_chat_models', _nonce: nonce }, function (res) {
+            if (!res.success || !res.data || !res.data.models || !res.data.models.length) return;
+
+            $select.empty();
+            $.each(res.data.models, function (_, name) {
+                var selected = (name === current) ? ' selected' : '';
+                $select.append('<option value="' + hsEscape(name) + '"' + selected + '>' + hsEscape(name) + '</option>');
+            });
+
+            // If the preferred model isn't in the list, keep it as first option
+            if (!res.data.models.includes(current)) {
+                $select.prepend('<option value="' + hsEscape(current) + '" selected>' + hsEscape(current) + '</option>');
+            }
+
+            $widget.data('model', $select.val());
+        }).always(function () {
+            $select.prop('disabled', false);
+        });
+    }
 
     function hsChatSend($widget) {
         var $input   = $widget.find('.hs-chat-input');
@@ -493,7 +528,7 @@
         if (!message) return;
         if ($sendBtn.prop('disabled')) return;
 
-        var model    = $widget.data('model')  || 'llama3.2';
+        var model    = $widget.find('.hs-chat-model-select').val() || $widget.data('model') || 'llama3.2';
         var system   = $widget.data('system') || '';
         var nonce    = $widget.data('nonce');
         var ajaxUrl  = $widget.data('ajax');

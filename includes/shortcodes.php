@@ -78,8 +78,10 @@ class Handschelle_Shortcodes {
         add_action( 'wp_ajax_nopriv_hs_get_person_data', array( $this, 'ajax_get_person_data' ) );
 
         // AJAX: Ollama-Chat
-        add_action( 'wp_ajax_hs_chat',        array( $this, 'ajax_chat' ) );
-        add_action( 'wp_ajax_nopriv_hs_chat', array( $this, 'ajax_chat' ) );
+        add_action( 'wp_ajax_hs_chat',              array( $this, 'ajax_chat' ) );
+        add_action( 'wp_ajax_nopriv_hs_chat',       array( $this, 'ajax_chat' ) );
+        add_action( 'wp_ajax_hs_chat_models',        array( $this, 'ajax_chat_models' ) );
+        add_action( 'wp_ajax_nopriv_hs_chat_models', array( $this, 'ajax_chat_models' ) );
     }
 
     /* ================================================================
@@ -2897,7 +2899,11 @@ class Handschelle_Shortcodes {
 
             <div class="hs-chat-header">
                 <span class="hs-chat-title"><?php echo esc_html( $atts['title'] ); ?></span>
-                <span class="hs-chat-model-badge"><?php echo esc_html( $atts['model'] ); ?></span>
+                <select class="hs-chat-model-select" aria-label="Modell auswählen" title="Modell auswählen">
+                    <option value="<?php echo esc_attr( $atts['model'] ); ?>" selected>
+                        <?php echo esc_html( $atts['model'] ); ?>
+                    </option>
+                </select>
                 <button type="button" class="hs-chat-clear-btn" title="Verlauf löschen">&#10006;</button>
             </div>
 
@@ -2989,6 +2995,40 @@ class Handschelle_Shortcodes {
         wp_send_json_success( array(
             'reply' => $data['message']['content'],
         ) );
+    }
+
+    /**
+     * AJAX handler – returns the list of locally available Ollama models.
+     */
+    public function ajax_chat_models() {
+        check_ajax_referer( 'hs_chat_nonce', '_nonce' );
+
+        $ollama_url = get_option( 'hs_ollama_url', 'http://localhost:11434' );
+        $endpoint   = trailingslashit( $ollama_url ) . 'api/tags';
+
+        $response = wp_remote_get( $endpoint, array( 'timeout' => 10 ) );
+
+        if ( is_wp_error( $response ) ) {
+            wp_send_json_error( array(
+                'message' => 'Ollama nicht erreichbar: ' . $response->get_error_message(),
+            ), 502 );
+        }
+
+        $code = wp_remote_retrieve_response_code( $response );
+        $data = json_decode( wp_remote_retrieve_body( $response ), true );
+
+        if ( $code !== 200 || ! isset( $data['models'] ) ) {
+            wp_send_json_error( array(
+                'message' => 'Keine Modellliste erhalten (HTTP ' . intval( $code ) . ').',
+            ), 502 );
+        }
+
+        $models = array_map( function ( $m ) {
+            return $m['name'];
+        }, $data['models'] );
+
+        sort( $models );
+        wp_send_json_success( array( 'models' => $models ) );
     }
 
 }
