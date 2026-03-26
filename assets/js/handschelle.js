@@ -483,6 +483,14 @@
             $(this).closest('.hs-chat-settings-label').find('.hs-chat-temp-value').text($(this).val());
         });
 
+        // Apply URL override: reload model list from new address
+        $(document).on('click', '.hs-chat-settings-url-apply', function () {
+            var $widget = $(this).closest('.hs-chat-widget');
+            var url     = $widget.find('.hs-chat-settings-url').val().trim();
+            $widget.data('hs-chat-custom-url', url || null);
+            hsChatLoadModels($widget);
+        });
+
         // Init each chat widget: empty state + load model list
         $('.hs-chat-widget').each(function () {
             var $w = $(this);
@@ -513,26 +521,35 @@
     });
 
     function hsChatLoadModels($widget, onReady) {
-        var $select  = $widget.find('.hs-chat-model-select');
-        var current  = $widget.data('model') || $select.val();
-        var nonce    = $widget.data('nonce');
-        var ajaxUrl  = $widget.data('ajax');
+        var $select    = $widget.find('.hs-chat-model-select');
+        var current    = $widget.data('model') || $select.val();
+        var nonce      = $widget.data('nonce');
+        var ajaxUrl    = $widget.data('ajax');
+        var customUrl  = $widget.data('hs-chat-custom-url') || '';
 
         $select.prop('disabled', true);
 
-        $.post(ajaxUrl, { action: 'hs_chat_models', _nonce: nonce }, function (res) {
+        var postData = { action: 'hs_chat_models', _nonce: nonce };
+        if (customUrl) postData.ollama_url = customUrl;
+
+        $.post(ajaxUrl, postData, function (res) {
             if (!res.success || !res.data || !res.data.models || !res.data.models.length) return;
 
-            $select.empty();
-            $.each(res.data.models, function (_, name) {
-                var selected = (name === current) ? ' selected' : '';
-                $select.append('<option value="' + hsEscape(name) + '"' + selected + '>' + hsEscape(name) + '</option>');
-            });
+            var models    = res.data.models; // [{name, size}, …]
+            var names     = models.map(function(m) { return m.name; });
+            var foundCurrent = names.indexOf(current) !== -1;
 
-            // If the preferred model isn't in the list, keep it as first option
-            if (!res.data.models.includes(current)) {
-                $select.prepend('<option value="' + hsEscape(current) + '" selected>' + hsEscape(current) + '</option>');
+            $select.empty();
+
+            if (!foundCurrent) {
+                $select.append('<option value="' + hsEscape(current) + '" selected>' + hsEscape(current) + '</option>');
             }
+
+            $.each(models, function (_, m) {
+                var label    = m.size ? hsEscape(m.name) + ' &mdash; ' + hsEscape(m.size) : hsEscape(m.name);
+                var selected = (m.name === current) ? ' selected' : '';
+                $select.append('<option value="' + hsEscape(m.name) + '"' + selected + '>' + label + '</option>');
+            });
 
             $widget.data('model', $select.val());
         }).always(function () {
@@ -554,6 +571,7 @@
         var $panel      = $widget.find('.hs-chat-settings-panel');
         var system      = $panel.find('.hs-chat-settings-system').val().trim() || $widget.data('system') || '';
         var temperature = parseFloat($panel.find('.hs-chat-settings-temp').val()) || 0.7;
+        var customUrl   = $widget.data('hs-chat-custom-url') || '';
         var nonce       = $widget.data('nonce');
         var ajaxUrl     = $widget.data('ajax');
         var history     = $widget.data('hs-chat-history') || [];
@@ -583,6 +601,7 @@
                 model       : model,
                 system      : system,
                 temperature : temperature,
+                ollama_url  : customUrl,
                 history     : JSON.stringify(history)
             },
             success: function (res) {

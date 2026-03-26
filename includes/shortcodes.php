@@ -2894,8 +2894,9 @@ class Handschelle_Shortcodes {
             'urlparam'    => '',
         ), $atts, 'handschelle-chat' );
 
-        $uid   = 'hs-chat-' . wp_rand( 1000, 9999 );
-        $nonce = wp_create_nonce( 'hs_chat_nonce' );
+        $uid        = 'hs-chat-' . wp_rand( 1000, 9999 );
+        $nonce      = wp_create_nonce( 'hs_chat_nonce' );
+        $ollama_url = get_option( 'hs_ollama_url', 'http://localhost:11434' );
 
         ob_start();
         ?>
@@ -2904,6 +2905,7 @@ class Handschelle_Shortcodes {
              data-system="<?php echo esc_attr( $atts['system'] ); ?>"
              data-nonce="<?php echo esc_attr( $nonce ); ?>"
              data-ajax="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>"
+             data-ollama-url="<?php echo esc_attr( $ollama_url ); ?>"
              <?php if ( $atts['urlparam'] !== '' ) : ?>
              data-urlparam="<?php echo esc_attr( $atts['urlparam'] ); ?>"
              <?php endif; ?>>
@@ -2931,6 +2933,17 @@ class Handschelle_Shortcodes {
                         Temperatur <span class="hs-chat-temp-value">0.7</span>
                         <input type="range" class="hs-chat-settings-temp" min="0" max="2" step="0.1" value="0.7">
                     </label>
+                    <label class="hs-chat-settings-label hs-chat-settings-url-row">
+                        Ollama URL
+                        <div class="hs-chat-settings-url-wrap">
+                            <input type="text" class="hs-chat-settings-url"
+                                   value="<?php echo esc_attr( $ollama_url ); ?>"
+                                   placeholder="http://localhost:11434"
+                                   spellcheck="false" autocomplete="off">
+                            <button type="button" class="hs-chat-settings-url-apply">↻</button>
+                        </div>
+                        <span class="hs-chat-settings-url-hint">Nur localhost / 127.0.0.1 erlaubt</span>
+                    </label>
                 </div>
             </div>
 
@@ -2954,8 +2967,22 @@ class Handschelle_Shortcodes {
     }
 
     /**
+     * Validates that an Ollama URL override points to localhost only (SSRF guard).
+     * Returns the sanitised URL or null if invalid.
+     */
+    private function validate_ollama_url_override( $raw ) {
+        $url    = esc_url_raw( trim( $raw ) );
+        $parsed = wp_parse_url( $url );
+        $host   = $parsed['host'] ?? '';
+        if ( ! in_array( $host, array( 'localhost', '127.0.0.1' ), true ) ) {
+            return null;
+        }
+        return $url;
+    }
+
+    /**
      * AJAX handler – proxies a message to the local Ollama API.
-     * Expects POST fields: message, model, history (JSON), system, _nonce
+     * Expects POST fields: message, model, history (JSON), system, temperature, ollama_url, _nonce
      */
     public function ajax_chat() {
         check_ajax_referer( 'hs_chat_nonce', '_nonce' );
@@ -2989,7 +3016,11 @@ class Handschelle_Shortcodes {
         $messages[] = array( 'role' => 'user', 'content' => $message );
 
         $ollama_url = get_option( 'hs_ollama_url', 'http://localhost:11434' );
-        $endpoint   = trailingslashit( $ollama_url ) . 'api/chat';
+        if ( ! empty( $_POST['ollama_url'] ) ) {
+            $override = $this->validate_ollama_url_override( wp_unslash( $_POST['ollama_url'] ) );
+            if ( $override ) $ollama_url = $override;
+        }
+        $endpoint = trailingslashit( $ollama_url ) . 'api/chat';
 
         $body = wp_json_encode( array(
             'model'    => $model,
@@ -3045,7 +3076,11 @@ class Handschelle_Shortcodes {
         check_ajax_referer( 'hs_chat_nonce', '_nonce' );
 
         $ollama_url = get_option( 'hs_ollama_url', 'http://localhost:11434' );
-        $endpoint   = trailingslashit( $ollama_url ) . 'api/tags';
+        if ( ! empty( $_POST['ollama_url'] ) ) {
+            $override = $this->validate_ollama_url_override( wp_unslash( $_POST['ollama_url'] ) );
+            if ( $override ) $ollama_url = $override;
+        }
+        $endpoint = trailingslashit( $ollama_url ) . 'api/tags';
 
         $response = wp_remote_get( $endpoint, array( 'timeout' => 10 ) );
 
@@ -3065,10 +3100,13 @@ class Handschelle_Shortcodes {
         }
 
         $models = array_map( function ( $m ) {
-            return $m['name'];
+            return array(
+                'name' => $m['name'],
+                'size' => $m['details']['parameter_size'] ?? '',
+            );
         }, $data['models'] );
 
-        sort( $models );
+        usort( $models, function( $a, $b ) { return strcmp( $a['name'], $b['name'] ); } );
         wp_send_json_success( array( 'models' => $models ) );
     }
 
