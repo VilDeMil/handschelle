@@ -1,9 +1,21 @@
+add other LLM Provodera for chat
+
+----
+
 modify gift request [handschelle-gift]
 https://claude.ai/gift
 bitcoin:
 paypal
 moero
 --
+add Link "KI-Analyse" to <each name>
+use link : /chat/?frage="Was weist du über"<Name>+ <Partei>? to personal data
+
+modify Link "KI-Analyse" to each straftat
+use link : /chat/?frage="Was weist du über"<Name>+ <Partei> + <Straftat>?modify Link "KI-Analyse" to each straftat
+use link : /chat/?frage="Was weist du über"<Name>+ <Partei> + <Straftat>?
+
+----
 
 add Links to AI
 
