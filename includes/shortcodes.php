@@ -2884,6 +2884,7 @@ class Handschelle_Shortcodes {
             'placeholder' => 'Schreibe eine Nachricht …',
             'title'       => 'KI-Assistent',
             'system'      => get_option( 'hs_ollama_system_prompt', 'Du bist ein hilfreicher Assistent.' ) ?: 'Du bist ein hilfreicher Assistent.',
+            'urlparam'    => '',
         ), $atts, 'handschelle-chat' );
 
         $uid   = 'hs-chat-' . wp_rand( 1000, 9999 );
@@ -2895,7 +2896,10 @@ class Handschelle_Shortcodes {
              data-model="<?php echo esc_attr( $atts['model'] ); ?>"
              data-system="<?php echo esc_attr( $atts['system'] ); ?>"
              data-nonce="<?php echo esc_attr( $nonce ); ?>"
-             data-ajax="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>">
+             data-ajax="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>"
+             <?php if ( $atts['urlparam'] !== '' ) : ?>
+             data-urlparam="<?php echo esc_attr( $atts['urlparam'] ); ?>"
+             <?php endif; ?>>
 
             <div class="hs-chat-header">
                 <span class="hs-chat-title"><?php echo esc_html( $atts['title'] ); ?></span>

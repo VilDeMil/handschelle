@@ -494,7 +494,14 @@
                     '<div class="hs-chat-empty">Stelle eine Frage!</div>'
                 );
             }
-            hsChatLoadModels($w);
+            hsChatLoadModels($w, function () {
+                var param = $w.data('urlparam');
+                if (!param) return;
+                var msg = new URLSearchParams(window.location.search).get(param);
+                if (!msg) return;
+                $w.find('.hs-chat-input').val(msg.trim());
+                hsChatSend($w);
+            });
         });
 
         // Update active model when user changes the select
@@ -505,7 +512,7 @@
 
     });
 
-    function hsChatLoadModels($widget) {
+    function hsChatLoadModels($widget, onReady) {
         var $select  = $widget.find('.hs-chat-model-select');
         var current  = $widget.data('model') || $select.val();
         var nonce    = $widget.data('nonce');
@@ -530,6 +537,7 @@
             $widget.data('model', $select.val());
         }).always(function () {
             $select.prop('disabled', false);
+            if (typeof onReady === 'function') onReady();
         });
     }
 
