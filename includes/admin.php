@@ -240,6 +240,8 @@ class Handschelle_Admin {
             case 'restore_pages':     $this->restore_pages(); break;
             case 'backup_posts':      $this->backup_posts(); break;
             case 'restore_posts':     $this->restore_posts(); break;
+            case 'backup_theme':      $this->backup_theme(); break;
+            case 'restore_theme':     $this->restore_theme(); break;
 
             case 'truncate':
                 Handschelle_Database::truncate_table();
@@ -1403,6 +1405,45 @@ class Handschelle_Admin {
                 </form>
             </div>
 
+            <!-- ── BACKUP THEME ── -->
+            <div class="hs-form-section" style="margin-top:2rem;">
+                <h2>🎨 Theme-Backup</h2>
+                <?php
+                $theme      = wp_get_theme();
+                $theme_name = $theme->get( 'Name' );
+                $theme_ver  = $theme->get( 'Version' );
+                ?>
+                <p>Exportiert das aktive WordPress-Theme als ZIP-Datei.<br>
+                   Aktuelles Theme: <strong><?php echo esc_html( $theme_name ); ?></strong>
+                   (Version <?php echo esc_html( $theme_ver ); ?>).</p>
+                <form method="post" action="<?php echo esc_url( admin_url('admin.php') ); ?>">
+                    <?php wp_nonce_field( 'handschelle_admin_action' ); ?>
+                    <input type="hidden" name="hs_action" value="backup_theme">
+                    <input type="hidden" name="page" value="handschelle-backup">
+                    <button type="submit" class="button button-primary hs-btn">🎨 Theme exportieren</button>
+                </form>
+            </div>
+
+            <!-- ── RESTORE THEME ── -->
+            <div class="hs-form-section" style="margin-top:2rem;">
+                <h2>⬆ Theme wiederherstellen</h2>
+                <p style="color:#c0392b;font-weight:600;">⚠ Das bestehende Theme-Verzeichnis wird vollständig überschrieben.</p>
+                <form method="post" action="<?php echo esc_url( admin_url('admin.php') ); ?>" enctype="multipart/form-data">
+                    <?php wp_nonce_field( 'handschelle_admin_action' ); ?>
+                    <input type="hidden" name="hs_action" value="restore_theme">
+                    <input type="hidden" name="page" value="handschelle-backup">
+                    <div class="hs-field" style="max-width:420px;margin-bottom:.8rem;">
+                        <label>Theme-ZIP auswählen</label>
+                        <input type="file" name="theme_zip" accept=".zip" required>
+                    </div>
+                    <label class="hs-checkbox-label" style="margin-bottom:.8rem;display:block;">
+                        <input type="checkbox" name="restore_theme_confirm" value="1" required>
+                        Ich verstehe, dass das bestehende Theme überschrieben wird.
+                    </label>
+                    <button type="submit" class="button hs-btn-danger" onclick="return confirm('Theme wirklich wiederherstellen?')">⬆ Theme einspielen</button>
+                </form>
+            </div>
+
             <?php echo $this->hs_footer(); ?>
         </div>
         <?php
@@ -1960,6 +2001,130 @@ class Handschelle_Admin {
             admin_url( 'admin.php?page=handschelle-backup' ),
             "Beiträge wiederhergestellt: {$created} neu angelegt, {$updated} aktualisiert."
         );
+    }
+
+    /* ================================================================
+       BACKUP THEME – aktives Theme als ZIP exportieren
+    ================================================================ */
+    private function backup_theme() {
+        if ( ! class_exists( 'ZipArchive' ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Fehler: PHP ZipArchive nicht verfügbar.' );
+            return;
+        }
+
+        $theme      = wp_get_theme();
+        $theme_slug = $theme->get_stylesheet();
+        $theme_dir  = get_stylesheet_directory();
+
+        if ( ! is_dir( $theme_dir ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Fehler: Theme-Verzeichnis nicht gefunden.' );
+            return;
+        }
+
+        $zip_path = sys_get_temp_dir() . '/hs-theme-backup-' . time() . '.zip';
+        $zip      = new ZipArchive();
+        if ( $zip->open( $zip_path, ZipArchive::CREATE | ZipArchive::OVERWRITE ) !== true ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Fehler: ZIP-Datei konnte nicht erstellt werden.' );
+            return;
+        }
+
+        $base_len = strlen( dirname( $theme_dir ) ) + 1;
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator( $theme_dir, RecursiveDirectoryIterator::SKIP_DOTS ),
+            RecursiveIteratorIterator::SELF_FIRST
+        );
+        foreach ( $iterator as $file ) {
+            $local_path = substr( $file->getRealPath(), $base_len );
+            if ( $file->isDir() ) {
+                $zip->addEmptyDir( $local_path );
+            } else {
+                $zip->addFile( $file->getRealPath(), $local_path );
+            }
+        }
+        $zip->close();
+
+        if ( ! file_exists( $zip_path ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Fehler: Theme-Backup konnte nicht erstellt werden.' );
+            return;
+        }
+
+        $filename = 'theme-' . sanitize_file_name( $theme_slug ) . '-' . date( 'Y-m-d_His' ) . '.zip';
+        header( 'Content-Type: application/zip' );
+        header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+        header( 'Content-Length: ' . filesize( $zip_path ) );
+        header( 'Pragma: no-cache' );
+        readfile( $zip_path );
+        unlink( $zip_path );
+        exit;
+    }
+
+    /* ================================================================
+       RESTORE THEME – Theme aus ZIP-Datei wiederherstellen
+    ================================================================ */
+    private function restore_theme() {
+        if ( ! class_exists( 'ZipArchive' ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Fehler: PHP ZipArchive nicht verfügbar.' );
+            return;
+        }
+        if ( empty( $_FILES['theme_zip']['tmp_name'] ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Fehler: Keine ZIP-Datei hochgeladen.' );
+            return;
+        }
+        if ( empty( $_POST['restore_theme_confirm'] ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Bitte Bestätigung ankreuzen.' );
+            return;
+        }
+
+        $zip = new ZipArchive();
+        if ( $zip->open( $_FILES['theme_zip']['tmp_name'] ) !== true ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Fehler: ZIP-Datei konnte nicht geöffnet werden.' );
+            return;
+        }
+
+        // Determine the top-level folder inside the ZIP (the theme slug)
+        $first_entry = $zip->getNameIndex( 0 );
+        $parts       = explode( '/', $first_entry );
+        $theme_slug  = $parts[0];
+
+        if ( empty( $theme_slug ) ) {
+            $zip->close();
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Fehler: Ungültige ZIP-Struktur (kein Theme-Verzeichnis gefunden).' );
+            return;
+        }
+
+        $themes_dir  = get_theme_root();
+        $target_dir  = $themes_dir . '/' . $theme_slug;
+
+        // Remove existing theme directory before extracting
+        if ( is_dir( $target_dir ) ) {
+            $this->delete_directory( $target_dir );
+        }
+
+        $zip->extractTo( $themes_dir );
+        $zip->close();
+
+        // Activate the restored theme if it matches the currently active one
+        $active_slug = get_stylesheet();
+        $msg = "Theme \"{$theme_slug}\" erfolgreich wiederhergestellt.";
+        if ( $active_slug === $theme_slug ) {
+            switch_theme( $theme_slug );
+            $msg .= ' Theme ist weiterhin aktiv.';
+        }
+
+        $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), $msg );
+    }
+
+    /* Helper: recursively delete a directory */
+    private function delete_directory( $dir ) {
+        if ( ! is_dir( $dir ) ) return;
+        $items = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator( $dir, RecursiveDirectoryIterator::SKIP_DOTS ),
+            RecursiveIteratorIterator::CHILD_FIRST
+        );
+        foreach ( $items as $item ) {
+            $item->isDir() ? rmdir( $item->getRealPath() ) : unlink( $item->getRealPath() );
+        }
+        rmdir( $dir );
     }
 
     /* ================================================================
