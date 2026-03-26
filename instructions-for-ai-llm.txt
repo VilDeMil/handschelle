@@ -60,4 +60,4 @@ When adding a new column:
 ---
 ---
 
-(c) 2026 - "Die-Handschelle" 15.0 - www.die-handschelle.com
+(c) 2026 - "Die-Handschelle" 15.1 - www.die-handschelle.com
