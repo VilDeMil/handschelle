@@ -2904,7 +2904,23 @@ class Handschelle_Shortcodes {
                         <?php echo esc_html( $atts['model'] ); ?>
                     </option>
                 </select>
+                <button type="button" class="hs-chat-settings-btn" title="Einstellungen" aria-expanded="false">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                </button>
                 <button type="button" class="hs-chat-clear-btn" title="Verlauf löschen">&#10006;</button>
+            </div>
+
+            <div class="hs-chat-settings-panel" hidden>
+                <div class="hs-chat-settings-grid">
+                    <label class="hs-chat-settings-label">
+                        System-Prompt
+                        <textarea class="hs-chat-settings-system" rows="3" maxlength="2000"><?php echo esc_textarea( $atts['system'] ); ?></textarea>
+                    </label>
+                    <label class="hs-chat-settings-label">
+                        Temperatur <span class="hs-chat-temp-value">0.7</span>
+                        <input type="range" class="hs-chat-settings-temp" min="0" max="2" step="0.1" value="0.7">
+                    </label>
+                </div>
             </div>
 
             <div class="hs-chat-messages" role="log" aria-live="polite"></div>
@@ -2933,9 +2949,10 @@ class Handschelle_Shortcodes {
     public function ajax_chat() {
         check_ajax_referer( 'hs_chat_nonce', '_nonce' );
 
-        $message = sanitize_text_field( wp_unslash( $_POST['message'] ?? '' ) );
-        $model   = sanitize_text_field( wp_unslash( $_POST['model']   ?? 'llama3.2' ) );
-        $system  = sanitize_textarea_field( wp_unslash( $_POST['system'] ?? '' ) );
+        $message     = sanitize_text_field( wp_unslash( $_POST['message']     ?? '' ) );
+        $model       = sanitize_text_field( wp_unslash( $_POST['model']       ?? 'llama3.2' ) );
+        $system      = sanitize_textarea_field( wp_unslash( $_POST['system']  ?? '' ) );
+        $temperature = isset( $_POST['temperature'] ) ? max( 0.0, min( 2.0, (float) $_POST['temperature'] ) ) : 0.7;
         $history = json_decode( wp_unslash( $_POST['history'] ?? '[]' ), true );
         if ( ! is_array( $history ) ) {
             $history = array();
@@ -2967,6 +2984,7 @@ class Handschelle_Shortcodes {
             'model'    => $model,
             'messages' => $messages,
             'stream'   => false,
+            'options'  => array( 'temperature' => $temperature ),
         ) );
 
         $timeout = max( 10, intval( get_option( 'hs_ollama_timeout', 120 ) ) );
@@ -2994,8 +3012,18 @@ class Handschelle_Shortcodes {
             ), 502 );
         }
 
+        // Compute timing stats from Ollama response fields (values are in nanoseconds)
+        $total_ns  = isset( $data['total_duration'] )    ? (float) $data['total_duration']    : 0;
+        $eval_ns   = isset( $data['eval_duration'] )     ? (float) $data['eval_duration']     : 0;
+        $eval_tok  = isset( $data['eval_count'] )        ? (int)   $data['eval_count']        : 0;
+        $toks_sec  = ( $eval_ns > 0 ) ? round( $eval_tok / ( $eval_ns / 1e9 ), 1 ) : 0;
+
         wp_send_json_success( array(
-            'reply' => $data['message']['content'],
+            'reply'      => $data['message']['content'],
+            'model'      => $data['model']  ?? $model,
+            'time_s'     => round( $total_ns / 1e9, 2 ),
+            'toks_sec'   => $toks_sec,
+            'eval_count' => $eval_tok,
         ) );
     }
 
