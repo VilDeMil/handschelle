@@ -2829,6 +2829,46 @@ class Handschelle_Admin {
                     </div>
 
                     <div class="hs-form-section">
+                        <h3>💬 Chat-Test</h3>
+                        <p class="description" style="margin-bottom:1rem;">
+                            Sende eine Testfrage direkt an ein KI-Modell, um die Konfiguration zu prüfen.
+                        </p>
+                        <div style="display:flex;flex-wrap:wrap;gap:.6rem;align-items:flex-end;margin-bottom:.75rem;">
+                            <div>
+                                <label for="hs-chattest-provider" style="display:block;font-weight:600;margin-bottom:.2rem;">Anbieter</label>
+                                <select id="hs-chattest-provider" style="min-width:120px;">
+                                    <option value="ollama">Ollama</option>
+                                    <?php if ( ! empty( get_option( 'hs_openai_api_key', '' ) ) ) : ?>
+                                    <option value="openai">OpenAI</option>
+                                    <?php endif; ?>
+                                    <?php if ( ! empty( get_option( 'hs_claude_api_key', '' ) ) ) : ?>
+                                    <option value="claude">Claude</option>
+                                    <?php endif; ?>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="hs-chattest-model" style="display:block;font-weight:600;margin-bottom:.2rem;">Modell</label>
+                                <select id="hs-chattest-model" style="min-width:220px;">
+                                    <option value="">— Lade …</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:.6rem;align-items:flex-start;">
+                            <input type="text" id="hs-chattest-question"
+                                   value="Antworte in einem Satz: Was ist 2+2?"
+                                   style="flex:1;max-width:480px;"
+                                   placeholder="Testfrage eingeben …">
+                            <button type="button" id="hs-chattest-send" class="button button-primary">
+                                ▶ Senden
+                            </button>
+                        </div>
+                        <div id="hs-chattest-result" style="margin-top:.75rem;display:none;border:1px solid #c3c4c7;border-radius:4px;padding:.75rem 1rem;background:#f9f9f9;">
+                            <div id="hs-chattest-meta" style="font-size:.8rem;color:#646970;margin-bottom:.4rem;"></div>
+                            <div id="hs-chattest-reply" style="white-space:pre-wrap;word-break:break-word;"></div>
+                        </div>
+                    </div>
+
+                    <div class="hs-form-section">
                         <h3>Shortcode-Referenz</h3>
                         <p>Füge den Chatbot mit folgendem Shortcode in eine Seite ein:</p>
                         <code>[handschelle-chat]</code>
@@ -2918,6 +2958,92 @@ class Handschelle_Admin {
                     })
                     .fail(function() { $result.text('❌ Anfrage fehlgeschlagen.').css('color', '#c0392b'); });
             });
+
+            // ── Chat-Test ─────────────────────────────────────────────
+            var chatTestProviderActions = {
+                ollama: { models: 'hs_chat_models',        chat: 'hs_chat'        },
+                openai: { models: 'hs_chat_openai_models', chat: 'hs_chat_openai' },
+                claude: { models: 'hs_chat_claude_models', chat: 'hs_chat_claude' }
+            };
+
+            function loadChatTestModels(provider) {
+                var $sel = $('#hs-chattest-model');
+                var pa   = chatTestProviderActions[provider];
+                if (!pa) return;
+                $sel.prop('disabled', true).empty().append('<option value="">Lade …</option>');
+                $.post(ajaxUrl, { action: pa.models, _nonce: nonce })
+                    .done(function(res) {
+                        $sel.empty();
+                        if (res.success && res.data && res.data.models && res.data.models.length) {
+                            $.each(res.data.models, function(_, m) {
+                                var label = m.size ? m.name + ' — ' + m.size : m.name;
+                                $sel.append('<option value="' + $('<span>').text(m.name).html() + '">' + $('<span>').text(label).html() + '</option>');
+                            });
+                        } else {
+                            $sel.append('<option value="">— Keine Modelle gefunden —</option>');
+                        }
+                    })
+                    .fail(function() {
+                        $sel.empty().append('<option value="">— Fehler beim Laden —</option>');
+                    })
+                    .always(function() { $sel.prop('disabled', false); });
+            }
+
+            $('#hs-chattest-provider').on('change', function() {
+                loadChatTestModels($(this).val());
+            });
+            loadChatTestModels($('#hs-chattest-provider').val());
+
+            $('#hs-chattest-send').on('click', function() {
+                var provider = $('#hs-chattest-provider').val();
+                var model    = $('#hs-chattest-model').val();
+                var question = $('#hs-chattest-question').val().trim();
+                var $btn     = $(this);
+                var $result  = $('#hs-chattest-result');
+                var $meta    = $('#hs-chattest-meta');
+                var $reply   = $('#hs-chattest-reply');
+
+                if (!model || !question) return;
+
+                var pa = chatTestProviderActions[provider];
+                if (!pa) return;
+
+                $btn.prop('disabled', true).text('Sende …');
+                $result.show();
+                $meta.text('');
+                $reply.text('⏳ Warte auf Antwort …');
+
+                $.post(ajaxUrl, {
+                    action      : pa.chat,
+                    _nonce      : nonce,
+                    message     : question,
+                    model       : model,
+                    system      : '',
+                    temperature : 0.7,
+                    history     : '[]'
+                })
+                .done(function(res) {
+                    if (res.success && res.data && res.data.reply) {
+                        var d = res.data;
+                        var parts = [];
+                        if (d.model)    parts.push(d.model);
+                        if (d.time_s)   parts.push(d.time_s + 's');
+                        if (d.toks_sec) parts.push(d.toks_sec + ' tok/s');
+                        $meta.text(parts.join(' · '));
+                        $reply.text(d.reply);
+                    } else {
+                        var msg = (res.data && res.data.message) ? res.data.message : 'Unbekannter Fehler.';
+                        $meta.text('');
+                        $reply.text('❌ ' + msg);
+                    }
+                })
+                .fail(function() {
+                    $meta.text('');
+                    $reply.text('❌ Verbindungsfehler.');
+                })
+                .always(function() { $btn.prop('disabled', false).text('▶ Senden'); });
+            });
+            // ── /Chat-Test ────────────────────────────────────────────
 
             $('#hs-ollama-load-models').on('click', function() {
                 var $btn   = $(this);

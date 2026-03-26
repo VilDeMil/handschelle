@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 15.5 |
+| **Version** | 15.6 |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
 | **Lizenz** | GPL-2.0+ |
@@ -123,6 +123,9 @@ Planned features for upcoming versions:
 ---
 
 ## Release Notes
+
+### 15.6 *(2026-03-26)*
+- **Admin Chat-Test**: New **💬 Chat-Test** section in the *Ollama KI* admin page. Select any configured provider (Ollama, OpenAI, Claude), pick a model from a dynamically loaded dropdown, type a test question, and click **▶ Senden** to fire a real chat request. The reply is shown inline with model name, response time, and tokens/sec. Only providers with API keys configured appear in the provider selector. Version bump 15.5 → 15.6.
 
 ### 15.5 *(2026-03-26)*
 - **Claude (Anthropic) integration**: Configure an Anthropic API key under **Ollama KI → Claude (Anthropic)** in the WordPress admin. Once set, Claude models (`claude-opus-4-5`, `claude-sonnet-4-5`, `claude-3-5-sonnet-20241022`, `claude-3-5-haiku-20241022`, `claude-3-opus-20240229`, `claude-3-haiku-20240307`) appear alongside Ollama and OpenAI models in the chat widget's model dropdown (grouped by provider). All existing features — Repost, Multi-LLM mode — work transparently with Claude models. The backend routes each request to the Anthropic Messages API (`hs_chat_claude`); the key is never exposed to the frontend. Version bump 15.4 → 15.5.
