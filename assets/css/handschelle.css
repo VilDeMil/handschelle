@@ -1337,6 +1337,60 @@ a.hs-st-item { display: inline-block; }
 .hs-chat-status-sep {
     opacity: .4;
 }
+.hs-chat-repost-btn {
+    background: var(--hs-accent);
+    border: none;
+    border-radius: 20px;
+    color: #fff;
+    cursor: pointer;
+    font-size: .68rem;
+    font-weight: 600;
+    padding: .15rem .55rem;
+    line-height: 1.4;
+    transition: background .2s, transform .1s;
+    white-space: nowrap;
+}
+.hs-chat-repost-btn:hover {
+    background: var(--hs-accent-h);
+    transform: scale(1.05);
+}
+.hs-chat-repost-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    margin-left: .2rem;
+}
+.hs-chat-repost-select {
+    font-size: .7rem;
+    border: 1px solid var(--hs-border);
+    border-radius: var(--hs-radius);
+    padding: .1rem .4rem;
+    background: var(--hs-card-bg);
+    color: #333;
+    cursor: pointer;
+    max-width: 160px;
+}
+.hs-chat-repost-go,
+.hs-chat-repost-cancel {
+    border: none;
+    border-radius: var(--hs-radius);
+    cursor: pointer;
+    font-size: .7rem;
+    font-weight: 600;
+    padding: .15rem .45rem;
+    line-height: 1.4;
+    transition: background .2s;
+}
+.hs-chat-repost-go     { background: var(--hs-accent); color: #fff; }
+.hs-chat-repost-cancel { background: #e0e0e0; color: #555; }
+.hs-chat-repost-go:hover     { background: var(--hs-accent-h); }
+.hs-chat-repost-cancel:hover { background: #c8c8c8; }
+.hs-chat-bubble-repost {
+    border-left: 3px solid var(--hs-accent);
+}
+.hs-chat-status-repost {
+    margin-left: .5rem;
+}
 
 @media (max-width: 480px) {
     .hs-chat-messages { min-height: 240px; max-height: 360px; }
