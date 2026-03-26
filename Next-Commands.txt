@@ -4,7 +4,9 @@ add other LLM Provodera for chat
 
 modify gift request [handschelle-gift]
 https://claude.ai/gift
-bitcoin:
+bitcoin:12hCRdfr5csjze6dDhgRaKjmU9YC6BnqZG
+bitcoin.gif
+
 paypal
 moero
 --
