@@ -88,6 +88,12 @@ class Handschelle_Shortcodes {
         add_action( 'wp_ajax_nopriv_hs_chat_openai',        array( $this, 'ajax_chat_openai' ) );
         add_action( 'wp_ajax_hs_chat_openai_models',        array( $this, 'ajax_chat_openai_models' ) );
         add_action( 'wp_ajax_nopriv_hs_chat_openai_models', array( $this, 'ajax_chat_openai_models' ) );
+
+        // AJAX: Claude (Anthropic)-Chat
+        add_action( 'wp_ajax_hs_chat_claude',               array( $this, 'ajax_chat_claude' ) );
+        add_action( 'wp_ajax_nopriv_hs_chat_claude',        array( $this, 'ajax_chat_claude' ) );
+        add_action( 'wp_ajax_hs_chat_claude_models',        array( $this, 'ajax_chat_claude_models' ) );
+        add_action( 'wp_ajax_nopriv_hs_chat_claude_models', array( $this, 'ajax_chat_claude_models' ) );
     }
 
     /* ================================================================
@@ -2943,6 +2949,7 @@ class Handschelle_Shortcodes {
         $nonce           = wp_create_nonce( 'hs_chat_nonce' );
         $ollama_url      = get_option( 'hs_ollama_url', 'http://localhost:11434' );
         $openai_enabled  = ! empty( get_option( 'hs_openai_api_key', '' ) ) ? '1' : '0';
+        $claude_enabled  = ! empty( get_option( 'hs_claude_api_key',  '' ) ) ? '1' : '0';
 
         ob_start();
         ?>
@@ -2953,6 +2960,7 @@ class Handschelle_Shortcodes {
              data-ajax="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>"
              data-ollama-url="<?php echo esc_attr( $ollama_url ); ?>"
              data-openai="<?php echo esc_attr( $openai_enabled ); ?>"
+             data-claude="<?php echo esc_attr( $claude_enabled ); ?>"
              <?php if ( $atts['urlparam'] !== '' ) : ?>
              data-urlparam="<?php echo esc_attr( $atts['urlparam'] ); ?>"
              <?php endif; ?>>
@@ -3278,6 +3286,124 @@ class Handschelle_Shortcodes {
             array( 'name' => 'gpt-3.5-turbo', 'size' => 'Legacy'      ),
             array( 'name' => 'o1',            'size' => 'Reasoning'   ),
             array( 'name' => 'o3-mini',       'size' => 'Reasoning'   ),
+        );
+
+        wp_send_json_success( array( 'models' => $models ) );
+    }
+
+    /* ================================================================
+       AJAX: Claude (Anthropic) Chat
+    ================================================================ */
+
+    /**
+     * AJAX handler – proxies a message to the Anthropic Messages API.
+     * Expects POST fields: message, model, history (JSON), system, temperature, _nonce
+     */
+    public function ajax_chat_claude() {
+        check_ajax_referer( 'hs_chat_nonce', '_nonce' );
+
+        $api_key = get_option( 'hs_claude_api_key', '' );
+        if ( empty( $api_key ) ) {
+            wp_send_json_error( array( 'message' => 'Kein Claude API-Key konfiguriert.' ), 400 );
+        }
+
+        $message     = sanitize_text_field( wp_unslash( $_POST['message']    ?? '' ) );
+        $model       = sanitize_text_field( wp_unslash( $_POST['model']      ?? 'claude-3-5-sonnet-20241022' ) );
+        $system      = sanitize_textarea_field( wp_unslash( $_POST['system'] ?? '' ) );
+        $temperature = isset( $_POST['temperature'] ) ? max( 0.0, min( 1.0, (float) $_POST['temperature'] ) ) : 0.7;
+        $history     = json_decode( wp_unslash( $_POST['history'] ?? '[]' ), true );
+        if ( ! is_array( $history ) ) {
+            $history = array();
+        }
+
+        if ( empty( $message ) ) {
+            wp_send_json_error( array( 'message' => 'Leere Nachricht.' ), 400 );
+        }
+
+        $messages = array();
+        foreach ( $history as $entry ) {
+            if ( isset( $entry['role'], $entry['content'] ) ) {
+                $messages[] = array(
+                    'role'    => sanitize_text_field( $entry['role'] ),
+                    'content' => sanitize_textarea_field( $entry['content'] ),
+                );
+            }
+        }
+        $messages[] = array( 'role' => 'user', 'content' => $message );
+
+        $body_arr = array(
+            'model'       => $model,
+            'max_tokens'  => 4096,
+            'messages'    => $messages,
+            'temperature' => $temperature,
+        );
+        if ( ! empty( $system ) ) {
+            $body_arr['system'] = $system;
+        }
+
+        $timeout    = max( 10, intval( get_option( 'hs_ollama_timeout', 120 ) ) );
+        $time_start = microtime( true );
+
+        $response = wp_remote_post( 'https://api.anthropic.com/v1/messages', array(
+            'timeout'     => $timeout,
+            'headers'     => array(
+                'Content-Type'      => 'application/json',
+                'x-api-key'         => $api_key,
+                'anthropic-version' => '2023-06-01',
+            ),
+            'body'        => wp_json_encode( $body_arr ),
+            'data_format' => 'body',
+        ) );
+
+        $elapsed = microtime( true ) - $time_start;
+
+        if ( is_wp_error( $response ) ) {
+            wp_send_json_error( array(
+                'message' => 'Claude nicht erreichbar: ' . $response->get_error_message(),
+            ), 502 );
+        }
+
+        $code = wp_remote_retrieve_response_code( $response );
+        $raw  = wp_remote_retrieve_body( $response );
+        $data = json_decode( $raw, true );
+
+        if ( $code !== 200 || empty( $data['content'][0]['text'] ) ) {
+            $err = $data['error']['message'] ?? ( 'HTTP ' . intval( $code ) );
+            wp_send_json_error( array( 'message' => 'Fehler von Claude: ' . $err ), 502 );
+        }
+
+        $reply     = $data['content'][0]['text'];
+        $out_model = $data['model'] ?? $model;
+        $eval_tok  = (int) ( $data['usage']['output_tokens'] ?? 0 );
+        $toks_sec  = $elapsed > 0 ? round( $eval_tok / $elapsed, 1 ) : 0;
+
+        wp_send_json_success( array(
+            'reply'      => $reply,
+            'model'      => $out_model,
+            'time_s'     => round( $elapsed, 2 ),
+            'toks_sec'   => $toks_sec,
+            'eval_count' => $eval_tok,
+        ) );
+    }
+
+    /**
+     * AJAX handler – returns the curated list of available Claude models.
+     * Only responds if an API key is configured.
+     */
+    public function ajax_chat_claude_models() {
+        check_ajax_referer( 'hs_chat_nonce', '_nonce' );
+
+        if ( empty( get_option( 'hs_claude_api_key', '' ) ) ) {
+            wp_send_json_error( array( 'message' => 'Kein Claude API-Key konfiguriert.' ), 400 );
+        }
+
+        $models = array(
+            array( 'name' => 'claude-opus-4-5',              'size' => 'Most capable' ),
+            array( 'name' => 'claude-sonnet-4-5',            'size' => 'Fast & smart' ),
+            array( 'name' => 'claude-3-5-sonnet-20241022',   'size' => 'Balanced'     ),
+            array( 'name' => 'claude-3-5-haiku-20241022',    'size' => 'Fast & cheap' ),
+            array( 'name' => 'claude-3-opus-20240229',       'size' => 'Powerful'     ),
+            array( 'name' => 'claude-3-haiku-20240307',      'size' => 'Lightweight'  ),
         );
 
         wp_send_json_success( array( 'models' => $models ) );
