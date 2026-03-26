@@ -1017,11 +1017,24 @@ class Handschelle_Shortcodes {
      * or an empty string if the chat page option is not set or straftat is empty.
      * Only call this for logged-in users.
      */
-    private function ki_analyse_link( $name, $straftat ) {
+    private function ki_analyse_link( $name, $straftat, $partei = '' ) {
         if ( empty( $straftat ) ) return '';
-        $page = get_option( 'hs_ollama_chat_page', '/chat/' ) ?: '/chat/';
-        $url  = $page . '?frage=' . urlencode( 'Was weißt du über ' . $name . ' ' . $straftat );
+        $page  = get_option( 'hs_ollama_chat_page', '/chat/' ) ?: '/chat/';
+        $query = 'Was weißt du über ' . $name;
+        if ( $partei ) $query .= ' (' . $partei . ')';
+        $query .= ' ' . $straftat . '?';
+        $url   = $page . '?frage=' . urlencode( $query );
         return '<a href="' . esc_url( $url ) . '" class="hs-search-btn hs-ki-btn">🤖 KI-Analyse</a>';
+    }
+
+    private function ki_person_link( $name, $partei = '' ) {
+        if ( empty( $name ) ) return '';
+        $page  = get_option( 'hs_ollama_chat_page', '/chat/' ) ?: '/chat/';
+        $query = 'Was weißt du über ' . $name;
+        if ( $partei ) $query .= ' (' . $partei . ')';
+        $query .= '?';
+        $url   = $page . '?frage=' . urlencode( $query );
+        return '<a href="' . esc_url( $url ) . '" class="hs-ki-name-btn">🤖 KI-Analyse</a>';
     }
 
     public function render_card( $e ) {
@@ -1056,6 +1069,7 @@ class Handschelle_Shortcodes {
                     <?php if ( $e->partei ) : ?><p class="hs-card-partei"><?php echo esc_html($e->partei); ?><?php if ( $e->aufgabe_partei ) echo ' &ndash; ' . esc_html($e->aufgabe_partei); ?></p><?php endif; ?>
                     <?php if ( $e->parlament ) : ?><p class="hs-card-parlament"><?php echo esc_html($e->parlament); ?><?php if ( $e->parlament_name ) echo ' (' . esc_html($e->parlament_name) . ')'; ?></p><?php endif; ?>
                     <p class="hs-card-status"><?php echo $e->status_aktiv ? '<span class="hs-badge hs-badge-aktiv">Aktiv</span>' : '<span class="hs-badge hs-badge-inaktiv">Inaktiv</span>'; ?></p>
+                    <?php if ( $is_logged_in ) echo $this->ki_person_link( $e->name, $e->partei ); ?>
                 </div>
                 <?php if ( $is_author ) : ?>
                 <button type="button"
@@ -1148,7 +1162,7 @@ class Handschelle_Shortcodes {
                     <?php if ( $is_logged_in ) : ?>
                     <div class="hs-search-buttons">
                         <small>Mehr infos:</small>
-                        <?php echo $this->ki_analyse_link( $e->name, $e->straftat ); ?>
+                        <?php echo $this->ki_analyse_link( $e->name, $e->straftat, $e->partei ); ?>
                         <a href="<?php echo esc_url( 'https://www.google.com/search?q=' . urlencode( $e->name . ' ' . $e->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Google</a>
                         <a href="<?php echo esc_url( 'https://www.qwant.com/?l=de&q=' . urlencode( $e->name . ' ' . $e->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Qwant</a>
                         <a href="<?php echo esc_url( 'https://duckduckgo.com/?q=' . urlencode( $e->name . ' ' . $e->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 DDG</a>
@@ -1179,7 +1193,7 @@ class Handschelle_Shortcodes {
                     <?php if ( $is_logged_in ) : ?>
                     <div class="hs-search-buttons">
                         <small>Mehr infos:</small>
-                        <?php echo $this->ki_analyse_link( $e->name, $off->straftat ); ?>
+                        <?php echo $this->ki_analyse_link( $e->name, $off->straftat, $e->partei ); ?>
                         <a href="<?php echo esc_url( 'https://www.google.com/search?q=' . urlencode( $e->name . ' ' . $off->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Google</a>
                         <a href="<?php echo esc_url( 'https://www.qwant.com/?l=de&q=' . urlencode( $e->name . ' ' . $off->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Qwant</a>
                         <a href="<?php echo esc_url( 'https://duckduckgo.com/?q=' . urlencode( $e->name . ' ' . $off->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 DDG</a>
@@ -2552,6 +2566,7 @@ class Handschelle_Shortcodes {
 
                 <div class="hs-wanted-header">
                     <div class="hs-wanted-header-gesucht"><?php echo esc_html( $display_name ); ?></div>
+                    <?php if ( $is_logged_in ) echo $this->ki_person_link( $e->name, $e->partei ); ?>
                 </div>
 
                 <div class="hs-wanted-body">

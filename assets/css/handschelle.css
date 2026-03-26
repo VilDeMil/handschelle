@@ -429,6 +429,8 @@
 .hs-search-btn { white-space:nowrap; text-decoration:none !important; font-size:.82rem !important; padding:.3rem .65rem !important; }
 .hs-ki-btn { background:var(--hs-accent) !important; color:#fff !important; border-color:var(--hs-accent) !important; }
 .hs-ki-btn:hover { background:var(--hs-accent-h) !important; border-color:var(--hs-accent-h) !important; }
+.hs-ki-name-btn { display:inline-block; margin-top:.4rem; text-decoration:none !important; font-size:.75rem; font-weight:600; padding:.2rem .55rem; border-radius:20px; background:var(--hs-accent); color:#fff; white-space:nowrap; }
+.hs-ki-name-btn:hover { background:var(--hs-accent-h); color:#fff; }
 .hs-cards-single { display:flex; flex-direction:column; gap:1.5rem; width:100%; }
 .hs-card-img-link { display:block; width:100%; height:100%; }
 .hs-card-img-link:hover { opacity:.85; transition:opacity .2s; }
