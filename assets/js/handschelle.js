@@ -440,6 +440,129 @@
             hsSmartClear($(this).closest('form'));
         });
 
+        /* ── [handschelle-chat] Ollama Chatbot ───────────────── */
+        $(document).on('click', '.hs-chat-send-btn', function () {
+            var $widget = $(this).closest('.hs-chat-widget');
+            hsChatSend($widget);
+        });
+
+        $(document).on('keydown', '.hs-chat-input', function (e) {
+            // Send on Enter (without Shift)
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                var $widget = $(this).closest('.hs-chat-widget');
+                hsChatSend($widget);
+            }
+        });
+
+        // Auto-grow textarea
+        $(document).on('input', '.hs-chat-input', function () {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 140) + 'px';
+        });
+
+        $(document).on('click', '.hs-chat-clear-btn', function () {
+            var $widget = $(this).closest('.hs-chat-widget');
+            $widget.find('.hs-chat-messages').empty().append(
+                '<div class="hs-chat-empty">Verlauf gelöscht. Stelle eine Frage!</div>'
+            );
+            $widget.data('hs-chat-history', []);
+        });
+
+        // Show empty state on init
+        $('.hs-chat-widget').each(function () {
+            var $w = $(this);
+            if (!$w.data('hs-chat-history')) {
+                $w.data('hs-chat-history', []);
+            }
+            if ($w.find('.hs-chat-messages').children().length === 0) {
+                $w.find('.hs-chat-messages').append(
+                    '<div class="hs-chat-empty">Stelle eine Frage!</div>'
+                );
+            }
+        });
+
     });
+
+    function hsChatSend($widget) {
+        var $input   = $widget.find('.hs-chat-input');
+        var $msgs    = $widget.find('.hs-chat-messages');
+        var $sendBtn = $widget.find('.hs-chat-send-btn');
+        var message  = $input.val().trim();
+
+        if (!message) return;
+        if ($sendBtn.prop('disabled')) return;
+
+        var model    = $widget.data('model')  || 'llama3.2';
+        var system   = $widget.data('system') || '';
+        var nonce    = $widget.data('nonce');
+        var ajaxUrl  = $widget.data('ajax');
+        var history  = $widget.data('hs-chat-history') || [];
+
+        // Remove empty-state placeholder
+        $msgs.find('.hs-chat-empty').remove();
+
+        // Append user bubble
+        $msgs.append(
+            '<div class="hs-chat-bubble hs-chat-bubble-user">' + hsEscape(message) + '</div>'
+        );
+        $input.val('').css('height', 'auto');
+        $sendBtn.prop('disabled', true);
+
+        // Typing indicator
+        var $typing = $('<div class="hs-chat-typing"><span></span><span></span><span></span></div>');
+        $msgs.append($typing);
+        $msgs.scrollTop($msgs[0].scrollHeight);
+
+        $.ajax({
+            url  : ajaxUrl,
+            type : 'POST',
+            data : {
+                action  : 'hs_chat',
+                _nonce  : nonce,
+                message : message,
+                model   : model,
+                system  : system,
+                history : JSON.stringify(history)
+            },
+            success: function (res) {
+                $typing.remove();
+                if (res.success && res.data && res.data.reply) {
+                    var reply = res.data.reply;
+                    $msgs.append(
+                        '<div class="hs-chat-bubble hs-chat-bubble-assistant">' + hsEscape(reply) + '</div>'
+                    );
+                    // Update history
+                    history.push({ role: 'user',      content: message });
+                    history.push({ role: 'assistant', content: reply   });
+                    $widget.data('hs-chat-history', history);
+                } else {
+                    var errMsg = (res.data && res.data.message) ? res.data.message : 'Unbekannter Fehler.';
+                    $msgs.append(
+                        '<div class="hs-chat-bubble hs-chat-bubble-error">&#9888; ' + hsEscape(errMsg) + '</div>'
+                    );
+                }
+            },
+            error: function () {
+                $typing.remove();
+                $msgs.append(
+                    '<div class="hs-chat-bubble hs-chat-bubble-error">&#9888; Verbindungsfehler. Ist Ollama aktiv?</div>'
+                );
+            },
+            complete: function () {
+                $sendBtn.prop('disabled', false);
+                $input.focus();
+                $msgs.scrollTop($msgs[0].scrollHeight);
+            }
+        });
+    }
+
+    function hsEscape(str) {
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
 
 })(jQuery);
