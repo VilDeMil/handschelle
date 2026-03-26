@@ -238,6 +238,8 @@ class Handschelle_Admin {
             case 'restore_full':      $this->restore_full(); break;
             case 'backup_pages':      $this->backup_pages(); break;
             case 'restore_pages':     $this->restore_pages(); break;
+            case 'backup_posts':      $this->backup_posts(); break;
+            case 'restore_posts':     $this->restore_posts(); break;
 
             case 'truncate':
                 Handschelle_Database::truncate_table();
@@ -1364,6 +1366,43 @@ class Handschelle_Admin {
                 </form>
             </div>
 
+            <!-- ── BACKUP POSTS ── -->
+            <div class="hs-form-section" style="margin-top:2rem;">
+                <h2>📝 Beitrags-Backup</h2>
+                <?php
+                $post_count = wp_count_posts( 'post' );
+                $total_posts = array_sum( (array) $post_count );
+                ?>
+                <p>Exportiert alle WordPress-Beiträge als JSON-Datei (Titel, Inhalt, Slug, Status, Kategorien, Tags, Meta).<br>
+                   Aktuell: <strong><?php echo intval( $total_posts ); ?> Beiträge</strong> (alle Status).</p>
+                <form method="post" action="<?php echo esc_url( admin_url('admin.php') ); ?>">
+                    <?php wp_nonce_field( 'handschelle_admin_action' ); ?>
+                    <input type="hidden" name="hs_action" value="backup_posts">
+                    <input type="hidden" name="page" value="handschelle-backup">
+                    <button type="submit" class="button button-primary hs-btn">📝 Beiträge exportieren</button>
+                </form>
+            </div>
+
+            <!-- ── RESTORE POSTS ── -->
+            <div class="hs-form-section" style="margin-top:2rem;">
+                <h2>⬆ Beiträge wiederherstellen</h2>
+                <p style="color:#c0392b;font-weight:600;">⚠ Bestehende Beiträge mit gleichem Slug werden überschrieben. Neue Beiträge werden angelegt.</p>
+                <form method="post" action="<?php echo esc_url( admin_url('admin.php') ); ?>" enctype="multipart/form-data">
+                    <?php wp_nonce_field( 'handschelle_admin_action' ); ?>
+                    <input type="hidden" name="hs_action" value="restore_posts">
+                    <input type="hidden" name="page" value="handschelle-backup">
+                    <div class="hs-field" style="max-width:420px;margin-bottom:.8rem;">
+                        <label>Beitrags-JSON auswählen</label>
+                        <input type="file" name="posts_json" accept=".json" required>
+                    </div>
+                    <label class="hs-checkbox-label" style="margin-bottom:.8rem;display:block;">
+                        <input type="checkbox" name="restore_posts_confirm" value="1" required>
+                        Ich verstehe, dass bestehende Beiträge überschrieben werden können.
+                    </label>
+                    <button type="submit" class="button hs-btn-danger" onclick="return confirm('Beiträge wirklich wiederherstellen?')">⬆ Beiträge einspielen</button>
+                </form>
+            </div>
+
             <?php echo $this->hs_footer(); ?>
         </div>
         <?php
@@ -1781,6 +1820,145 @@ class Handschelle_Admin {
         $this->redirect(
             admin_url( 'admin.php?page=handschelle-backup' ),
             "Seiten wiederhergestellt: {$created} neu angelegt, {$updated} aktualisiert."
+        );
+    }
+
+    /* ================================================================
+       BACKUP POSTS – alle WP-Beiträge als JSON exportieren
+    ================================================================ */
+    private function backup_posts() {
+        $posts = get_posts( array(
+            'post_type'      => 'post',
+            'post_status'    => 'any',
+            'numberposts'    => -1,
+            'orderby'        => 'ID',
+            'order'          => 'ASC',
+        ) );
+
+        $data = array();
+        foreach ( $posts as $post ) {
+            $meta = get_post_meta( $post->ID );
+            foreach ( array_keys( $meta ) as $key ) {
+                if ( strpos( $key, '_' ) === 0 ) unset( $meta[ $key ] );
+            }
+            $categories = wp_get_post_terms( $post->ID, 'category', array( 'fields' => 'names' ) );
+            $tags       = wp_get_post_terms( $post->ID, 'post_tag', array( 'fields' => 'names' ) );
+            $data[] = array(
+                'post_title'     => $post->post_title,
+                'post_name'      => $post->post_name,
+                'post_content'   => $post->post_content,
+                'post_excerpt'   => $post->post_excerpt,
+                'post_status'    => $post->post_status,
+                'post_date'      => $post->post_date,
+                'comment_status' => $post->comment_status,
+                'ping_status'    => $post->ping_status,
+                'categories'     => is_array( $categories ) ? $categories : array(),
+                'tags'           => is_array( $tags ) ? $tags : array(),
+                'meta'           => $meta,
+            );
+        }
+
+        $json     = wp_json_encode( $data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE );
+        $filename = 'handschelle-posts-' . date( 'Y-m-d_His' ) . '.json';
+
+        header( 'Content-Type: application/json; charset=utf-8' );
+        header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+        header( 'Content-Length: ' . strlen( $json ) );
+        header( 'Pragma: no-cache' );
+        echo $json;
+        exit;
+    }
+
+    /* ================================================================
+       RESTORE POSTS – aus JSON-Datei wiederherstellen
+    ================================================================ */
+    private function restore_posts() {
+        if ( empty( $_FILES['posts_json']['tmp_name'] ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Fehler: Keine JSON-Datei hochgeladen.' );
+            return;
+        }
+        if ( empty( $_POST['restore_posts_confirm'] ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Bitte Bestätigung ankreuzen.' );
+            return;
+        }
+
+        $raw = file_get_contents( $_FILES['posts_json']['tmp_name'] );
+        if ( $raw === false ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Fehler: Datei konnte nicht gelesen werden.' );
+            return;
+        }
+
+        $posts = json_decode( $raw, true );
+        if ( ! is_array( $posts ) ) {
+            $this->redirect( admin_url( 'admin.php?page=handschelle-backup' ), 'Fehler: Ungültiges JSON-Format.' );
+            return;
+        }
+
+        $created = 0;
+        $updated = 0;
+
+        foreach ( $posts as $p ) {
+            if ( empty( $p['post_title'] ) && empty( $p['post_name'] ) ) continue;
+
+            $post_data = array(
+                'post_type'      => 'post',
+                'post_title'     => sanitize_text_field( $p['post_title'] ?? '' ),
+                'post_name'      => sanitize_title( $p['post_name'] ?? '' ),
+                'post_content'   => wp_kses_post( $p['post_content'] ?? '' ),
+                'post_excerpt'   => sanitize_textarea_field( $p['post_excerpt'] ?? '' ),
+                'post_status'    => in_array( $p['post_status'] ?? '', array( 'publish', 'draft', 'private', 'pending' ), true ) ? $p['post_status'] : 'draft',
+                'post_date'      => sanitize_text_field( $p['post_date'] ?? '' ),
+                'comment_status' => in_array( $p['comment_status'] ?? '', array( 'open', 'closed' ), true ) ? $p['comment_status'] : 'closed',
+                'ping_status'    => in_array( $p['ping_status'] ?? '', array( 'open', 'closed' ), true ) ? $p['ping_status'] : 'closed',
+            );
+
+            $existing = get_page_by_path( $post_data['post_name'], OBJECT, 'post' );
+            if ( $existing ) {
+                $post_data['ID'] = $existing->ID;
+                wp_update_post( $post_data );
+                $post_id = $existing->ID;
+                $updated++;
+            } else {
+                $post_id = wp_insert_post( $post_data );
+                $created++;
+            }
+
+            if ( $post_id && ! is_wp_error( $post_id ) ) {
+                // Restore categories and tags
+                if ( ! empty( $p['categories'] ) && is_array( $p['categories'] ) ) {
+                    $cat_ids = array();
+                    foreach ( $p['categories'] as $cat_name ) {
+                        $cat = get_term_by( 'name', $cat_name, 'category' );
+                        if ( $cat ) {
+                            $cat_ids[] = $cat->term_id;
+                        } else {
+                            $new_cat = wp_insert_term( $cat_name, 'category' );
+                            if ( ! is_wp_error( $new_cat ) ) $cat_ids[] = $new_cat['term_id'];
+                        }
+                    }
+                    if ( $cat_ids ) wp_set_post_categories( $post_id, $cat_ids );
+                }
+                if ( ! empty( $p['tags'] ) && is_array( $p['tags'] ) ) {
+                    wp_set_post_tags( $post_id, $p['tags'] );
+                }
+
+                // Restore public meta
+                if ( ! empty( $p['meta'] ) && is_array( $p['meta'] ) ) {
+                    foreach ( $p['meta'] as $meta_key => $meta_values ) {
+                        $meta_key = sanitize_key( $meta_key );
+                        if ( empty( $meta_key ) ) continue;
+                        delete_post_meta( $post_id, $meta_key );
+                        foreach ( (array) $meta_values as $val ) {
+                            add_post_meta( $post_id, $meta_key, maybe_unserialize( $val ) );
+                        }
+                    }
+                }
+            }
+        }
+
+        $this->redirect(
+            admin_url( 'admin.php?page=handschelle-backup' ),
+            "Beiträge wiederhergestellt: {$created} neu angelegt, {$updated} aktualisiert."
         );
     }
 
