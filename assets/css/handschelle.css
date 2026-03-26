@@ -427,6 +427,8 @@
 .hs-media-btn { white-space:nowrap; }
 .hs-search-buttons { display:flex; gap:.5rem; flex-wrap:wrap; margin-top:.4rem; }
 .hs-search-btn { white-space:nowrap; text-decoration:none !important; font-size:.82rem !important; padding:.3rem .65rem !important; }
+.hs-ki-btn { background:var(--hs-primary) !important; color:#fff !important; border-color:var(--hs-primary) !important; }
+.hs-ki-btn:hover { background:var(--hs-accent) !important; border-color:var(--hs-accent) !important; }
 .hs-cards-single { display:flex; flex-direction:column; gap:1.5rem; width:100%; }
 .hs-card-img-link { display:block; width:100%; height:100%; }
 .hs-card-img-link:hover { opacity:.85; transition:opacity .2s; }

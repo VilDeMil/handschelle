@@ -1133,8 +1133,12 @@ class Handschelle_Shortcodes {
                         <?php if ( $e->bemerkung ) : ?><div class="hs-card-bemerkung"><span class="hs-label">💬 Bemerkung:</span><p><?php echo nl2br(esc_html($e->bemerkung)); ?></p></div><?php endif; ?>
                     <?php endif; ?>
                     <?php if ( $is_logged_in ) : ?>
+                    <?php $hs_ki_page = get_option( 'hs_ollama_chat_page', '' ); ?>
                     <div class="hs-search-buttons">
                         <small>Mehr infos:</small>
+                        <?php if ( $hs_ki_page ) : ?>
+                        <a href="<?php echo esc_url( $hs_ki_page . '?frage=' . urlencode( 'Was weißt du über ' . $e->name . ' ' . $e->straftat ) ); ?>" class="hs-search-btn hs-ki-btn">🤖 KI-Analyse</a>
+                        <?php endif; ?>
                         <a href="<?php echo esc_url( 'https://www.google.com/search?q=' . urlencode( $e->name . ' ' . $e->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Google</a>
                         <a href="<?php echo esc_url( 'https://www.qwant.com/?l=de&q=' . urlencode( $e->name . ' ' . $e->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Qwant</a>
                         <a href="<?php echo esc_url( 'https://duckduckgo.com/?q=' . urlencode( $e->name . ' ' . $e->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 DDG</a>
@@ -1165,6 +1169,9 @@ class Handschelle_Shortcodes {
                     <?php if ( $is_logged_in ) : ?>
                     <div class="hs-search-buttons">
                         <small>Mehr infos:</small>
+                        <?php if ( $hs_ki_page ) : ?>
+                        <a href="<?php echo esc_url( $hs_ki_page . '?frage=' . urlencode( 'Was weißt du über ' . $e->name . ' ' . $off->straftat ) ); ?>" class="hs-search-btn hs-ki-btn">🤖 KI-Analyse</a>
+                        <?php endif; ?>
                         <a href="<?php echo esc_url( 'https://www.google.com/search?q=' . urlencode( $e->name . ' ' . $off->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Google</a>
                         <a href="<?php echo esc_url( 'https://www.qwant.com/?l=de&q=' . urlencode( $e->name . ' ' . $off->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Qwant</a>
                         <a href="<?php echo esc_url( 'https://duckduckgo.com/?q=' . urlencode( $e->name . ' ' . $off->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 DDG</a>
