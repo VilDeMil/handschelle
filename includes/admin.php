@@ -1299,6 +1299,47 @@ class Handschelle_Admin {
         <div class="wrap hs-wrap">
             <h1>💾 Backup &amp; Restore</h1>
 
+            <!-- ── OVERVIEW ── -->
+            <div class="hs-form-section" style="background:#f0f6fc;border-left:4px solid #2271b1;">
+                <h2 style="margin-top:0;">ℹ Übersicht der Funktionen</h2>
+                <table style="border-collapse:collapse;width:100%;font-size:.92em;">
+                    <thead>
+                        <tr style="border-bottom:2px solid #c3c4c7;">
+                            <th style="text-align:left;padding:.4rem .8rem;">Funktion</th>
+                            <th style="text-align:left;padding:.4rem .8rem;">Was wird gesichert?</th>
+                            <th style="text-align:left;padding:.4rem .8rem;">Format</th>
+                            <th style="text-align:left;padding:.4rem .8rem;">Beim Wiederherstellen</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="border-bottom:1px solid #e0e0e0;">
+                            <td style="padding:.4rem .8rem;white-space:nowrap;">📦 Vollständiges Backup</td>
+                            <td style="padding:.4rem .8rem;">Alle Personen-Einträge (inkl. Straftaten) + zugehörige Bilder aus der Medienbibliothek</td>
+                            <td style="padding:.4rem .8rem;">ZIP (CSV + Bilder)</td>
+                            <td style="padding:.4rem .8rem;">Alle bestehenden Einträge werden <strong>gelöscht</strong> und neu eingelesen; Bilder werden hinzugefügt</td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #e0e0e0;">
+                            <td style="padding:.4rem .8rem;white-space:nowrap;">📄 Seiten-Backup</td>
+                            <td style="padding:.4rem .8rem;">Alle WordPress-Seiten (Titel, Inhalt, Slug, Status, Veröffentlichungsdatum, benutzerdefinierte Felder)</td>
+                            <td style="padding:.4rem .8rem;">JSON</td>
+                            <td style="padding:.4rem .8rem;">Seiten werden per Slug abgeglichen – bestehende werden aktualisiert, neue werden angelegt</td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #e0e0e0;">
+                            <td style="padding:.4rem .8rem;white-space:nowrap;">📝 Beitrags-Backup</td>
+                            <td style="padding:.4rem .8rem;">Alle WordPress-Beiträge (Titel, Inhalt, Slug, Status, Kategorien, Tags, benutzerdefinierte Felder)</td>
+                            <td style="padding:.4rem .8rem;">JSON</td>
+                            <td style="padding:.4rem .8rem;">Beiträge werden per Slug abgeglichen – bestehende werden aktualisiert, neue werden angelegt; Kategorien/Tags werden bei Bedarf neu erstellt</td>
+                        </tr>
+                        <tr>
+                            <td style="padding:.4rem .8rem;white-space:nowrap;">🎨 Theme-Backup</td>
+                            <td style="padding:.4rem .8rem;">Alle Dateien des aktuell aktiven Themes (Templates, CSS, JS, Bilder, functions.php usw.)</td>
+                            <td style="padding:.4rem .8rem;">ZIP</td>
+                            <td style="padding:.4rem .8rem;">Das Theme-Verzeichnis wird vollständig ersetzt; das Theme bleibt aktiv, falls es bereits aktiv war</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
             <!-- ── BACKUP ── -->
             <div class="hs-form-section">
                 <h2>⬇ Vollständiges Backup erstellen</h2>
@@ -1351,6 +1392,9 @@ class Handschelle_Admin {
             <!-- ── RESTORE PAGES ── -->
             <div class="hs-form-section" style="margin-top:2rem;">
                 <h2>⬆ Seiten wiederherstellen</h2>
+                <p>Spielt eine zuvor exportierte JSON-Datei ein. Für jede Seite wird der Slug als Schlüssel verwendet:
+                   bereits vorhandene Seiten werden aktualisiert (Inhalt, Titel, Status, Meta), nicht vorhandene werden neu angelegt.
+                   Andere Seiten, die nicht in der Datei enthalten sind, bleiben unverändert.</p>
                 <p style="color:#c0392b;font-weight:600;">⚠ Bestehende Seiten mit gleichem Slug werden überschrieben. Neue Seiten werden angelegt.</p>
                 <form method="post" action="<?php echo esc_url( admin_url('admin.php') ); ?>" enctype="multipart/form-data">
                     <?php wp_nonce_field( 'handschelle_admin_action' ); ?>
@@ -1388,6 +1432,10 @@ class Handschelle_Admin {
             <!-- ── RESTORE POSTS ── -->
             <div class="hs-form-section" style="margin-top:2rem;">
                 <h2>⬆ Beiträge wiederherstellen</h2>
+                <p>Spielt eine zuvor exportierte JSON-Datei ein. Für jeden Beitrag wird der Slug als Schlüssel verwendet:
+                   bereits vorhandene Beiträge werden aktualisiert (Inhalt, Titel, Status, Meta), nicht vorhandene werden neu angelegt.
+                   Kategorien und Tags werden automatisch erstellt, falls sie noch nicht existieren.
+                   Andere Beiträge, die nicht in der Datei enthalten sind, bleiben unverändert.</p>
                 <p style="color:#c0392b;font-weight:600;">⚠ Bestehende Beiträge mit gleichem Slug werden überschrieben. Neue Beiträge werden angelegt.</p>
                 <form method="post" action="<?php echo esc_url( admin_url('admin.php') ); ?>" enctype="multipart/form-data">
                     <?php wp_nonce_field( 'handschelle_admin_action' ); ?>
@@ -1413,7 +1461,9 @@ class Handschelle_Admin {
                 $theme_name = $theme->get( 'Name' );
                 $theme_ver  = $theme->get( 'Version' );
                 ?>
-                <p>Exportiert das aktive WordPress-Theme als ZIP-Datei.<br>
+                <p>Exportiert alle Dateien des aktuell aktiven Themes als ZIP-Archiv – inklusive Templates, Stylesheet, JavaScript,
+                   Bilddateien und <code>functions.php</code>. Das Archiv kann als Sicherung oder zur Übertragung auf eine andere
+                   WordPress-Installation verwendet werden.<br>
                    Aktuelles Theme: <strong><?php echo esc_html( $theme_name ); ?></strong>
                    (Version <?php echo esc_html( $theme_ver ); ?>).</p>
                 <form method="post" action="<?php echo esc_url( admin_url('admin.php') ); ?>">
@@ -1427,6 +1477,9 @@ class Handschelle_Admin {
             <!-- ── RESTORE THEME ── -->
             <div class="hs-form-section" style="margin-top:2rem;">
                 <h2>⬆ Theme wiederherstellen</h2>
+                <p>Spielt ein zuvor exportiertes Theme-ZIP ein. Der Theme-Ordner im ZIP bestimmt den Zielordner unter
+                   <code>wp-content/themes/</code>. Ein eventuell vorhandenes Verzeichnis gleichen Namens wird dabei vollständig
+                   gelöscht und neu entpackt. War das Theme bereits aktiv, bleibt es nach der Wiederherstellung aktiv.</p>
                 <p style="color:#c0392b;font-weight:600;">⚠ Das bestehende Theme-Verzeichnis wird vollständig überschrieben.</p>
                 <form method="post" action="<?php echo esc_url( admin_url('admin.php') ); ?>" enctype="multipart/form-data">
                     <?php wp_nonce_field( 'handschelle_admin_action' ); ?>
