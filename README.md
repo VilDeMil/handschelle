@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 15.1 |
+| **Version** | 15.2 |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
 | **Lizenz** | GPL-2.0+ |
@@ -123,6 +123,9 @@ Planned features for upcoming versions:
 ---
 
 ## Release Notes
+
+### 15.2 *(2026-03-26)*
+- **`[handschelle-chat]` – Repost with different LLM**: Each assistant response now shows a "↻ Repost" button in the status line. Clicking it reveals an inline model selector populated from the local Ollama instance; confirming re-sends the same user message (with full conversation context up to that point) to the chosen model. The alternative response appears directly below the original, visually marked with an accent border. No PHP changes required — the existing `hs_chat` AJAX endpoint handles any model.
 
 ### 15.1 *(2026-03-26)*
 - **KI-Analyse link format**: Updated all card/ticker templates to build the KI link for each Straftat as `/chat/?frage="Was weist du über"<Name>+<Partei>+<Straftat>?` (URL-encoded in code).

@@ -518,6 +518,53 @@
             $widget.data('model', $(this).val());
         });
 
+        // Repost button: show model selector
+        $(document).on('click', '.hs-chat-repost-btn', function () {
+            var $btn      = $(this);
+            var $status   = $btn.closest('.hs-chat-status');
+            var $controls = $status.find('.hs-chat-repost-controls');
+            var $widget   = $btn.closest('.hs-chat-widget');
+            var $select   = $controls.find('.hs-chat-repost-select');
+
+            $btn.attr('hidden', '');
+            $controls.removeAttr('hidden');
+
+            if ($select.find('option[value!=""]').length === 0) {
+                $select.empty().append('<option value="">Lade …</option>');
+                hsChatFetchModels($widget, function (models) {
+                    $select.empty();
+                    $.each(models, function (_, m) {
+                        var label = m.size ? m.name + ' \u2014 ' + m.size : m.name;
+                        $select.append('<option value="' + hsEscape(m.name) + '">' + hsEscape(label) + '</option>');
+                    });
+                });
+            }
+        });
+
+        // Repost cancel
+        $(document).on('click', '.hs-chat-repost-cancel', function () {
+            var $status = $(this).closest('.hs-chat-status');
+            $status.find('.hs-chat-repost-controls').attr('hidden', '');
+            $status.find('.hs-chat-repost-btn').removeAttr('hidden');
+        });
+
+        // Repost confirm: resend with chosen model
+        $(document).on('click', '.hs-chat-repost-go', function () {
+            var $go       = $(this);
+            var $status   = $go.closest('.hs-chat-status');
+            var $widget   = $go.closest('.hs-chat-widget');
+            var $controls = $status.find('.hs-chat-repost-controls');
+            var $btn      = $status.find('.hs-chat-repost-btn');
+            var newModel  = $controls.find('.hs-chat-repost-select').val();
+            var exchIdx   = parseInt($btn.data('exchange-idx'), 10);
+
+            if (!newModel) return;
+
+            $controls.attr('hidden', '');
+            $btn.removeAttr('hidden');
+            hsChatRepost($widget, exchIdx, newModel, $status);
+        });
+
     });
 
     function hsChatLoadModels($widget, onReady) {
@@ -612,17 +659,26 @@
                     $msgs.append(
                         '<div class="hs-chat-bubble hs-chat-bubble-assistant">' + hsEscape(reply) + '</div>'
                     );
-                    // Status line: model · time · tok/s
+                    // exchangeIdx = position of this exchange in history (history not yet updated)
+                    var exchangeIdx = history.length / 2;
+                    // Status line: model · time · tok/s · repost button
                     var statusParts = [];
                     if (d.model)    statusParts.push(hsEscape(d.model));
                     if (d.time_s)   statusParts.push(d.time_s + 's');
                     if (d.toks_sec) statusParts.push(d.toks_sec + ' tok/s');
                     if (statusParts.length) {
-                        $msgs.append(
-                            '<div class="hs-chat-status">' +
+                        var $status = $('<div class="hs-chat-status"></div>');
+                        $status.html(
                             statusParts.join('<span class="hs-chat-status-sep"> · </span>') +
-                            '</div>'
+                            '<span class="hs-chat-status-sep"> · </span>' +
+                            '<button type="button" class="hs-chat-repost-btn" data-exchange-idx="' + exchangeIdx + '" title="Nochmal mit anderem Modell senden">\u21bb Repost</button>' +
+                            '<span class="hs-chat-repost-controls" hidden>' +
+                            '<select class="hs-chat-repost-select" aria-label="Modell f\u00fcr Repost"></select>' +
+                            '<button type="button" class="hs-chat-repost-go" title="Senden">\u2713</button>' +
+                            '<button type="button" class="hs-chat-repost-cancel" title="Abbrechen">\u2715</button>' +
+                            '</span>'
                         );
+                        $msgs.append($status);
                     }
                     // Update history
                     history.push({ role: 'user',      content: message });
@@ -644,6 +700,86 @@
             complete: function () {
                 $sendBtn.prop('disabled', false);
                 $input.focus();
+                $msgs.scrollTop($msgs[0].scrollHeight);
+            }
+        });
+    }
+
+    function hsChatFetchModels($widget, callback) {
+        var nonce     = $widget.data('nonce');
+        var ajaxUrl   = $widget.data('ajax');
+        var customUrl = $widget.data('hs-chat-custom-url') || '';
+        var postData  = { action: 'hs_chat_models', _nonce: nonce };
+        if (customUrl) postData.ollama_url = customUrl;
+        $.post(ajaxUrl, postData, function (res) {
+            if (res.success && res.data && res.data.models) {
+                callback(res.data.models);
+            }
+        });
+    }
+
+    function hsChatRepost($widget, exchangeIdx, model, $afterStatus) {
+        var history    = $widget.data('hs-chat-history') || [];
+        var userEntry  = history[exchangeIdx * 2];
+        if (!userEntry || !userEntry.content) return;
+
+        var userMsg    = userEntry.content;
+        var histBefore = history.slice(0, exchangeIdx * 2);
+        var $msgs      = $widget.find('.hs-chat-messages');
+        var $panel     = $widget.find('.hs-chat-settings-panel');
+        var system      = $panel.find('.hs-chat-settings-system').val().trim() || $widget.data('system') || '';
+        var temperature = parseFloat($panel.find('.hs-chat-settings-temp').val()) || 0.7;
+        var customUrl   = $widget.data('hs-chat-custom-url') || '';
+        var nonce       = $widget.data('nonce');
+        var ajaxUrl     = $widget.data('ajax');
+
+        var $typing = $('<div class="hs-chat-typing"><span></span><span></span><span></span></div>');
+        $afterStatus.after($typing);
+        $msgs.scrollTop($msgs[0].scrollHeight);
+
+        $.ajax({
+            url  : ajaxUrl,
+            type : 'POST',
+            data : {
+                action      : 'hs_chat',
+                _nonce      : nonce,
+                message     : userMsg,
+                model       : model,
+                system      : system,
+                temperature : temperature,
+                ollama_url  : customUrl,
+                history     : JSON.stringify(histBefore)
+            },
+            success: function (res) {
+                $typing.remove();
+                if (res.success && res.data && res.data.reply) {
+                    var d      = res.data;
+                    var $bubble = $('<div class="hs-chat-bubble hs-chat-bubble-assistant hs-chat-bubble-repost"></div>');
+                    $bubble.text(d.reply);
+                    $afterStatus.after($bubble);
+
+                    var rParts = [];
+                    if (d.model)    rParts.push(hsEscape(d.model));
+                    if (d.time_s)   rParts.push(d.time_s + 's');
+                    if (d.toks_sec) rParts.push(d.toks_sec + ' tok/s');
+                    if (rParts.length) {
+                        var $rStatus = $('<div class="hs-chat-status hs-chat-status-repost"></div>');
+                        $rStatus.html(rParts.join('<span class="hs-chat-status-sep"> \u00b7 </span>'));
+                        $bubble.after($rStatus);
+                    }
+                } else {
+                    var errMsg = (res.data && res.data.message) ? res.data.message : 'Unbekannter Fehler.';
+                    var $err = $('<div class="hs-chat-bubble hs-chat-bubble-error"></div>');
+                    $err.text('\u26a0 ' + errMsg);
+                    $afterStatus.after($err);
+                }
+            },
+            error: function () {
+                $typing.remove();
+                var $err = $('<div class="hs-chat-bubble hs-chat-bubble-error">&#9888; Verbindungsfehler. Ist Ollama aktiv?</div>');
+                $afterStatus.after($err);
+            },
+            complete: function () {
                 $msgs.scrollTop($msgs[0].scrollHeight);
             }
         });

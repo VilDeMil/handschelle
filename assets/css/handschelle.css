@@ -1337,6 +1337,53 @@ a.hs-st-item { display: inline-block; }
 .hs-chat-status-sep {
     opacity: .4;
 }
+.hs-chat-repost-btn {
+    background: none;
+    border: none;
+    color: var(--hs-muted);
+    cursor: pointer;
+    font-size: .7rem;
+    padding: 0;
+    line-height: 1;
+    transition: color .2s;
+}
+.hs-chat-repost-btn:hover { color: var(--hs-accent); }
+.hs-chat-repost-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    margin-left: .2rem;
+}
+.hs-chat-repost-select {
+    font-size: .7rem;
+    border: 1px solid var(--hs-border);
+    border-radius: var(--hs-radius);
+    padding: .1rem .4rem;
+    background: var(--hs-card-bg);
+    color: #333;
+    cursor: pointer;
+    max-width: 160px;
+}
+.hs-chat-repost-go,
+.hs-chat-repost-cancel {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: .75rem;
+    padding: 0 .15rem;
+    line-height: 1;
+    transition: color .2s;
+}
+.hs-chat-repost-go     { color: var(--hs-accent); }
+.hs-chat-repost-cancel { color: var(--hs-muted); }
+.hs-chat-repost-go:hover     { color: var(--hs-accent-h); }
+.hs-chat-repost-cancel:hover { color: #c0392b; }
+.hs-chat-bubble-repost {
+    border-left: 3px solid var(--hs-accent);
+}
+.hs-chat-status-repost {
+    margin-left: .5rem;
+}
 
 @media (max-width: 480px) {
     .hs-chat-messages { min-height: 240px; max-height: 360px; }
