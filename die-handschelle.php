@@ -3,7 +3,7 @@
  * Plugin Name: Die-Handschelle
  * Plugin URI:  https://github.com/VilDeMil/handschelle
  * Description: Dokumentation von Straftaten politischer Personen. Neue Einträge müssen im Admin-Bereich freigegeben werden.
- * Version:     15.0
+ * Version:     14.9
  * Author:      Die-Handschelle
  * Author URI:  mailto:info@die-handschelle.com
  * Text Domain: die-handschelle
@@ -21,7 +21,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'HANDSCHELLE_VERSION',    '15.0' );
+define( 'HANDSCHELLE_VERSION',    '14.9' );
 define( 'HANDSCHELLE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'HANDSCHELLE_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'HANDSCHELLE_DB_TABLE',   'die_handschelle' );
@@ -31,7 +31,6 @@ require_once HANDSCHELLE_PLUGIN_DIR . 'includes/database.php';
 require_once HANDSCHELLE_PLUGIN_DIR . 'includes/image-handler.php';
 require_once HANDSCHELLE_PLUGIN_DIR . 'includes/admin.php';
 require_once HANDSCHELLE_PLUGIN_DIR . 'includes/shortcodes.php';
-require_once HANDSCHELLE_PLUGIN_DIR . 'includes/chat.php';
 
 register_activation_hook( __FILE__, function() {
     Handschelle_Database::create_table();
