@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 14.8 |
+| **Version** | 14.9 |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
 | **Lizenz** | GPL-2.0+ |
@@ -123,6 +123,9 @@ Planned features for upcoming versions:
 ---
 
 ## Release Notes
+
+### 14.9 *(2026-03-26)*
+- **WordPress theme responsive width**: Mobile always renders at 95% viewport width; desktop (≥782px) always renders at 90% viewport width — implemented via CSS root padding variable overrides in `wordpressc template/style.css` and `style.min.css`.
 
 ### 14.8 *(2026-03-25)*
 - **New shortcode `[handschelle-straftaten]`**: Dropdown listing all distinct Straftat values (from both the main table and the approved offences table). Selecting a crime displays full entry cards (`render_card()`) for every person linked to that crime — main straftat field and any additional offence in `wp_die_handschelle_offences` are both searched. Query parameter: `hs_straftat`.
