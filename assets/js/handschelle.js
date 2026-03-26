@@ -518,6 +518,27 @@
             $widget.data('model', $(this).val());
         });
 
+        // Multi-LLM toggle
+        $(document).on('click', '.hs-chat-multi-btn', function () {
+            var $btn    = $(this);
+            var $widget = $btn.closest('.hs-chat-widget');
+            var active  = $btn.attr('aria-pressed') === 'true';
+            var nowOn   = !active;
+
+            $btn.attr('aria-pressed', nowOn).toggleClass('is-active', nowOn);
+            $widget.data('hs-chat-multi', nowOn);
+
+            var $multiPanel = $widget.find('.hs-chat-settings-multi-row');
+            $multiPanel.prop('hidden', !nowOn);
+
+            // Auto-open settings panel so checkboxes are visible
+            if (nowOn) {
+                var $panel = $widget.find('.hs-chat-settings-panel');
+                $panel.prop('hidden', false);
+                $widget.find('.hs-chat-settings-btn').addClass('is-open').attr('aria-expanded', 'true');
+            }
+        });
+
         // Repost button: show model selector
         $(document).on('click', '.hs-chat-repost-btn', function () {
             var $btn      = $(this);
@@ -599,6 +620,23 @@
             });
 
             $widget.data('model', $select.val());
+
+            // Populate multi-model checkboxes
+            var $multiWrap = $widget.find('.hs-chat-multi-models');
+            if ($multiWrap.length) {
+                $multiWrap.empty();
+                var uid = $widget.attr('id') || '';
+                $.each(models, function (_, m) {
+                    var cbId  = 'hsmulti-' + uid + '-' + m.name.replace(/[^a-z0-9]/gi, '_');
+                    var extra = m.size ? ' <span class="hs-chat-multi-size">' + hsEscape(m.size) + '</span>' : '';
+                    $multiWrap.append(
+                        '<label class="hs-chat-multi-model-label" for="' + cbId + '">' +
+                        '<input type="checkbox" class="hs-chat-multi-check" id="' + cbId + '" value="' + hsEscape(m.name) + '">' +
+                        ' ' + hsEscape(m.name) + extra +
+                        '</label>'
+                    );
+                });
+            }
         }).always(function () {
             $select.prop('disabled', false);
             if (typeof onReady === 'function') onReady();
@@ -613,6 +651,18 @@
 
         if (!message) return;
         if ($sendBtn.prop('disabled')) return;
+
+        // Multi-model mode: collect checked models and dispatch separately
+        if ($widget.data('hs-chat-multi')) {
+            var multiModels = [];
+            $widget.find('.hs-chat-multi-check:checked').each(function () {
+                multiModels.push($(this).val());
+            });
+            if (multiModels.length > 0) {
+                hsChatSendMulti($widget, message, multiModels);
+                return;
+            }
+        }
 
         var model       = $widget.find('.hs-chat-model-select').val() || $widget.data('model') || 'llama3.2';
         var $panel      = $widget.find('.hs-chat-settings-panel');
@@ -702,6 +752,96 @@
                 $input.focus();
                 $msgs.scrollTop($msgs[0].scrollHeight);
             }
+        });
+    }
+
+    function hsChatSendMulti($widget, message, models) {
+        var $input      = $widget.find('.hs-chat-input');
+        var $msgs       = $widget.find('.hs-chat-messages');
+        var $sendBtn    = $widget.find('.hs-chat-send-btn');
+        var $panel      = $widget.find('.hs-chat-settings-panel');
+        var system      = $panel.find('.hs-chat-settings-system').val().trim() || $widget.data('system') || '';
+        var temperature = parseFloat($panel.find('.hs-chat-settings-temp').val()) || 0.7;
+        var customUrl   = $widget.data('hs-chat-custom-url') || '';
+        var nonce       = $widget.data('nonce');
+        var ajaxUrl     = $widget.data('ajax');
+        var history     = $widget.data('hs-chat-history') || [];
+
+        $msgs.find('.hs-chat-empty').remove();
+
+        // User bubble
+        $msgs.append('<div class="hs-chat-bubble hs-chat-bubble-user">' + hsEscape(message) + '</div>');
+        $input.val('').css('height', 'auto');
+        $sendBtn.prop('disabled', true);
+
+        // Multi-column response group
+        var $group = $('<div class="hs-chat-multi-group"></div>');
+        $msgs.append($group);
+        $msgs.scrollTop($msgs[0].scrollHeight);
+
+        var pending     = models.length;
+        var firstReply  = null; // used to update history once all are done
+
+        $.each(models, function (_, model) {
+            var $col = $('<div class="hs-chat-multi-col"></div>');
+            $col.append('<div class="hs-chat-multi-label">' + hsEscape(model) + '</div>');
+            var $typing = $('<div class="hs-chat-typing"><span></span><span></span><span></span></div>');
+            $col.append($typing);
+            $group.append($col);
+
+            $.ajax({
+                url  : ajaxUrl,
+                type : 'POST',
+                data : {
+                    action      : 'hs_chat',
+                    _nonce      : nonce,
+                    message     : message,
+                    model       : model,
+                    system      : system,
+                    temperature : temperature,
+                    ollama_url  : customUrl,
+                    history     : JSON.stringify(history)
+                },
+                success: function (res) {
+                    $typing.remove();
+                    if (res.success && res.data && res.data.reply) {
+                        var d = res.data;
+                        if (firstReply === null) firstReply = d.reply;
+                        $col.append('<div class="hs-chat-bubble hs-chat-bubble-assistant">' + hsEscape(d.reply) + '</div>');
+                        var sParts = [];
+                        if (d.time_s)   sParts.push(d.time_s + 's');
+                        if (d.toks_sec) sParts.push(d.toks_sec + ' tok/s');
+                        if (sParts.length) {
+                            $col.append(
+                                '<div class="hs-chat-status">' +
+                                sParts.join('<span class="hs-chat-status-sep"> \u00b7 </span>') +
+                                '</div>'
+                            );
+                        }
+                    } else {
+                        var errMsg = (res.data && res.data.message) ? res.data.message : 'Fehler.';
+                        $col.append('<div class="hs-chat-bubble hs-chat-bubble-error">&#9888; ' + hsEscape(errMsg) + '</div>');
+                    }
+                },
+                error: function () {
+                    $typing.remove();
+                    $col.append('<div class="hs-chat-bubble hs-chat-bubble-error">&#9888; Verbindungsfehler.</div>');
+                },
+                complete: function () {
+                    pending--;
+                    if (pending === 0) {
+                        $sendBtn.prop('disabled', false);
+                        $input.focus();
+                        $msgs.scrollTop($msgs[0].scrollHeight);
+                        // Update shared history with first successful reply for context continuity
+                        if (firstReply !== null) {
+                            history.push({ role: 'user',      content: message    });
+                            history.push({ role: 'assistant', content: firstReply });
+                            $widget.data('hs-chat-history', history);
+                        }
+                    }
+                }
+            });
         });
     }
 
