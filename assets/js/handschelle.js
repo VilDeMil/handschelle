@@ -469,6 +469,20 @@
             $widget.data('hs-chat-history', []);
         });
 
+        // Settings panel toggle
+        $(document).on('click', '.hs-chat-settings-btn', function () {
+            var $btn    = $(this);
+            var $panel  = $btn.closest('.hs-chat-widget').find('.hs-chat-settings-panel');
+            var open    = !$panel.prop('hidden');
+            $panel.prop('hidden', open);
+            $btn.toggleClass('is-open', !open).attr('aria-expanded', !open);
+        });
+
+        // Live temperature label
+        $(document).on('input', '.hs-chat-settings-temp', function () {
+            $(this).closest('.hs-chat-settings-label').find('.hs-chat-temp-value').text($(this).val());
+        });
+
         // Init each chat widget: empty state + load model list
         $('.hs-chat-widget').each(function () {
             var $w = $(this);
@@ -528,11 +542,13 @@
         if (!message) return;
         if ($sendBtn.prop('disabled')) return;
 
-        var model    = $widget.find('.hs-chat-model-select').val() || $widget.data('model') || 'llama3.2';
-        var system   = $widget.data('system') || '';
-        var nonce    = $widget.data('nonce');
-        var ajaxUrl  = $widget.data('ajax');
-        var history  = $widget.data('hs-chat-history') || [];
+        var model       = $widget.find('.hs-chat-model-select').val() || $widget.data('model') || 'llama3.2';
+        var $panel      = $widget.find('.hs-chat-settings-panel');
+        var system      = $panel.find('.hs-chat-settings-system').val().trim() || $widget.data('system') || '';
+        var temperature = parseFloat($panel.find('.hs-chat-settings-temp').val()) || 0.7;
+        var nonce       = $widget.data('nonce');
+        var ajaxUrl     = $widget.data('ajax');
+        var history     = $widget.data('hs-chat-history') || [];
 
         // Remove empty-state placeholder
         $msgs.find('.hs-chat-empty').remove();
@@ -553,20 +569,34 @@
             url  : ajaxUrl,
             type : 'POST',
             data : {
-                action  : 'hs_chat',
-                _nonce  : nonce,
-                message : message,
-                model   : model,
-                system  : system,
-                history : JSON.stringify(history)
+                action      : 'hs_chat',
+                _nonce      : nonce,
+                message     : message,
+                model       : model,
+                system      : system,
+                temperature : temperature,
+                history     : JSON.stringify(history)
             },
             success: function (res) {
                 $typing.remove();
                 if (res.success && res.data && res.data.reply) {
-                    var reply = res.data.reply;
+                    var d     = res.data;
+                    var reply = d.reply;
                     $msgs.append(
                         '<div class="hs-chat-bubble hs-chat-bubble-assistant">' + hsEscape(reply) + '</div>'
                     );
+                    // Status line: model · time · tok/s
+                    var statusParts = [];
+                    if (d.model)    statusParts.push(hsEscape(d.model));
+                    if (d.time_s)   statusParts.push(d.time_s + 's');
+                    if (d.toks_sec) statusParts.push(d.toks_sec + ' tok/s');
+                    if (statusParts.length) {
+                        $msgs.append(
+                            '<div class="hs-chat-status">' +
+                            statusParts.join('<span class="hs-chat-status-sep"> · </span>') +
+                            '</div>'
+                        );
+                    }
                     // Update history
                     history.push({ role: 'user',      content: message });
                     history.push({ role: 'assistant', content: reply   });

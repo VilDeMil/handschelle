@@ -1097,17 +1097,71 @@ a.hs-st-item { display: inline-block; }
     opacity: .5;
     cursor: default;
 }
+.hs-chat-settings-btn,
 .hs-chat-clear-btn {
     background: none;
     border: none;
     color: rgba(255,255,255,.7);
     cursor: pointer;
-    font-size: .85rem;
     padding: 0 .25rem;
     line-height: 1;
     transition: color .2s;
+    display: flex;
+    align-items: center;
 }
+.hs-chat-settings-btn:hover,
 .hs-chat-clear-btn:hover { color: #fff; }
+.hs-chat-settings-btn.is-open { color: #fff; }
+.hs-chat-clear-btn { font-size: .85rem; }
+
+/* Settings panel */
+.hs-chat-settings-panel {
+    background: #f7f7f9;
+    border-bottom: 1px solid var(--hs-border);
+    padding: .75rem 1rem;
+}
+.hs-chat-settings-grid {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: .75rem;
+    align-items: start;
+}
+.hs-chat-settings-label {
+    display: flex;
+    flex-direction: column;
+    gap: .3rem;
+    font-size: .78rem;
+    font-weight: 600;
+    color: #444;
+}
+.hs-chat-settings-system {
+    resize: vertical;
+    border: 1px solid var(--hs-border);
+    border-radius: var(--hs-radius);
+    padding: .4rem .6rem;
+    font-family: var(--hs-font);
+    font-size: .82rem;
+    line-height: 1.45;
+    min-height: 58px;
+}
+.hs-chat-settings-system:focus {
+    outline: none;
+    border-color: var(--hs-accent);
+}
+.hs-chat-settings-temp {
+    width: 120px;
+    accent-color: var(--hs-accent);
+    cursor: pointer;
+}
+.hs-chat-temp-value {
+    font-weight: 400;
+    color: var(--hs-accent);
+    font-size: .78rem;
+    margin-left: .25rem;
+}
+@media (max-width: 480px) {
+    .hs-chat-settings-grid { grid-template-columns: 1fr; }
+}
 
 .hs-chat-messages {
     flex: 1;
@@ -1228,6 +1282,21 @@ a.hs-st-item { display: inline-block; }
     font-size: .85rem;
     margin: auto;
     padding: 2rem 1rem;
+}
+
+/* Message status line */
+.hs-chat-status {
+    align-self: flex-start;
+    font-size: .7rem;
+    color: var(--hs-muted);
+    display: flex;
+    gap: .4rem;
+    align-items: center;
+    padding: 0 .2rem;
+    margin-top: -.35rem;
+}
+.hs-chat-status-sep {
+    opacity: .4;
 }
 
 @media (max-width: 480px) {
