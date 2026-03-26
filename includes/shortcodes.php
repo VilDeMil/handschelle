@@ -1011,6 +1011,20 @@ class Handschelle_Shortcodes {
     /* ================================================================
        KARTE – einzelner Eintrag
     ================================================================ */
+
+    /**
+     * Returns the "🤖 KI-Analyse" anchor HTML for a given name + straftat,
+     * or an empty string if the chat page option is not set or straftat is empty.
+     * Only call this for logged-in users.
+     */
+    private function ki_analyse_link( $name, $straftat ) {
+        if ( empty( $straftat ) ) return '';
+        $page = get_option( 'hs_ollama_chat_page', '' );
+        if ( ! $page ) return '';
+        $url = $page . '?frage=' . urlencode( 'Was weißt du über ' . $name . ' ' . $straftat );
+        return '<a href="' . esc_url( $url ) . '" class="hs-search-btn hs-ki-btn">🤖 KI-Analyse</a>';
+    }
+
     public function render_card( $e ) {
         $img_url      = handschelle_get_image_url( $e->bild );
         $status_class = array(
@@ -1133,12 +1147,9 @@ class Handschelle_Shortcodes {
                         <?php if ( $e->bemerkung ) : ?><div class="hs-card-bemerkung"><span class="hs-label">💬 Bemerkung:</span><p><?php echo nl2br(esc_html($e->bemerkung)); ?></p></div><?php endif; ?>
                     <?php endif; ?>
                     <?php if ( $is_logged_in ) : ?>
-                    <?php $hs_ki_page = get_option( 'hs_ollama_chat_page', '' ); ?>
                     <div class="hs-search-buttons">
                         <small>Mehr infos:</small>
-                        <?php if ( $hs_ki_page ) : ?>
-                        <a href="<?php echo esc_url( $hs_ki_page . '?frage=' . urlencode( 'Was weißt du über ' . $e->name . ' ' . $e->straftat ) ); ?>" class="hs-search-btn hs-ki-btn">🤖 KI-Analyse</a>
-                        <?php endif; ?>
+                        <?php echo $this->ki_analyse_link( $e->name, $e->straftat ); ?>
                         <a href="<?php echo esc_url( 'https://www.google.com/search?q=' . urlencode( $e->name . ' ' . $e->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Google</a>
                         <a href="<?php echo esc_url( 'https://www.qwant.com/?l=de&q=' . urlencode( $e->name . ' ' . $e->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Qwant</a>
                         <a href="<?php echo esc_url( 'https://duckduckgo.com/?q=' . urlencode( $e->name . ' ' . $e->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 DDG</a>
@@ -1169,9 +1180,7 @@ class Handschelle_Shortcodes {
                     <?php if ( $is_logged_in ) : ?>
                     <div class="hs-search-buttons">
                         <small>Mehr infos:</small>
-                        <?php if ( $hs_ki_page ) : ?>
-                        <a href="<?php echo esc_url( $hs_ki_page . '?frage=' . urlencode( 'Was weißt du über ' . $e->name . ' ' . $off->straftat ) ); ?>" class="hs-search-btn hs-ki-btn">🤖 KI-Analyse</a>
-                        <?php endif; ?>
+                        <?php echo $this->ki_analyse_link( $e->name, $off->straftat ); ?>
                         <a href="<?php echo esc_url( 'https://www.google.com/search?q=' . urlencode( $e->name . ' ' . $off->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Google</a>
                         <a href="<?php echo esc_url( 'https://www.qwant.com/?l=de&q=' . urlencode( $e->name . ' ' . $off->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 Qwant</a>
                         <a href="<?php echo esc_url( 'https://duckduckgo.com/?q=' . urlencode( $e->name . ' ' . $off->straftat ) ); ?>" target="_blank" rel="noopener" class="hs-search-btn">🔍 DDG</a>
@@ -1649,12 +1658,14 @@ class Handschelle_Shortcodes {
             return '<p class="hs-ticker-empty">Keine Einträge vorhanden.</p>';
         }
 
-        $items = '';
+        $items        = '';
+        $is_logged_in = is_user_logged_in();
         foreach ( $rows as $r ) {
-            $name    = esc_html( hs_display_name( $r->name ) );
-            $partei  = $r->partei ? ' <span class="hs-ticker-partei">(' . esc_html( $r->partei ) . ')</span>' : '';
+            $name     = esc_html( hs_display_name( $r->name ) );
+            $partei   = $r->partei   ? ' <span class="hs-ticker-partei">(' . esc_html( $r->partei ) . ')</span>' : '';
             $straftat = $r->straftat ? ' &mdash; <span class="hs-ticker-straftat">' . esc_html( $r->straftat ) . '</span>' : '';
-            $items .= '<span class="hs-ticker-item"><span class="hs-ticker-name">' . $name . '</span>' . $partei . $straftat . '</span>';
+            $ki       = $is_logged_in ? ' ' . $this->ki_analyse_link( $r->name, $r->straftat ) : '';
+            $items   .= '<span class="hs-ticker-item"><span class="hs-ticker-name">' . $name . '</span>' . $partei . $straftat . $ki . '</span>';
         }
 
         ob_start();
@@ -1734,13 +1745,15 @@ class Handschelle_Shortcodes {
             return '<p class="hs-st-empty">Keine Einträge vorhanden.</p>';
         }
 
-        $items = '';
+        $items        = '';
+        $is_logged_in = is_user_logged_in();
         foreach ( $rows as $r ) {
-            $partei         = $r->partei         ? '<span class="hs-st-partei">'         . esc_html( $r->partei )                                       . '</span> ' : '';
-            $name           = '<span class="hs-st-name">'           . esc_html( hs_display_name( $r->name ) )                                          . '</span>';
-            $straftat       = $r->straftat       ? ' <span class="hs-st-straftat">'       . esc_html( $r->straftat )          . '</span>' : '';
-            $status_straftat = $r->status_straftat ? ' <span class="hs-st-status">'       . esc_html( $r->status_straftat )                             . '</span>' : '';
-            $items .= '<span class="hs-st-item">' . $partei . $name . $straftat . $status_straftat . '</span>';
+            $partei          = $r->partei          ? '<span class="hs-st-partei">'  . esc_html( $r->partei )          . '</span> ' : '';
+            $name            = '<span class="hs-st-name">'   . esc_html( hs_display_name( $r->name ) ) . '</span>';
+            $straftat        = $r->straftat        ? ' <span class="hs-st-straftat">' . esc_html( $r->straftat )      . '</span>' : '';
+            $status_straftat = $r->status_straftat ? ' <span class="hs-st-status">'  . esc_html( $r->status_straftat ). '</span>' : '';
+            $ki              = $is_logged_in ? ' ' . $this->ki_analyse_link( $r->name, $r->straftat ) : '';
+            $items          .= '<span class="hs-st-item">' . $partei . $name . $straftat . $status_straftat . $ki . '</span>';
         }
 
         ob_start();
@@ -1786,14 +1799,22 @@ class Handschelle_Shortcodes {
             return '<p class="hs-st-empty">Keine Einträge vorhanden.</p>';
         }
 
-        $items = '';
+        $items        = '';
+        $is_logged_in = is_user_logged_in();
         foreach ( $rows as $r ) {
             $entry_url       = esc_url( add_query_arg( 'hs_name_name', rawurlencode( hs_encode_url_name( $r->name ) ), $base_url ) );
             $partei          = $r->partei          ? '<span class="hs-st-partei">'  . esc_html( $r->partei )          . '</span> ' : '';
             $name            = '<span class="hs-st-name">'   . esc_html( hs_display_name( $r->name ) ) . '</span>';
-            $straftat        = $r->straftat        ? ' <span class="hs-st-straftat">' . esc_html( $r->straftat )        . '</span>' : '';
-            $status_straftat = $r->status_straftat ? ' <span class="hs-st-status">'  . esc_html( $r->status_straftat ) . '</span>' : '';
-            $items .= '<a href="' . $entry_url . '" class="hs-st-item hs-st-link">' . $partei . $name . $straftat . $status_straftat . '</a>';
+            $straftat        = $r->straftat        ? ' <span class="hs-st-straftat">' . esc_html( $r->straftat )      . '</span>' : '';
+            $status_straftat = $r->status_straftat ? ' <span class="hs-st-status">'  . esc_html( $r->status_straftat ). '</span>' : '';
+            $ki              = $is_logged_in ? ' ' . $this->ki_analyse_link( $r->name, $r->straftat ) : '';
+            if ( $ki ) {
+                $items .= '<span class="hs-st-item">'
+                        . '<a href="' . $entry_url . '" class="hs-st-link">' . $partei . $name . $straftat . $status_straftat . '</a>'
+                        . $ki . '</span>';
+            } else {
+                $items .= '<a href="' . $entry_url . '" class="hs-st-item hs-st-link">' . $partei . $name . $straftat . $status_straftat . '</a>';
+            }
         }
 
         ob_start();
@@ -1853,12 +1874,19 @@ class Handschelle_Shortcodes {
 
             $partei          = $r->partei          ? '<span class="hs-st-partei">'   . esc_html( $r->partei )          . '</span> ' : '';
             $name            = '<span class="hs-st-name">'    . esc_html( hs_display_name( $r->name ) ) . '</span>';
-            $straftat        = $r->straftat        ? ' <span class="hs-st-straftat">' . esc_html( $r->straftat )        . '</span>' : '';
-            $status_straftat = $r->status_straftat ? ' <span class="hs-st-status">'  . esc_html( $r->status_straftat ) . '</span>' : '';
+            $straftat        = $r->straftat        ? ' <span class="hs-st-straftat">' . esc_html( $r->straftat )      . '</span>' : '';
+            $status_straftat = $r->status_straftat ? ' <span class="hs-st-status">'  . esc_html( $r->status_straftat ). '</span>' : '';
+            $ki              = is_user_logged_in() ? ' ' . $this->ki_analyse_link( $r->name, $r->straftat ) : '';
 
-            $items .= '<a href="' . $entry_url . '" class="hs-st-item hs-st-link">'
-                    . $icon . $partei . $name . $straftat . $status_straftat
-                    . '</a>';
+            if ( $ki ) {
+                $items .= '<span class="hs-st-item">'
+                        . '<a href="' . $entry_url . '" class="hs-st-link">' . $icon . $partei . $name . $straftat . $status_straftat . '</a>'
+                        . $ki . '</span>';
+            } else {
+                $items .= '<a href="' . $entry_url . '" class="hs-st-item hs-st-link">'
+                        . $icon . $partei . $name . $straftat . $status_straftat
+                        . '</a>';
+            }
         }
 
         ob_start();
@@ -2573,6 +2601,7 @@ class Handschelle_Shortcodes {
                     <div class="hs-wanted-status hs-wanted-status--<?php echo esc_attr( $status_key ); ?>">
                         <?php echo esc_html( $e->status_straftat ); ?>
                     </div>
+                    <?php if ( $is_logged_in && $e->straftat ) echo $this->ki_analyse_link( $e->name, $e->straftat ); ?>
                     <div class="hs-wanted-footer-hinweis">(c) 2026 - "Die-Handschelle.com"</div>
                 </div>
 
