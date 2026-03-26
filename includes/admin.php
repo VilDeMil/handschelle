@@ -276,6 +276,13 @@ class Handschelle_Admin {
                     delete_option( 'hs_openai_api_key' );
                 }
                 update_option( 'hs_openai_default_model', sanitize_text_field( wp_unslash( $_POST['hs_openai_default_model'] ?? 'gpt-4o' ) ) );
+                // Claude (Anthropic) settings
+                if ( ! empty( $_POST['hs_claude_api_key'] ) ) {
+                    update_option( 'hs_claude_api_key', sanitize_text_field( wp_unslash( $_POST['hs_claude_api_key'] ) ) );
+                } elseif ( isset( $_POST['hs_claude_api_key_clear'] ) ) {
+                    delete_option( 'hs_claude_api_key' );
+                }
+                update_option( 'hs_claude_default_model', sanitize_text_field( wp_unslash( $_POST['hs_claude_default_model'] ?? 'claude-3-5-sonnet-20241022' ) ) );
                 $this->redirect( admin_url( 'admin.php?page=handschelle-ollama' ), 'Einstellungen gespeichert.' );
                 break;
         }
@@ -2755,6 +2762,61 @@ class Handschelle_Admin {
                     </div>
 
                     <div class="hs-form-section">
+                        <h3>🤖 Claude (Anthropic)</h3>
+                        <p class="description" style="margin-bottom:1rem;">
+                            Trage hier deinen Anthropic API-Key ein, damit der Chat-Widget auch Claude-Modelle nutzen kann.
+                            Den Key erhältst du unter <strong>console.anthropic.com → API keys</strong>.
+                        </p>
+                        <div class="hs-form-grid">
+                            <div class="hs-field">
+                                <label for="hs_claude_api_key">API-Key</label>
+                                <?php $has_claude_key = ! empty( get_option( 'hs_claude_api_key', '' ) ); ?>
+                                <div style="display:flex;gap:.5rem;align-items:center;">
+                                    <input type="password" id="hs_claude_api_key" name="hs_claude_api_key"
+                                           value=""
+                                           placeholder="<?php echo $has_claude_key ? '••••••••  (gesetzt – leer lassen zum Beibehalten)' : 'sk-ant-...'; ?>"
+                                           autocomplete="new-password" style="flex:1;font-family:monospace;">
+                                    <?php if ( $has_claude_key ) : ?>
+                                    <label style="white-space:nowrap;font-size:.85rem;display:flex;align-items:center;gap:.3rem;">
+                                        <input type="checkbox" name="hs_claude_api_key_clear" value="1"> Key löschen
+                                    </label>
+                                    <?php endif; ?>
+                                </div>
+                                <span class="description">
+                                    <?php if ( $has_claude_key ) : ?>
+                                    ✅ API-Key ist gesetzt. Leer lassen, um ihn beizubehalten.
+                                    <?php else : ?>
+                                    Noch kein Key gesetzt. Claude-Modelle werden erst nach dem Speichern im Frontend angezeigt.
+                                    <?php endif; ?>
+                                </span>
+                            </div>
+                            <div class="hs-field">
+                                <label for="hs_claude_default_model">Standard-Modell</label>
+                                <?php
+                                $claude_models  = array( 'claude-opus-4-5', 'claude-sonnet-4-5', 'claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022', 'claude-3-opus-20240229', 'claude-3-haiku-20240307' );
+                                $claude_current = get_option( 'hs_claude_default_model', 'claude-3-5-sonnet-20241022' );
+                                ?>
+                                <select id="hs_claude_default_model" name="hs_claude_default_model" style="max-width:280px;">
+                                    <?php foreach ( $claude_models as $m ) : ?>
+                                    <option value="<?php echo esc_attr( $m ); ?>" <?php selected( $claude_current, $m ); ?>>
+                                        <?php echo esc_html( $m ); ?>
+                                    </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <span class="description">Vorgabe, wenn Claude im Chat-Widget aktiv ist.</span>
+                            </div>
+                        </div>
+                        <?php if ( $has_claude_key ) : ?>
+                        <div style="margin-top:.75rem;">
+                            <button type="button" id="hs-claude-test-btn" class="button button-secondary">
+                                🔌 Claude-Verbindung testen
+                            </button>
+                            <span id="hs-claude-test-result" style="margin-left:.75rem;font-weight:600;"></span>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="hs-form-section">
                         <h3>Verbindungstest (Ollama)</h3>
                         <button type="button" id="hs-ollama-test-btn" class="button button-secondary">
                             🔌 Verbindung testen
@@ -2831,6 +2893,21 @@ class Handschelle_Admin {
                 var $result = $('#hs-openai-test-result');
                 $result.text('Teste …').css('color', '#7f8c8d');
                 $.post(ajaxUrl, { action: 'hs_chat_openai_models', _nonce: nonce })
+                    .done(function(res) {
+                        if (res.success && res.data && res.data.models) {
+                            $result.text('✅ API-Key gültig – ' + res.data.models.length + ' Modelle verfügbar.').css('color', '#27ae60');
+                        } else {
+                            var msg = (res.data && res.data.message) ? res.data.message : 'Fehler.';
+                            $result.text('❌ ' + msg).css('color', '#c0392b');
+                        }
+                    })
+                    .fail(function() { $result.text('❌ Anfrage fehlgeschlagen.').css('color', '#c0392b'); });
+            });
+
+            $('#hs-claude-test-btn').on('click', function() {
+                var $result = $('#hs-claude-test-result');
+                $result.text('Teste …').css('color', '#7f8c8d');
+                $.post(ajaxUrl, { action: 'hs_chat_claude_models', _nonce: nonce })
                     .done(function(res) {
                         if (res.success && res.data && res.data.models) {
                             $result.text('✅ API-Key gültig – ' + res.data.models.length + ' Modelle verfügbar.').css('color', '#27ae60');
