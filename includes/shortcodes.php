@@ -1023,6 +1023,16 @@ class Handschelle_Shortcodes {
         return '<a href="' . esc_url( $url ) . '" class="hs-search-btn hs-ki-btn">🤖 KI-Analyse</a>';
     }
 
+    private function ki_person_link( $name, $partei = '' ) {
+        if ( empty( $name ) ) return '';
+        $page  = get_option( 'hs_ollama_chat_page', '/chat/' ) ?: '/chat/';
+        $query = 'Was weißt du über ' . $name;
+        if ( $partei ) $query .= ' (' . $partei . ')';
+        $query .= '?';
+        $url   = $page . '?frage=' . urlencode( $query );
+        return '<a href="' . esc_url( $url ) . '" class="hs-ki-name-btn">🤖 KI-Analyse</a>';
+    }
+
     public function render_card( $e ) {
         $img_url      = handschelle_get_image_url( $e->bild );
         $status_class = array(
@@ -1055,6 +1065,7 @@ class Handschelle_Shortcodes {
                     <?php if ( $e->partei ) : ?><p class="hs-card-partei"><?php echo esc_html($e->partei); ?><?php if ( $e->aufgabe_partei ) echo ' &ndash; ' . esc_html($e->aufgabe_partei); ?></p><?php endif; ?>
                     <?php if ( $e->parlament ) : ?><p class="hs-card-parlament"><?php echo esc_html($e->parlament); ?><?php if ( $e->parlament_name ) echo ' (' . esc_html($e->parlament_name) . ')'; ?></p><?php endif; ?>
                     <p class="hs-card-status"><?php echo $e->status_aktiv ? '<span class="hs-badge hs-badge-aktiv">Aktiv</span>' : '<span class="hs-badge hs-badge-inaktiv">Inaktiv</span>'; ?></p>
+                    <?php if ( $is_logged_in ) echo $this->ki_person_link( $e->name, $e->partei ); ?>
                 </div>
                 <?php if ( $is_author ) : ?>
                 <button type="button"
@@ -2551,6 +2562,7 @@ class Handschelle_Shortcodes {
 
                 <div class="hs-wanted-header">
                     <div class="hs-wanted-header-gesucht"><?php echo esc_html( $display_name ); ?></div>
+                    <?php if ( $is_logged_in ) echo $this->ki_person_link( $e->name, $e->partei ); ?>
                 </div>
 
                 <div class="hs-wanted-body">
