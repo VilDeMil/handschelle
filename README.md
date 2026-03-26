@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 15.0 |
+| **Version** | 15.1 |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
 | **Lizenz** | GPL-2.0+ |
@@ -123,6 +123,10 @@ Planned features for upcoming versions:
 ---
 
 ## Release Notes
+
+### 15.1 *(2026-03-26)*
+- **KI-Analyse link format**: Updated all card/ticker templates to build the KI link for each Straftat as `/chat/?frage="Was weist du über"<Name>+<Partei>+<Straftat>?` (URL-encoded in code).
+- **Version bump**: Bumped version from 15.0 to 15.1; updated README.md and all .txt files to reflect the new version.
 
 ### 15.0 *(2026-03-26)*
 - **Version bump**: Bumped version from 14.9 to 15.0; updated README.md and all .txt files to reflect the new version.
@@ -1335,5 +1339,4 @@ IMPORTANT BEHAVIOURS
 ```
 
 ---
-
 
