@@ -2755,7 +2755,8 @@ class Handschelle_Admin {
                     if (models) {
                         $result.text('✅ Verbunden – ' + models.length + ' Modell(e) gefunden.').css('color', '#27ae60');
                         $.each(models, function(_, m) {
-                            $list.append('<li style="font-family:monospace;">' + $('<span>').text(m).html() + '</li>');
+                            var label = m.size ? m.name + ' — ' + m.size : m.name;
+                            $list.append('<li style="font-family:monospace;">' + $('<span>').text(label).html() + '</li>');
                         });
                         $list.show();
                     } else {
@@ -2779,8 +2780,9 @@ class Handschelle_Admin {
                     var $picker = $('<select style="margin-left:.5rem;max-width:220px;">');
                     $picker.append('<option value="">— Modell wählen —</option>');
                     $.each(models, function(_, m) {
-                        var sel = (m === $input.val()) ? ' selected' : '';
-                        $picker.append('<option value="' + $('<span>').text(m).html() + '"' + sel + '>' + $('<span>').text(m).html() + '</option>');
+                        var label = m.size ? m.name + ' — ' + m.size : m.name;
+                        var sel   = (m.name === $input.val()) ? ' selected' : '';
+                        $picker.append('<option value="' + $('<span>').text(m.name).html() + '"' + sel + '>' + $('<span>').text(label).html() + '</option>');
                     });
                     $picker.on('change', function() {
                         if ($(this).val()) {
