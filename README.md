@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 14.9 |
+| **Version** | 15.0 |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
 | **Lizenz** | GPL-2.0+ |
@@ -123,6 +123,9 @@ Planned features for upcoming versions:
 ---
 
 ## Release Notes
+
+### 15.0 *(2026-03-26)*
+- **Version bump**: Bumped version from 14.9 to 15.0; updated README.md and all .txt files to reflect the new version.
 
 ### 14.9 *(2026-03-26)*
 - **WordPress theme responsive width**: Mobile always renders at 95% viewport width; desktop (≥782px) always renders at 90% viewport width — implemented via CSS root padding variable overrides in `wordpressc template/style.css` and `style.min.css`.
