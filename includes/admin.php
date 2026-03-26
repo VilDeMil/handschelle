@@ -269,7 +269,14 @@ class Handschelle_Admin {
                 update_option( 'hs_ollama_system_prompt',  sanitize_textarea_field( wp_unslash( $_POST['hs_ollama_system_prompt'] ?? '' ) ) );
                 update_option( 'hs_ollama_timeout',        max( 10, intval( $_POST['hs_ollama_timeout'] ?? 120 ) ) );
                 update_option( 'hs_ollama_chat_page',      sanitize_text_field( wp_unslash( $_POST['hs_ollama_chat_page']      ?? '' ) ) );
-                $this->redirect( admin_url( 'admin.php?page=handschelle-ollama' ), 'Ollama-Einstellungen gespeichert.' );
+                // OpenAI settings (key only updated if non-empty to avoid accidental clearing)
+                if ( ! empty( $_POST['hs_openai_api_key'] ) ) {
+                    update_option( 'hs_openai_api_key', sanitize_text_field( wp_unslash( $_POST['hs_openai_api_key'] ) ) );
+                } elseif ( isset( $_POST['hs_openai_api_key_clear'] ) ) {
+                    delete_option( 'hs_openai_api_key' );
+                }
+                update_option( 'hs_openai_default_model', sanitize_text_field( wp_unslash( $_POST['hs_openai_default_model'] ?? 'gpt-4o' ) ) );
+                $this->redirect( admin_url( 'admin.php?page=handschelle-ollama' ), 'Einstellungen gespeichert.' );
                 break;
         }
     }
@@ -2693,7 +2700,62 @@ class Handschelle_Admin {
                     </div>
 
                     <div class="hs-form-section">
-                        <h3>Verbindungstest</h3>
+                        <h3>🤖 OpenAI / ChatGPT</h3>
+                        <p class="description" style="margin-bottom:1rem;">
+                            Trage hier deinen OpenAI API-Key ein, damit der Chat-Widget auch GPT-Modelle nutzen kann.
+                            Den Key erhältst du unter <strong>platform.openai.com → API keys</strong>.
+                        </p>
+                        <div class="hs-form-grid">
+                            <div class="hs-field">
+                                <label for="hs_openai_api_key">API-Key</label>
+                                <?php $has_key = ! empty( get_option( 'hs_openai_api_key', '' ) ); ?>
+                                <div style="display:flex;gap:.5rem;align-items:center;">
+                                    <input type="password" id="hs_openai_api_key" name="hs_openai_api_key"
+                                           value=""
+                                           placeholder="<?php echo $has_key ? '••••••••  (gesetzt – leer lassen zum Beibehalten)' : 'sk-...'; ?>"
+                                           autocomplete="new-password" style="flex:1;font-family:monospace;">
+                                    <?php if ( $has_key ) : ?>
+                                    <label style="white-space:nowrap;font-size:.85rem;display:flex;align-items:center;gap:.3rem;">
+                                        <input type="checkbox" name="hs_openai_api_key_clear" value="1"> Key löschen
+                                    </label>
+                                    <?php endif; ?>
+                                </div>
+                                <span class="description">
+                                    <?php if ( $has_key ) : ?>
+                                    ✅ API-Key ist gesetzt. Leer lassen, um ihn beizubehalten.
+                                    <?php else : ?>
+                                    Noch kein Key gesetzt. GPT-Modelle werden erst nach dem Speichern im Frontend angezeigt.
+                                    <?php endif; ?>
+                                </span>
+                            </div>
+                            <div class="hs-field">
+                                <label for="hs_openai_default_model">Standard-Modell</label>
+                                <?php
+                                $openai_models = array( 'gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo', 'o1', 'o3-mini' );
+                                $openai_current = get_option( 'hs_openai_default_model', 'gpt-4o' );
+                                ?>
+                                <select id="hs_openai_default_model" name="hs_openai_default_model" style="max-width:220px;">
+                                    <?php foreach ( $openai_models as $m ) : ?>
+                                    <option value="<?php echo esc_attr( $m ); ?>" <?php selected( $openai_current, $m ); ?>>
+                                        <?php echo esc_html( $m ); ?>
+                                    </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <span class="description">Vorgabe, wenn OpenAI im Chat-Widget aktiv ist.</span>
+                            </div>
+                        </div>
+                        <?php if ( $has_key ) : ?>
+                        <div style="margin-top:.75rem;">
+                            <button type="button" id="hs-openai-test-btn" class="button button-secondary">
+                                🔌 OpenAI-Verbindung testen
+                            </button>
+                            <span id="hs-openai-test-result" style="margin-left:.75rem;font-weight:600;"></span>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="hs-form-section">
+                        <h3>Verbindungstest (Ollama)</h3>
                         <button type="button" id="hs-ollama-test-btn" class="button button-secondary">
                             🔌 Verbindung testen
                         </button>
@@ -2763,6 +2825,21 @@ class Handschelle_Admin {
                         $result.text('❌ Verbindung fehlgeschlagen.').css('color', '#c0392b');
                     }
                 });
+            });
+
+            $('#hs-openai-test-btn').on('click', function() {
+                var $result = $('#hs-openai-test-result');
+                $result.text('Teste …').css('color', '#7f8c8d');
+                $.post(ajaxUrl, { action: 'hs_chat_openai_models', _nonce: nonce })
+                    .done(function(res) {
+                        if (res.success && res.data && res.data.models) {
+                            $result.text('✅ API-Key gültig – ' + res.data.models.length + ' Modelle verfügbar.').css('color', '#27ae60');
+                        } else {
+                            var msg = (res.data && res.data.message) ? res.data.message : 'Fehler.';
+                            $result.text('❌ ' + msg).css('color', '#c0392b');
+                        }
+                    })
+                    .fail(function() { $result.text('❌ Anfrage fehlgeschlagen.').css('color', '#c0392b'); });
             });
 
             $('#hs-ollama-load-models').on('click', function() {

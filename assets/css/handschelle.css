@@ -1256,6 +1256,23 @@ a.hs-st-item { display: inline-block; }
     color: var(--hs-muted);
     font-style: normal;
 }
+.hs-chat-multi-group-label {
+    display: block;
+    width: 100%;
+    font-size: .68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--hs-muted);
+    margin-top: .4rem;
+    padding-bottom: .15rem;
+    border-bottom: 1px solid var(--hs-border);
+}
+.hs-chat-multi-group-label:first-child { margin-top: 0; }
+.hs-chat-multi-group-openai {
+    color: #10a37f; /* OpenAI brand green */
+    border-color: #10a37f;
+}
 
 /* Multi-model response columns */
 .hs-chat-multi-group {

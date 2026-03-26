@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 15.3 |
+| **Version** | 15.4 |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
 | **Lizenz** | GPL-2.0+ |
@@ -123,6 +123,9 @@ Planned features for upcoming versions:
 ---
 
 ## Release Notes
+
+### 15.4 *(2026-03-26)*
+- **OpenAI / ChatGPT integration**: Configure an OpenAI API key under **Ollama KI → OpenAI / ChatGPT** in the WordPress admin. Once set, GPT models (`gpt-4o`, `gpt-4o-mini`, `gpt-4-turbo`, `gpt-4`, `gpt-3.5-turbo`, `o1`, `o3-mini`) appear alongside local Ollama models in the chat widget's model dropdown (grouped by provider). All existing features — Repost, Multi-LLM mode — work transparently with OpenAI models. The backend routes each request to the correct API (`hs_chat` for Ollama, `hs_chat_openai` for OpenAI); the key is never exposed to the frontend. Version bump 15.3 → 15.4.
 
 ### 15.3 *(2026-03-26)*
 - **`[handschelle-chat]` – Multi-LLM mode**: New columns icon (⊟) button in the chat header activates multi-model mode. When active, the settings panel reveals a checkbox list of all locally available Ollama models. Checking two or more models and sending a message fires parallel AJAX requests; responses appear side-by-side in labelled columns (single column on mobile). The first successful reply is used to maintain conversation history for follow-up questions. Version bump 15.2 → 15.3.

@@ -589,58 +589,111 @@
     });
 
     function hsChatLoadModels($widget, onReady) {
-        var $select    = $widget.find('.hs-chat-model-select');
-        var current    = $widget.data('model') || $select.val();
-        var nonce      = $widget.data('nonce');
-        var ajaxUrl    = $widget.data('ajax');
-        var customUrl  = $widget.data('hs-chat-custom-url') || '';
+        var $select   = $widget.find('.hs-chat-model-select');
+        var current   = $widget.data('model') || $select.val();
+        var nonce     = $widget.data('nonce');
+        var ajaxUrl   = $widget.data('ajax');
+        var customUrl = $widget.data('hs-chat-custom-url') || '';
+        var openai    = $widget.data('openai') === '1' || $widget.data('openai') === 1;
 
         $select.prop('disabled', true);
 
-        var postData = { action: 'hs_chat_models', _nonce: nonce };
-        if (customUrl) postData.ollama_url = customUrl;
+        var ollamaModels = [];
+        var openaiModels = [];
+        var pending = openai ? 2 : 1;
 
-        $.post(ajaxUrl, postData, function (res) {
-            if (!res.success || !res.data || !res.data.models || !res.data.models.length) return;
-
-            var models    = res.data.models; // [{name, size}, …]
-            var names     = models.map(function(m) { return m.name; });
-            var foundCurrent = names.indexOf(current) !== -1;
-
-            $select.empty();
-
-            if (!foundCurrent) {
-                $select.append('<option value="' + hsEscape(current) + '" selected>' + hsEscape(current) + '</option>');
-            }
-
-            $.each(models, function (_, m) {
-                var label    = m.size ? hsEscape(m.name) + ' &mdash; ' + hsEscape(m.size) : hsEscape(m.name);
-                var selected = (m.name === current) ? ' selected' : '';
-                $select.append('<option value="' + hsEscape(m.name) + '"' + selected + '>' + label + '</option>');
-            });
-
-            $widget.data('model', $select.val());
-
-            // Populate multi-model checkboxes
-            var $multiWrap = $widget.find('.hs-chat-multi-models');
-            if ($multiWrap.length) {
-                $multiWrap.empty();
-                var uid = $widget.attr('id') || '';
-                $.each(models, function (_, m) {
-                    var cbId  = 'hsmulti-' + uid + '-' + m.name.replace(/[^a-z0-9]/gi, '_');
-                    var extra = m.size ? ' <span class="hs-chat-multi-size">' + hsEscape(m.size) + '</span>' : '';
-                    $multiWrap.append(
-                        '<label class="hs-chat-multi-model-label" for="' + cbId + '">' +
-                        '<input type="checkbox" class="hs-chat-multi-check" id="' + cbId + '" value="' + hsEscape(m.name) + '">' +
-                        ' ' + hsEscape(m.name) + extra +
-                        '</label>'
-                    );
-                });
-            }
-        }).always(function () {
+        function finish() {
+            pending--;
+            if (pending > 0) return;
+            hsBuildModelsUI($widget, $select, current, ollamaModels, openaiModels);
             $select.prop('disabled', false);
             if (typeof onReady === 'function') onReady();
-        });
+        }
+
+        var ollamaPost = { action: 'hs_chat_models', _nonce: nonce };
+        if (customUrl) ollamaPost.ollama_url = customUrl;
+        $.post(ajaxUrl, ollamaPost, function (res) {
+            if (res.success && res.data && res.data.models) ollamaModels = res.data.models;
+        }).always(finish);
+
+        if (openai) {
+            $.post(ajaxUrl, { action: 'hs_chat_openai_models', _nonce: nonce }, function (res) {
+                if (res.success && res.data && res.data.models) openaiModels = res.data.models;
+            }).always(finish);
+        }
+    }
+
+    function hsBuildModelsUI($widget, $select, current, ollamaModels, openaiModels) {
+        var useGroups = ollamaModels.length > 0 && openaiModels.length > 0;
+        var allModels = ollamaModels.concat(openaiModels);
+        var modelActions = {};
+        ollamaModels.forEach(function (m) { modelActions[m.name] = 'hs_chat'; });
+        openaiModels.forEach(function (m) { modelActions[m.name] = 'hs_chat_openai'; });
+        $widget.data('hs-model-actions', modelActions);
+
+        var foundCurrent = allModels.some(function (m) { return m.name === current; });
+        $select.empty();
+        if (!foundCurrent && current) {
+            $select.append('<option value="' + hsEscape(current) + '" selected>' + hsEscape(current) + '</option>');
+        }
+
+        function buildOpts($container, models) {
+            $.each(models, function (_, m) {
+                var label = m.size ? hsEscape(m.name) + ' &mdash; ' + hsEscape(m.size) : hsEscape(m.name);
+                var sel   = (m.name === current) ? ' selected' : '';
+                $container.append('<option value="' + hsEscape(m.name) + '"' + sel + '>' + label + '</option>');
+            });
+        }
+
+        if (useGroups) {
+            var $og1 = $('<optgroup label="Ollama">');
+            buildOpts($og1, ollamaModels);
+            $select.append($og1);
+            var $og2 = $('<optgroup label="OpenAI">');
+            buildOpts($og2, openaiModels);
+            $select.append($og2);
+        } else {
+            buildOpts($select, allModels);
+        }
+        $widget.data('model', $select.val());
+
+        // Populate multi-model checkboxes
+        var $multiWrap = $widget.find('.hs-chat-multi-models');
+        if (!$multiWrap.length) return;
+        $multiWrap.empty();
+        var uid = $widget.attr('id') || '';
+
+        function addCheckboxes(label, models, groupClass) {
+            if (!models.length) return;
+            if (label) {
+                $multiWrap.append(
+                    '<span class="hs-chat-multi-group-label' + (groupClass ? ' ' + groupClass : '') + '">' + label + '</span>'
+                );
+            }
+            $.each(models, function (_, m) {
+                var cbId   = 'hsmulti-' + uid + '-' + m.name.replace(/[^a-z0-9]/gi, '_');
+                var extra  = m.size ? ' <span class="hs-chat-multi-size">' + hsEscape(m.size) + '</span>' : '';
+                var action = modelActions[m.name] || 'hs_chat';
+                $multiWrap.append(
+                    '<label class="hs-chat-multi-model-label" for="' + cbId + '">' +
+                    '<input type="checkbox" class="hs-chat-multi-check" id="' + cbId +
+                        '" value="' + hsEscape(m.name) + '" data-action="' + action + '">' +
+                    ' ' + hsEscape(m.name) + extra + '</label>'
+                );
+            });
+        }
+
+        if (useGroups) {
+            addCheckboxes('Ollama', ollamaModels, '');
+            addCheckboxes('OpenAI', openaiModels, 'hs-chat-multi-group-openai');
+        } else {
+            addCheckboxes('', allModels, '');
+        }
+    }
+
+    function hsChatGetAction($widget, model) {
+        var map = $widget.data('hs-model-actions') || {};
+        return map[model] || 'hs_chat';
     }
 
     function hsChatSend($widget) {
@@ -656,7 +709,10 @@
         if ($widget.data('hs-chat-multi')) {
             var multiModels = [];
             $widget.find('.hs-chat-multi-check:checked').each(function () {
-                multiModels.push($(this).val());
+                multiModels.push({
+                    name:   $(this).val(),
+                    action: $(this).data('action') || hsChatGetAction($widget, $(this).val())
+                });
             });
             if (multiModels.length > 0) {
                 hsChatSendMulti($widget, message, multiModels);
@@ -692,7 +748,7 @@
             url  : ajaxUrl,
             type : 'POST',
             data : {
-                action      : 'hs_chat',
+                action      : hsChatGetAction( $widget, model ),
                 _nonce      : nonce,
                 message     : message,
                 model       : model,
@@ -782,7 +838,9 @@
         var pending     = models.length;
         var firstReply  = null; // used to update history once all are done
 
-        $.each(models, function (_, model) {
+        $.each(models, function (_, m) {
+            var model  = (typeof m === 'object') ? m.name   : m;
+            var action = (typeof m === 'object') ? m.action : hsChatGetAction($widget, model);
             var $col = $('<div class="hs-chat-multi-col"></div>');
             $col.append('<div class="hs-chat-multi-label">' + hsEscape(model) + '</div>');
             var $typing = $('<div class="hs-chat-typing"><span></span><span></span><span></span></div>');
@@ -793,7 +851,7 @@
                 url  : ajaxUrl,
                 type : 'POST',
                 data : {
-                    action      : 'hs_chat',
+                    action      : action,
                     _nonce      : nonce,
                     message     : message,
                     model       : model,
@@ -849,13 +907,28 @@
         var nonce     = $widget.data('nonce');
         var ajaxUrl   = $widget.data('ajax');
         var customUrl = $widget.data('hs-chat-custom-url') || '';
+        var openai    = $widget.data('openai') === '1' || $widget.data('openai') === 1;
         var postData  = { action: 'hs_chat_models', _nonce: nonce };
         if (customUrl) postData.ollama_url = customUrl;
+
+        var ollama = [];
+        var oai    = [];
+        var pending = openai ? 2 : 1;
+
+        function done() {
+            pending--;
+            if (pending === 0) callback(ollama.concat(oai));
+        }
+
         $.post(ajaxUrl, postData, function (res) {
-            if (res.success && res.data && res.data.models) {
-                callback(res.data.models);
-            }
-        });
+            if (res.success && res.data && res.data.models) ollama = res.data.models;
+        }).always(done);
+
+        if (openai) {
+            $.post(ajaxUrl, { action: 'hs_chat_openai_models', _nonce: nonce }, function (res) {
+                if (res.success && res.data && res.data.models) oai = res.data.models;
+            }).always(done);
+        }
     }
 
     function hsChatRepost($widget, exchangeIdx, model, $afterStatus) {
@@ -881,7 +954,7 @@
             url  : ajaxUrl,
             type : 'POST',
             data : {
-                action      : 'hs_chat',
+                action      : hsChatGetAction( $widget, model ),
                 _nonce      : nonce,
                 message     : userMsg,
                 model       : model,
