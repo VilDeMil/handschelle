@@ -1019,9 +1019,8 @@ class Handschelle_Shortcodes {
      */
     private function ki_analyse_link( $name, $straftat ) {
         if ( empty( $straftat ) ) return '';
-        $page = get_option( 'hs_ollama_chat_page', '' );
-        if ( ! $page ) return '';
-        $url = $page . '?frage=' . urlencode( 'Was weißt du über ' . $name . ' ' . $straftat );
+        $page = get_option( 'hs_ollama_chat_page', '/chat/' ) ?: '/chat/';
+        $url  = $page . '?frage=' . urlencode( 'Was weißt du über ' . $name . ' ' . $straftat );
         return '<a href="' . esc_url( $url ) . '" class="hs-search-btn hs-ki-btn">🤖 KI-Analyse</a>';
     }
 
