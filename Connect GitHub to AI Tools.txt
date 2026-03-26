@@ -127,4 +127,4 @@ Add Claude Code to your CI pipeline by storing `ANTHROPIC_API_KEY` as a GitHub A
 
 ---
 
-(c) 2026 - "Die-Handschelle" 14.3 - www.die-handschelle.com
+(c) 2026 - "Die-Handschelle" 15.0 - www.die-handschelle.com
