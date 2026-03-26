@@ -1,19 +1,25 @@
 /**
  * Die-Handschelle – Ollama Chat
  *
- * Steps:
- *   1. Enter endpoint (IP:PORT)
- *   2. Fetch + select model
- *   3. Chat (streaming via Fetch API)
+ * All Ollama requests go through the WordPress AJAX proxy (no direct
+ * browser→Ollama calls, so no CORS issues).
+ *
+ * Globals injected by wp_localize_script:
+ *   hsChatAjax.ajaxUrl  – URL of admin-ajax.php
+ *   hsChatAjax.nonce    – wp nonce for hs_chat_nonce
  */
 (function () {
     'use strict';
 
+    /* ── Config ─────────────────────────────────────────────────── */
+    var ajaxUrl = (typeof hsChatAjax !== 'undefined') ? hsChatAjax.ajaxUrl : '/wp-admin/admin-ajax.php';
+    var nonce   = (typeof hsChatAjax !== 'undefined') ? hsChatAjax.nonce   : '';
+
     /* ── State ──────────────────────────────────────────────────── */
     var state = {
-        endpoint: '',   // e.g. "http://192.168.1.100:11434"
-        model:    '',
-        history:  [],   // [{role, content}]
+        endpoint:  '',   // e.g. "192.168.1.100:11434" (raw, as entered)
+        model:     '',
+        history:   [],   // [{role, content}]
         streaming: false,
     };
 
@@ -34,24 +40,24 @@
         el.hidden = !msg;
     }
 
-    /* ── Normalise endpoint URL ─────────────────────────────────── */
-    function normaliseEndpoint(raw) {
-        raw = raw.trim().replace(/\/+$/, '');
-        if (!/^https?:\/\//i.test(raw)) {
-            raw = 'http://' + raw;
-        }
-        return raw;
-    }
-
-    /* ── Fetch models from /api/tags ────────────────────────────── */
+    /* ── Fetch models via PHP proxy ─────────────────────────────── */
     function fetchModels(endpoint, callback) {
-        fetch(endpoint + '/api/tags', { method: 'GET' })
+        var body = new FormData();
+        body.append('action',   'hs_chat_models');
+        body.append('nonce',    nonce);
+        body.append('endpoint', endpoint);
+
+        fetch(ajaxUrl, { method: 'POST', body: body })
             .then(function (res) {
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 return res.json();
             })
             .then(function (data) {
-                var models = (data.models || []).map(function (m) {
+                if (!data.success) {
+                    callback(data.data || 'Unbekannter Fehler');
+                    return;
+                }
+                var models = ((data.data && data.data.models) || []).map(function (m) {
                     return m.name || m.model || '';
                 }).filter(Boolean);
                 callback(null, models);
@@ -89,83 +95,98 @@
 
     function finishBubble(bubble) {
         if (!bubble) return;
-        var parent = bubble.parentElement;
-        if (parent) parent.classList.remove('hs-chat__bubble--streaming');
+        bubble.classList.remove('hs-chat__bubble--streaming');
     }
 
-    /* ── Send message + stream response ─────────────────────────── */
+    /* ── Lock / unlock composer ──────────────────────────────────── */
+    function setComposerLocked(locked) {
+        var sendBtn   = $('hs-chat-send-btn');
+        var inputEl   = $('hs-chat-input');
+        if (sendBtn) sendBtn.disabled  = locked;
+        if (inputEl) inputEl.disabled  = locked;
+        state.streaming = locked;
+    }
+
+    /* ── Send message + stream response via PHP proxy ────────────── */
     function sendMessage(text) {
         if (state.streaming || !text.trim()) return;
 
         state.history.push({ role: 'user', content: text });
         appendMessage('user', text, false);
+        setComposerLocked(true);
 
-        var sendBtn   = $('hs-chat-send-btn');
-        var inputEl   = $('hs-chat-input');
-        if (sendBtn)  sendBtn.disabled = true;
-        if (inputEl)  inputEl.disabled = true;
-        state.streaming = true;
+        var assistantBubble = appendMessage('assistant', '', true);
+        var assistantInner  = assistantBubble
+            ? assistantBubble.parentElement
+                ? assistantBubble  // assistantBubble IS the inner div
+                : null
+            : null;
+        /* appendMessage returns the inner div directly */
+        var innerEl = assistantBubble; /* alias for clarity */
 
-        var assistantInner = appendMessage('assistant', '', true);
+        var body = new FormData();
+        body.append('action',   'hs_chat_stream');
+        body.append('nonce',    nonce);
+        body.append('endpoint', state.endpoint);
+        body.append('model',    state.model);
+        body.append('messages', JSON.stringify(state.history.slice()));
 
-        var body = JSON.stringify({
-            model:    state.model,
-            messages: state.history.slice(),
-            stream:   true,
-        });
+        var accumulated = '';
 
-        fetch(state.endpoint + '/api/chat', {
-            method:  'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body:    body,
-        })
-        .then(function (res) {
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            return res.body;
-        })
-        .then(function (readableStream) {
-            var reader  = readableStream.getReader();
-            var decoder = new TextDecoder();
-            var accumulated = '';
+        fetch(ajaxUrl, { method: 'POST', body: body })
+            .then(function (res) {
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                return res.body;
+            })
+            .then(function (readableStream) {
+                var reader  = readableStream.getReader();
+                var decoder = new TextDecoder();
 
-            function read() {
-                reader.read().then(function (chunk) {
-                    if (chunk.done) {
-                        finishBubble(assistantInner && assistantInner.parentElement);
-                        state.history.push({ role: 'assistant', content: accumulated });
-                        state.streaming = false;
-                        if (sendBtn) sendBtn.disabled = false;
-                        if (inputEl) { inputEl.disabled = false; inputEl.focus(); }
-                        return;
-                    }
-                    var lines = decoder.decode(chunk.value, { stream: true }).split('\n');
-                    lines.forEach(function (line) {
-                        if (!line.trim()) return;
-                        try {
-                            var json = JSON.parse(line);
-                            var token = (json.message && json.message.content) ? json.message.content : '';
-                            accumulated += token;
-                            updateBubbleText(assistantInner, accumulated);
-                        } catch (e) { /* ignore partial JSON */ }
+                function read() {
+                    reader.read().then(function (chunk) {
+                        if (chunk.done) {
+                            finishBubble(innerEl && innerEl.parentElement);
+                            if (accumulated) {
+                                state.history.push({ role: 'assistant', content: accumulated });
+                            }
+                            setComposerLocked(false);
+                            var chatInput = $('hs-chat-input');
+                            if (chatInput) chatInput.focus();
+                            return;
+                        }
+
+                        var lines = decoder.decode(chunk.value, { stream: true }).split('\n');
+                        lines.forEach(function (line) {
+                            if (!line.trim()) return;
+                            try {
+                                var json = JSON.parse(line);
+                                /* Ollama /api/chat NDJSON token */
+                                if (json.message && json.message.content) {
+                                    accumulated += json.message.content;
+                                    updateBubbleText(innerEl, accumulated);
+                                }
+                                /* Proxy error forwarded as JSON */
+                                if (json.error) {
+                                    finishBubble(innerEl && innerEl.parentElement);
+                                    appendMessage('system', 'Fehler: ' + json.error, false);
+                                    setComposerLocked(false);
+                                }
+                            } catch (e) { /* ignore partial JSON lines */ }
+                        });
+                        read();
+                    }).catch(function (err) {
+                        finishBubble(innerEl && innerEl.parentElement);
+                        appendMessage('system', 'Fehler: ' + err.message, false);
+                        setComposerLocked(false);
                     });
-                    read();
-                }).catch(function (err) {
-                    finishBubble(assistantInner && assistantInner.parentElement);
-                    appendMessage('system', 'Fehler: ' + err.message, false);
-                    state.streaming = false;
-                    if (sendBtn) sendBtn.disabled = false;
-                    if (inputEl) { inputEl.disabled = false; }
-                });
-            }
-            read();
-        })
-        .catch(function (err) {
-            finishBubble(assistantInner && assistantInner.parentElement);
-            appendMessage('system', 'Fehler: ' + (err.message || 'Unbekannter Fehler'), false);
-            state.streaming = false;
-            if (sendBtn) sendBtn.disabled = false;
-            if (inputEl) { inputEl.disabled = false; }
-        });
+                }
+                read();
+            })
+            .catch(function (err) {
+                finishBubble(innerEl && innerEl.parentElement);
+                appendMessage('system', 'Fehler: ' + (err.message || 'Unbekannter Fehler'), false);
+                setComposerLocked(false);
+            });
     }
 
     /* ── Auto-resize textarea ───────────────────────────────────── */
@@ -200,15 +221,15 @@
 
     /* ── Init ───────────────────────────────────────────────────── */
     function init() {
-        /* Step 1 – Connect */
         var connectBtn    = $('hs-chat-connect-btn');
         var endpointInput = $('hs-chat-endpoint');
 
         if (!connectBtn || !endpointInput) return; // widget not on this page
 
+        /* ── Step 1: Connect ── */
         function doConnect() {
-            var raw = endpointInput.value;
-            if (!raw.trim()) {
+            var raw = endpointInput.value.trim();
+            if (!raw) {
                 setError('hs-chat-endpoint-error', 'Bitte eine IP-Adresse und Port eingeben.');
                 return;
             }
@@ -216,8 +237,7 @@
             connectBtn.disabled = true;
             connectBtn.textContent = 'Verbinde…';
 
-            var ep = normaliseEndpoint(raw);
-            fetchModels(ep, function (err, models) {
+            fetchModels(raw, function (err, models) {
                 connectBtn.disabled = false;
                 connectBtn.textContent = 'Verbinden';
 
@@ -230,7 +250,7 @@
                     return;
                 }
 
-                state.endpoint = ep;
+                state.endpoint = raw;
 
                 var select = $('hs-chat-model-select');
                 select.innerHTML = '<option value="">-- Modell auswählen --</option>';
@@ -243,7 +263,7 @@
 
                 $('hs-chat-model-desc').textContent =
                     models.length + ' Modell' + (models.length !== 1 ? 'e' : '') +
-                    ' gefunden auf ' + ep;
+                    ' gefunden auf ' + raw;
 
                 showStep('model');
             });
@@ -254,7 +274,7 @@
             if (e.key === 'Enter') doConnect();
         });
 
-        /* Step 2 – Model select */
+        /* ── Step 2: Model select ── */
         var modelBtn = $('hs-chat-model-btn');
         var backBtn  = $('hs-chat-back-btn');
 
@@ -277,7 +297,7 @@
             showStep('endpoint');
         });
 
-        /* Step 3 – Chat */
+        /* ── Step 3: Chat ── */
         var sendBtn   = $('hs-chat-send-btn');
         var chatInput = $('hs-chat-input');
         var resetBtn  = $('hs-chat-reset-btn');
@@ -312,10 +332,5 @@
     } else {
         init();
     }
-
-    /* Support multiple widgets on same page */
-    document.addEventListener('DOMContentLoaded', function () {
-        /* nothing extra needed – IDs are unique per shortcode instance */
-    });
 
 })();
