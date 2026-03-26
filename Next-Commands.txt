@@ -4,6 +4,14 @@ bitcoin:
 paypal
 moero
 --
+add Link "KI-Analyse" to <each name>
+use link : /chat/?frage="Was weist du über"<Name>+ <Partei>? to personal data
+
+modify Link "KI-Analyse" to each straftat
+use link : /chat/?frage="Was weist du über"<Name>+ <Partei> + <Straftat>?modify Link "KI-Analyse" to each straftat
+use link : /chat/?frage="Was weist du über"<Name>+ <Partei> + <Straftat>?
+
+----
 
 add Links to AI
 
