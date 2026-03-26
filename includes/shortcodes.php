@@ -1019,7 +1019,7 @@ class Handschelle_Shortcodes {
      */
     private function ki_analyse_link( $name, $partei, $straftat ) {
         if ( empty( $straftat ) ) return '';
-        $url  = '/chat/?frage=' . urlencode( 'Was weist du über ' . $name . ' ' . $partei . ' ' . $straftat . '?' );
+        $url  = '/chat/?frage=' . urlencode( '"Was weist du über" ' . $name . ' ' . $partei . ' ' . $straftat . '?' );
         return '<a href="' . esc_url( $url ) . '" class="hs-search-btn hs-ki-btn">🤖 KI-Analyse</a>';
     }
 
