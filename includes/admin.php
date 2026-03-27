@@ -264,7 +264,16 @@ class Handschelle_Admin {
                 break;
 
             case 'save_ollama':
-                update_option( 'hs_ollama_url',            sanitize_text_field( wp_unslash( $_POST['hs_ollama_url']            ?? 'http://localhost:11434' ) ) );
+                $ollama_mode_save = in_array( $_POST['hs_ollama_mode'] ?? 'local', array( 'local', 'remote' ), true )
+                    ? $_POST['hs_ollama_mode'] : 'local';
+                update_option( 'hs_ollama_mode', $ollama_mode_save );
+                // In local mode always use localhost; in remote mode use the submitted URL.
+                if ( $ollama_mode_save === 'remote' ) {
+                    $url_save = sanitize_text_field( wp_unslash( $_POST['hs_ollama_url'] ?? '' ) );
+                    update_option( 'hs_ollama_url', $url_save ?: 'http://localhost:11434' );
+                } else {
+                    update_option( 'hs_ollama_url', 'http://localhost:11434' );
+                }
                 update_option( 'hs_ollama_default_model',  sanitize_text_field( wp_unslash( $_POST['hs_ollama_default_model']  ?? '' ) ) );
                 update_option( 'hs_ollama_system_prompt',  sanitize_textarea_field( wp_unslash( $_POST['hs_ollama_system_prompt'] ?? '' ) ) );
                 update_option( 'hs_ollama_timeout',        max( 10, intval( $_POST['hs_ollama_timeout'] ?? 120 ) ) );
@@ -2641,6 +2650,7 @@ class Handschelle_Admin {
     ================================================================ */
     public function page_ollama() {
         $nonce          = wp_create_nonce( 'handschelle_admin_action' );
+        $ollama_mode    = get_option( 'hs_ollama_mode',          'local' ); // 'local' | 'remote'
         $ollama_url     = get_option( 'hs_ollama_url',           'http://localhost:11434' );
         $ollama_api_key = get_option( 'hs_ollama_api_key',       '' );
         $default_model  = get_option( 'hs_ollama_default_model', '' );
@@ -2659,13 +2669,37 @@ class Handschelle_Admin {
                     <div class="hs-form-section">
                         <h3>Verbindung</h3>
                         <div class="hs-form-grid">
-                            <div class="hs-field">
-                                <label for="hs_ollama_url">Ollama Server-URL</label>
-                                <input type="text" id="hs_ollama_url" name="hs_ollama_url"
-                                       value="<?php echo esc_attr( $ollama_url ); ?>"
-                                       placeholder="http://localhost:11434">
-                                <span class="description">Adresse des lokalen oder remote Ollama-Servers.</span>
+                            <div class="hs-field hs-field-full">
+                                <label>Server-Typ</label>
+                                <div style="display:flex;gap:1.5rem;margin-top:.3rem;">
+                                    <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer;">
+                                        <input type="radio" name="hs_ollama_mode" id="hs_ollama_mode_local"
+                                               value="local" <?php checked( $ollama_mode, 'local' ); ?>>
+                                        🖥️ Lokaler Server
+                                    </label>
+                                    <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer;">
+                                        <input type="radio" name="hs_ollama_mode" id="hs_ollama_mode_remote"
+                                               value="remote" <?php checked( $ollama_mode, 'remote' ); ?>>
+                                        ☁️ Remote-Server (Cloud)
+                                    </label>
+                                </div>
+                                <span class="description" id="hs-ollama-mode-hint">
+                                    <?php if ( $ollama_mode === 'remote' ) : ?>
+                                    Remote-Modus: Die URL des Cloud-Servers und ein optionaler API-Key sind erforderlich. Der Chat-Widget erlaubt keine clientseitige URL-Änderung.
+                                    <?php else : ?>
+                                    Lokaler Modus: Ollama läuft auf demselben Server wie WordPress (Standard: <code>http://localhost:11434</code>).
+                                    <?php endif; ?>
+                                </span>
                             </div>
+
+                            <div class="hs-field" id="hs-ollama-url-row" <?php echo $ollama_mode === 'local' ? 'style="display:none"' : ''; ?>>
+                                <label for="hs_ollama_url">Remote Server-URL</label>
+                                <input type="text" id="hs_ollama_url" name="hs_ollama_url"
+                                       value="<?php echo esc_attr( $ollama_url !== 'http://localhost:11434' ? $ollama_url : '' ); ?>"
+                                       placeholder="https://ollama.example.com">
+                                <span class="description">Vollständige URL des Remote-Ollama-Servers inkl. Protokoll und Port.</span>
+                            </div>
+
                             <div class="hs-field">
                                 <label for="hs_ollama_chat_page">Chat-Seiten-URL</label>
                                 <input type="text" id="hs_ollama_chat_page" name="hs_ollama_chat_page"
@@ -2684,8 +2718,9 @@ class Handschelle_Admin {
                                        min="10" max="600" style="width:120px;">
                                 <span class="description">Max. Wartezeit auf eine Antwort (10–600 s).</span>
                             </div>
-                            <div class="hs-field">
-                                <label for="hs_ollama_api_key">Cloud API-Key (optional)</label>
+
+                            <div class="hs-field" id="hs-ollama-apikey-row" <?php echo $ollama_mode === 'local' ? 'style="display:none"' : ''; ?>>
+                                <label for="hs_ollama_api_key">API-Key (optional)</label>
                                 <?php $has_ollama_key = ! empty( $ollama_api_key ); ?>
                                 <div style="display:flex;gap:.5rem;align-items:center;">
                                     <input type="password" id="hs_ollama_api_key" name="hs_ollama_api_key"
@@ -2702,11 +2737,33 @@ class Handschelle_Admin {
                                     <?php if ( $has_ollama_key ) : ?>
                                     ✅ API-Key ist gesetzt. Wird als <code>Authorization: Bearer …</code> Header übermittelt.
                                     <?php else : ?>
-                                    Nur für Cloud-gehostete Ollama-Instanzen mit Authentifizierung. Leer lassen für lokale Server.
+                                    Für Remote-Server mit Authentifizierung. Wird als <code>Authorization: Bearer …</code> Header gesendet.
                                     <?php endif; ?>
                                 </span>
                             </div>
                         </div>
+
+                        <script>
+                        (function() {
+                            var radios   = document.querySelectorAll('input[name="hs_ollama_mode"]');
+                            var urlRow   = document.getElementById('hs-ollama-url-row');
+                            var keyRow   = document.getElementById('hs-ollama-apikey-row');
+                            var hint     = document.getElementById('hs-ollama-mode-hint');
+                            var urlInput = document.getElementById('hs_ollama_url');
+                            function update(mode) {
+                                var isRemote = mode === 'remote';
+                                urlRow.style.display = isRemote ? '' : 'none';
+                                keyRow.style.display = isRemote ? '' : 'none';
+                                if (!isRemote) { urlInput.value = ''; }
+                                hint.innerHTML = isRemote
+                                    ? 'Remote-Modus: Die URL des Cloud-Servers und ein optionaler API-Key sind erforderlich. Der Chat-Widget erlaubt keine clientseitige URL-Änderung.'
+                                    : 'Lokaler Modus: Ollama läuft auf demselben Server wie WordPress (Standard: <code>http://localhost:11434</code>).';
+                            }
+                            radios.forEach(function(r) {
+                                r.addEventListener('change', function() { update(this.value); });
+                            });
+                        })();
+                        </script>
                     </div>
 
                     <div class="hs-form-section">

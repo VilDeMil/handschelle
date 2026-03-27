@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 15.7 |
+| **Version** | 15.8 |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
 | **Lizenz** | GPL-2.0+ |
@@ -123,6 +123,9 @@ Planned features for upcoming versions:
 ---
 
 ## Release Notes
+
+### 15.8 *(2026-03-27)*
+- **Ollama Local / Remote toggle**: Added a **Server-Typ** radio selector (*🖥️ Lokaler Server* / *☁️ Remote-Server*) to the Ollama KI admin page. In **local** mode the URL is always forced to `http://localhost:11434` and the URL/API-key fields are hidden. In **remote** mode the URL and API-key fields appear; the chat widget hides its URL-override row and all server-side AJAX handlers ignore any client-supplied URL, keeping the remote endpoint fully admin-controlled. Version bump 15.7 → 15.8.
 
 ### 15.7 *(2026-03-27)*
 - **Ollama Cloud Config**: Added optional **Cloud API-Key** field to the *Ollama KI* admin page (Verbindung section). When set, the key is sent as an `Authorization: Bearer …` header on all requests to the Ollama server (both chat and model-list endpoints), enabling use of cloud-hosted or authentication-protected Ollama instances. The key is stored in the WordPress options table and never exposed to the frontend. Version bump 15.6 → 15.7.
