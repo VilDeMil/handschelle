@@ -269,6 +269,12 @@ class Handschelle_Admin {
                 update_option( 'hs_ollama_system_prompt',  sanitize_textarea_field( wp_unslash( $_POST['hs_ollama_system_prompt'] ?? '' ) ) );
                 update_option( 'hs_ollama_timeout',        max( 10, intval( $_POST['hs_ollama_timeout'] ?? 120 ) ) );
                 update_option( 'hs_ollama_chat_page',      sanitize_text_field( wp_unslash( $_POST['hs_ollama_chat_page']      ?? '' ) ) );
+                // Ollama Cloud API key (only updated if non-empty to avoid accidental clearing)
+                if ( ! empty( $_POST['hs_ollama_api_key'] ) ) {
+                    update_option( 'hs_ollama_api_key', sanitize_text_field( wp_unslash( $_POST['hs_ollama_api_key'] ) ) );
+                } elseif ( isset( $_POST['hs_ollama_api_key_clear'] ) ) {
+                    delete_option( 'hs_ollama_api_key' );
+                }
                 // OpenAI settings (key only updated if non-empty to avoid accidental clearing)
                 if ( ! empty( $_POST['hs_openai_api_key'] ) ) {
                     update_option( 'hs_openai_api_key', sanitize_text_field( wp_unslash( $_POST['hs_openai_api_key'] ) ) );
@@ -2636,6 +2642,7 @@ class Handschelle_Admin {
     public function page_ollama() {
         $nonce          = wp_create_nonce( 'handschelle_admin_action' );
         $ollama_url     = get_option( 'hs_ollama_url',           'http://localhost:11434' );
+        $ollama_api_key = get_option( 'hs_ollama_api_key',       '' );
         $default_model  = get_option( 'hs_ollama_default_model', '' );
         $system_prompt  = get_option( 'hs_ollama_system_prompt', 'Du bist ein hilfreicher Assistent.' );
         $timeout        = intval( get_option( 'hs_ollama_timeout', 120 ) );
@@ -2676,6 +2683,28 @@ class Handschelle_Admin {
                                        value="<?php echo esc_attr( $timeout ); ?>"
                                        min="10" max="600" style="width:120px;">
                                 <span class="description">Max. Wartezeit auf eine Antwort (10–600 s).</span>
+                            </div>
+                            <div class="hs-field">
+                                <label for="hs_ollama_api_key">Cloud API-Key (optional)</label>
+                                <?php $has_ollama_key = ! empty( $ollama_api_key ); ?>
+                                <div style="display:flex;gap:.5rem;align-items:center;">
+                                    <input type="password" id="hs_ollama_api_key" name="hs_ollama_api_key"
+                                           value=""
+                                           placeholder="<?php echo $has_ollama_key ? '••••••••  (gesetzt – leer lassen zum Beibehalten)' : 'Bearer-Token …'; ?>"
+                                           autocomplete="new-password" style="flex:1;font-family:monospace;">
+                                    <?php if ( $has_ollama_key ) : ?>
+                                    <label style="white-space:nowrap;font-size:.85rem;display:flex;align-items:center;gap:.3rem;">
+                                        <input type="checkbox" name="hs_ollama_api_key_clear" value="1"> Key löschen
+                                    </label>
+                                    <?php endif; ?>
+                                </div>
+                                <span class="description">
+                                    <?php if ( $has_ollama_key ) : ?>
+                                    ✅ API-Key ist gesetzt. Wird als <code>Authorization: Bearer …</code> Header übermittelt.
+                                    <?php else : ?>
+                                    Nur für Cloud-gehostete Ollama-Instanzen mit Authentifizierung. Leer lassen für lokale Server.
+                                    <?php endif; ?>
+                                </span>
                             </div>
                         </div>
                     </div>

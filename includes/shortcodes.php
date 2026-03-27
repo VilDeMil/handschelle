@@ -3095,9 +3095,15 @@ class Handschelle_Shortcodes {
 
         $timeout = max( 10, intval( get_option( 'hs_ollama_timeout', 120 ) ) );
 
+        $headers = array( 'Content-Type' => 'application/json' );
+        $ollama_api_key = get_option( 'hs_ollama_api_key', '' );
+        if ( ! empty( $ollama_api_key ) ) {
+            $headers['Authorization'] = 'Bearer ' . $ollama_api_key;
+        }
+
         $response = wp_remote_post( $endpoint, array(
             'timeout'     => $timeout,
-            'headers'     => array( 'Content-Type' => 'application/json' ),
+            'headers'     => $headers,
             'body'        => $body,
             'data_format' => 'body',
         ) );
@@ -3146,7 +3152,13 @@ class Handschelle_Shortcodes {
         }
         $endpoint = trailingslashit( $ollama_url ) . 'api/tags';
 
-        $response = wp_remote_get( $endpoint, array( 'timeout' => 10 ) );
+        $get_headers = array();
+        $ollama_api_key = get_option( 'hs_ollama_api_key', '' );
+        if ( ! empty( $ollama_api_key ) ) {
+            $get_headers['Authorization'] = 'Bearer ' . $ollama_api_key;
+        }
+
+        $response = wp_remote_get( $endpoint, array( 'timeout' => 10, 'headers' => $get_headers ) );
 
         if ( is_wp_error( $response ) ) {
             wp_send_json_error( array(

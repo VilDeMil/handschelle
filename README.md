@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 15.6 |
+| **Version** | 15.7 |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
 | **Lizenz** | GPL-2.0+ |
@@ -123,6 +123,9 @@ Planned features for upcoming versions:
 ---
 
 ## Release Notes
+
+### 15.7 *(2026-03-27)*
+- **Ollama Cloud Config**: Added optional **Cloud API-Key** field to the *Ollama KI* admin page (Verbindung section). When set, the key is sent as an `Authorization: Bearer …` header on all requests to the Ollama server (both chat and model-list endpoints), enabling use of cloud-hosted or authentication-protected Ollama instances. The key is stored in the WordPress options table and never exposed to the frontend. Version bump 15.6 → 15.7.
 
 ### 15.6 *(2026-03-26)*
 - **Admin Chat-Test**: New **💬 Chat-Test** section in the *Ollama KI* admin page. Select any configured provider (Ollama, OpenAI, Claude), pick a model from a dynamically loaded dropdown, type a test question, and click **▶ Senden** to fire a real chat request. The reply is shown inline with model name, response time, and tokens/sec. Only providers with API keys configured appear in the provider selector. Version bump 15.5 → 15.6.
