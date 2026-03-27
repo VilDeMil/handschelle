@@ -2948,6 +2948,7 @@ class Handschelle_Shortcodes {
         $uid             = 'hs-chat-' . wp_rand( 1000, 9999 );
         $nonce           = wp_create_nonce( 'hs_chat_nonce' );
         $ollama_url      = get_option( 'hs_ollama_url', 'http://localhost:11434' );
+        $ollama_mode     = get_option( 'hs_ollama_mode', 'local' ); // 'local' | 'remote'
         $openai_enabled  = ! empty( get_option( 'hs_openai_api_key', '' ) ) ? '1' : '0';
         $claude_enabled  = ! empty( get_option( 'hs_claude_api_key',  '' ) ) ? '1' : '0';
 
@@ -2959,6 +2960,7 @@ class Handschelle_Shortcodes {
              data-nonce="<?php echo esc_attr( $nonce ); ?>"
              data-ajax="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>"
              data-ollama-url="<?php echo esc_attr( $ollama_url ); ?>"
+             data-ollama-mode="<?php echo esc_attr( $ollama_mode ); ?>"
              data-openai="<?php echo esc_attr( $openai_enabled ); ?>"
              data-claude="<?php echo esc_attr( $claude_enabled ); ?>"
              <?php if ( $atts['urlparam'] !== '' ) : ?>
@@ -2991,6 +2993,7 @@ class Handschelle_Shortcodes {
                         Temperatur <span class="hs-chat-temp-value">0.7</span>
                         <input type="range" class="hs-chat-settings-temp" min="0" max="2" step="0.1" value="0.7">
                     </label>
+                    <?php if ( $ollama_mode === 'local' ) : ?>
                     <label class="hs-chat-settings-label hs-chat-settings-url-row">
                         Ollama URL
                         <div class="hs-chat-settings-url-wrap">
@@ -3002,6 +3005,7 @@ class Handschelle_Shortcodes {
                         </div>
                         <span class="hs-chat-settings-url-hint">Nur localhost / 127.0.0.1 erlaubt</span>
                     </label>
+                    <?php endif; ?>
                     <div class="hs-chat-settings-label hs-chat-settings-multi-row" id="hs-multi-panel-<?php echo esc_attr( $uid ); ?>" hidden>
                         Mehrere Modelle gleichzeitig
                         <div class="hs-chat-multi-models">
@@ -3079,8 +3083,10 @@ class Handschelle_Shortcodes {
         }
         $messages[] = array( 'role' => 'user', 'content' => $message );
 
-        $ollama_url = get_option( 'hs_ollama_url', 'http://localhost:11434' );
-        if ( ! empty( $_POST['ollama_url'] ) ) {
+        $ollama_url  = get_option( 'hs_ollama_url', 'http://localhost:11434' );
+        $ollama_mode = get_option( 'hs_ollama_mode', 'local' );
+        // Client-side URL overrides are only allowed in local mode (SSRF guard).
+        if ( $ollama_mode === 'local' && ! empty( $_POST['ollama_url'] ) ) {
             $override = $this->validate_ollama_url_override( wp_unslash( $_POST['ollama_url'] ) );
             if ( $override ) $ollama_url = $override;
         }
@@ -3095,9 +3101,15 @@ class Handschelle_Shortcodes {
 
         $timeout = max( 10, intval( get_option( 'hs_ollama_timeout', 120 ) ) );
 
+        $headers = array( 'Content-Type' => 'application/json' );
+        $ollama_api_key = get_option( 'hs_ollama_api_key', '' );
+        if ( ! empty( $ollama_api_key ) ) {
+            $headers['Authorization'] = 'Bearer ' . $ollama_api_key;
+        }
+
         $response = wp_remote_post( $endpoint, array(
             'timeout'     => $timeout,
-            'headers'     => array( 'Content-Type' => 'application/json' ),
+            'headers'     => $headers,
             'body'        => $body,
             'data_format' => 'body',
         ) );
@@ -3139,14 +3151,22 @@ class Handschelle_Shortcodes {
     public function ajax_chat_models() {
         check_ajax_referer( 'hs_chat_nonce', '_nonce' );
 
-        $ollama_url = get_option( 'hs_ollama_url', 'http://localhost:11434' );
-        if ( ! empty( $_POST['ollama_url'] ) ) {
+        $ollama_url  = get_option( 'hs_ollama_url', 'http://localhost:11434' );
+        $ollama_mode = get_option( 'hs_ollama_mode', 'local' );
+        // Client-side URL overrides are only allowed in local mode (SSRF guard).
+        if ( $ollama_mode === 'local' && ! empty( $_POST['ollama_url'] ) ) {
             $override = $this->validate_ollama_url_override( wp_unslash( $_POST['ollama_url'] ) );
             if ( $override ) $ollama_url = $override;
         }
         $endpoint = trailingslashit( $ollama_url ) . 'api/tags';
 
-        $response = wp_remote_get( $endpoint, array( 'timeout' => 10 ) );
+        $get_headers = array();
+        $ollama_api_key = get_option( 'hs_ollama_api_key', '' );
+        if ( ! empty( $ollama_api_key ) ) {
+            $get_headers['Authorization'] = 'Bearer ' . $ollama_api_key;
+        }
+
+        $response = wp_remote_get( $endpoint, array( 'timeout' => 10, 'headers' => $get_headers ) );
 
         if ( is_wp_error( $response ) ) {
             wp_send_json_error( array(
