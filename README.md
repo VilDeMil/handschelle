@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 15.6 |
+| **Version** | 16.5 |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
 | **Lizenz** | GPL-2.0+ |
@@ -123,6 +123,36 @@ Planned features for upcoming versions:
 ---
 
 ## Release Notes
+
+### 16.5 *(2026-03-28)*
+- **Version bump**: 16.4 → 16.5.
+
+### 16.4 *(2026-03-28)*
+- **AI-Profil: all field placeholders**: Expanded placeholder support from 3 to 19 fields. The AI-Profil button now passes every relevant entry field as a `data-*` attribute. The JS `replace()` function substitutes all of them before sending each question to the LLM. The admin description lists every available placeholder. New placeholders: `{beruf}`, `{spitzname}`, `{geburtsort}`, `{geburtsdatum}`, `{geburtsland}`, `{verstorben}`, `{dod}`, `{aufgabe_partei}`, `{parlament}`, `{parlament_name}`, `{status_aktiv}`, `{urteil}`, `{aktenzeichen}`, `{status_straftat}`, `{bemerkung}`. Version bump 16.3 → 16.4.
+
+### 16.3 *(2026-03-28)*
+- **AI-Profil button**: Every entry card (for logged-in users) now shows a **🧾 AI-Profil** button when at least one profile question is configured. Clicking it opens a modal overlay that fires the configured questions one by one to the selected LLM, displaying each Q&A pair as the answer arrives with a pulsing `…` loading indicator. A **✅ Fertig** line appears when all questions are answered. The modal can be closed with ✕, a click on the backdrop, or Escape.
+  - **Admin config** (*Ollama KI → 🧾 AI-Profil Fragen*): textarea for questions (one per line, `{name}` / `{partei}` / `{straftat}` placeholders), system-prompt field, provider dropdown (Ollama / OpenAI / Claude / Gemini — only shows providers with a configured key), and model text input.
+  - **Backend**: `ajax_profile_ask` AJAX handler routes to the selected provider; `inject_profile_config()` injects `window.hsProfileConfig` into the page footer.
+  - Version bump 16.2 → 16.3.
+
+### 16.2 *(2026-03-28)*
+- **Multi-model list: grouped & sorted**: The *Mehrere Modelle gleichzeitig* checkbox list now renders a visible provider header (`Ollama`, `OpenAI`, `Claude`, `Gemini`) before each group, and sorts models alphabetically by name within each group. Version bump 16.1 → 16.2.
+
+### 16.1 *(2026-03-28)*
+- **Provider prefix in model dropdown & lists**: Every entry in the model selector and multi-model checkbox list now shows `Provider - Model` (e.g. `Ollama - llama3.2`, `OpenAI - gpt-4o`, `Claude - claude-sonnet-4-5`, `Gemini - gemini-2.0-flash`). Applies both when a single provider is active and when multiple providers are combined with optgroups. The group-header rows have been removed from the checkbox list since the provider is already visible in each label. Version bump 16.0 → 16.1.
+
+### 16.0 *(2026-03-28)*
+- **Google Gemini integration**: Added full Gemini support as a fourth LLM provider. New *🤖 Google Gemini* section in the *Ollama KI* admin page with API-key field (placeholder `AIza…`), set/clear flow, model dropdown (`gemini-2.5-pro`, `gemini-2.0-flash`, `gemini-2.0-flash-lite`, `gemini-1.5-pro`, `gemini-1.5-flash`), and connection-test button. Two new AJAX handlers (`ajax_chat_gemini`, `ajax_chat_gemini_models`) call the Google Generative Language API with the correct `contents`/`parts` format and optional `system_instruction`. The JS chat widget loads Gemini models in parallel, displays them in an optgroup, maps them to `hs_chat_gemini`, and includes them in multi-model mode and the repost picker. Gemini also appears in the admin Chat-Test panel. Version bump 15.9 → 16.0.
+
+### 15.9 *(2026-03-28)*
+- **ChatGPT model update**: Added `gpt-4.5`, `o3`, and `o4-mini` to the OpenAI model list in the admin dropdown and the `ajax_chat_openai_models` endpoint. Fixed `ajax_chat_openai` to omit the `temperature` parameter for o-series reasoning models (o1, o3, o3-mini, o4-mini), which do not support it. Version bump 15.8 → 15.9.
+
+### 15.8 *(2026-03-27)*
+- **Ollama Local / Remote toggle**: Added a **Server-Typ** radio selector (*🖥️ Lokaler Server* / *☁️ Remote-Server*) to the Ollama KI admin page. In **local** mode the URL is always forced to `http://localhost:11434` and the URL/API-key fields are hidden. In **remote** mode the URL and API-key fields appear; the chat widget hides its URL-override row and all server-side AJAX handlers ignore any client-supplied URL, keeping the remote endpoint fully admin-controlled. Version bump 15.7 → 15.8.
+
+### 15.7 *(2026-03-27)*
+- **Ollama Cloud Config**: Added optional **Cloud API-Key** field to the *Ollama KI* admin page (Verbindung section). When set, the key is sent as an `Authorization: Bearer …` header on all requests to the Ollama server (both chat and model-list endpoints), enabling use of cloud-hosted or authentication-protected Ollama instances. The key is stored in the WordPress options table and never exposed to the frontend. Version bump 15.6 → 15.7.
 
 ### 15.6 *(2026-03-26)*
 - **Admin Chat-Test**: New **💬 Chat-Test** section in the *Ollama KI* admin page. Select any configured provider (Ollama, OpenAI, Claude), pick a model from a dynamically loaded dropdown, type a test question, and click **▶ Senden** to fire a real chat request. The reply is shown inline with model name, response time, and tokens/sec. Only providers with API keys configured appear in the provider selector. Version bump 15.5 → 15.6.

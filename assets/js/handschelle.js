@@ -586,7 +586,139 @@
             hsChatRepost($widget, exchIdx, newModel, $status);
         });
 
+        // ── AI-Profil ─────────────────────────────────────────────
+        $(document).on('click', '.hs-profile-btn', function () {
+            var $btn = $(this);
+            var ctx = {
+                name:            $btn.data('name')           || '',
+                beruf:           $btn.data('beruf')          || '',
+                spitzname:       $btn.data('spitzname')      || '',
+                geburtsort:      $btn.data('geburtsort')     || '',
+                geburtsdatum:    $btn.data('geburtsdatum')   || '',
+                geburtsland:     $btn.data('geburtsland')    || '',
+                verstorben:      $btn.data('verstorben')     || '',
+                dod:             $btn.data('dod')            || '',
+                partei:          $btn.data('partei')         || '',
+                aufgabe_partei:  $btn.data('aufgabe-partei') || '',
+                parlament:       $btn.data('parlament')      || '',
+                parlament_name:  $btn.data('parlament-name') || '',
+                status_aktiv:    $btn.data('status-aktiv')   || '',
+                straftat:        $btn.data('straftat')       || '',
+                urteil:          $btn.data('urteil')         || '',
+                aktenzeichen:    $btn.data('aktenzeichen')   || '',
+                status_straftat: $btn.data('status-straftat')|| '',
+                bemerkung:       $btn.data('bemerkung')      || ''
+            };
+            hsProfileOpen(ctx);
+        });
+
+        $(document).on('click', '.hs-profile-modal-close, .hs-profile-modal-overlay', function (e) {
+            if (e.target === this) $('#hs-profile-modal').remove();
+        });
+
+        $(document).on('keydown.hsprofile', function (e) {
+            if (e.key === 'Escape') $('#hs-profile-modal').remove();
+        });
+
     });
+
+    /* ── AI-Profil modal ────────────────────────────────────────── */
+
+    function hsProfileOpen(ctx) {
+        var config    = window.hsProfileConfig || {};
+        var questions = config.questions || [];
+        if (!questions.length) return;
+
+        // Remove stale modal
+        $('#hs-profile-modal').remove();
+
+        var name  = ctx.name || '';
+        var title = name ? '🧾 AI-Profil: ' + name : '🧾 AI-Profil';
+
+        var $modal = $(
+            '<div id="hs-profile-modal" class="hs-profile-modal" role="dialog" aria-modal="true">' +
+              '<div class="hs-profile-modal-overlay"></div>' +
+              '<div class="hs-profile-modal-box">' +
+                '<div class="hs-profile-modal-header">' +
+                  '<span class="hs-profile-modal-title">' + hsEscape(title) + '</span>' +
+                  '<button type="button" class="hs-profile-modal-close" aria-label="Schließen">✕</button>' +
+                '</div>' +
+                '<div class="hs-profile-modal-body"></div>' +
+              '</div>' +
+            '</div>'
+        );
+        $('body').append($modal);
+
+        var $body    = $modal.find('.hs-profile-modal-body');
+        var provider = config.provider || 'ollama';
+        var model    = config.model    || '';
+
+        function replace(tpl) {
+            return tpl
+                .replace(/\{name\}/g,            ctx.name            || '')
+                .replace(/\{beruf\}/g,            ctx.beruf           || '')
+                .replace(/\{spitzname\}/g,        ctx.spitzname       || '')
+                .replace(/\{geburtsort\}/g,       ctx.geburtsort      || '')
+                .replace(/\{geburtsdatum\}/g,     ctx.geburtsdatum    || '')
+                .replace(/\{geburtsland\}/g,      ctx.geburtsland     || '')
+                .replace(/\{verstorben\}/g,       ctx.verstorben      || '')
+                .replace(/\{dod\}/g,              ctx.dod             || '')
+                .replace(/\{partei\}/g,           ctx.partei          || '')
+                .replace(/\{aufgabe_partei\}/g,   ctx.aufgabe_partei  || '')
+                .replace(/\{parlament\}/g,        ctx.parlament       || '')
+                .replace(/\{parlament_name\}/g,   ctx.parlament_name  || '')
+                .replace(/\{status_aktiv\}/g,     ctx.status_aktiv    || '')
+                .replace(/\{straftat\}/g,         ctx.straftat        || '')
+                .replace(/\{urteil\}/g,           ctx.urteil          || '')
+                .replace(/\{aktenzeichen\}/g,     ctx.aktenzeichen    || '')
+                .replace(/\{status_straftat\}/g,  ctx.status_straftat || '')
+                .replace(/\{bemerkung\}/g,        ctx.bemerkung       || '');
+        }
+
+        function askNext(idx) {
+            if (idx >= questions.length) {
+                $body.append('<p class="hs-profile-done">✅ Fertig</p>');
+                return;
+            }
+
+            var q = replace(questions[idx]);
+
+            var $qa = $(
+                '<div class="hs-profile-qa">' +
+                  '<div class="hs-profile-question">' + hsEscape(q) + '</div>' +
+                  '<div class="hs-profile-answer"><span class="hs-profile-loading">…</span></div>' +
+                '</div>'
+            );
+            $body.append($qa);
+            // Scroll to the new block
+            $modal.find('.hs-profile-modal-box').scrollTop(99999);
+
+            $.post(config.ajaxUrl, {
+                action:   'hs_profile_ask',
+                question: q,
+                system:   config.systemPrompt || '',
+                _nonce:   config.nonce
+            })
+            .done(function (res) {
+                if (res.success && res.data && res.data.reply) {
+                    var html = hsEscape(res.data.reply).replace(/\n/g, '<br>');
+                    $qa.find('.hs-profile-answer').html(html);
+                } else {
+                    var msg = (res.data && res.data.message) ? res.data.message : 'Fehler.';
+                    $qa.find('.hs-profile-answer').html('<em class="hs-profile-error">' + hsEscape(msg) + '</em>');
+                }
+            })
+            .fail(function () {
+                $qa.find('.hs-profile-answer').html('<em class="hs-profile-error">Verbindungsfehler.</em>');
+            })
+            .always(function () {
+                $modal.find('.hs-profile-modal-box').scrollTop(99999);
+                askNext(idx + 1);
+            });
+        }
+
+        askNext(0);
+    }
 
     function hsChatLoadModels($widget, onReady) {
         var $select   = $widget.find('.hs-chat-model-select');
@@ -596,18 +728,20 @@
         var customUrl = $widget.data('hs-chat-custom-url') || '';
         var openai    = $widget.data('openai') === '1' || $widget.data('openai') === 1;
         var claude    = $widget.data('claude')  === '1' || $widget.data('claude')  === 1;
+        var gemini    = $widget.data('gemini')  === '1' || $widget.data('gemini')  === 1;
 
         $select.prop('disabled', true);
 
-        var ollamaModels = [];
-        var openaiModels = [];
-        var claudeModels = [];
-        var pending = 1 + (openai ? 1 : 0) + (claude ? 1 : 0);
+        var ollamaModels  = [];
+        var openaiModels  = [];
+        var claudeModels  = [];
+        var geminiModels  = [];
+        var pending = 1 + (openai ? 1 : 0) + (claude ? 1 : 0) + (gemini ? 1 : 0);
 
         function finish() {
             pending--;
             if (pending > 0) return;
-            hsBuildModelsUI($widget, $select, current, ollamaModels, openaiModels, claudeModels);
+            hsBuildModelsUI($widget, $select, current, ollamaModels, openaiModels, claudeModels, geminiModels);
             $select.prop('disabled', false);
             if (typeof onReady === 'function') onReady();
         }
@@ -629,17 +763,25 @@
                 if (res.success && res.data && res.data.models) claudeModels = res.data.models;
             }).always(finish);
         }
+
+        if (gemini) {
+            $.post(ajaxUrl, { action: 'hs_chat_gemini_models', _nonce: nonce }, function (res) {
+                if (res.success && res.data && res.data.models) geminiModels = res.data.models;
+            }).always(finish);
+        }
     }
 
-    function hsBuildModelsUI($widget, $select, current, ollamaModels, openaiModels, claudeModels) {
+    function hsBuildModelsUI($widget, $select, current, ollamaModels, openaiModels, claudeModels, geminiModels) {
         claudeModels = claudeModels || [];
-        var providerCount = (ollamaModels.length > 0 ? 1 : 0) + (openaiModels.length > 0 ? 1 : 0) + (claudeModels.length > 0 ? 1 : 0);
+        geminiModels = geminiModels || [];
+        var providerCount = (ollamaModels.length > 0 ? 1 : 0) + (openaiModels.length > 0 ? 1 : 0) + (claudeModels.length > 0 ? 1 : 0) + (geminiModels.length > 0 ? 1 : 0);
         var useGroups = providerCount > 1;
-        var allModels = ollamaModels.concat(openaiModels).concat(claudeModels);
+        var allModels = ollamaModels.concat(openaiModels).concat(claudeModels).concat(geminiModels);
         var modelActions = {};
         ollamaModels.forEach(function (m) { modelActions[m.name] = 'hs_chat'; });
         openaiModels.forEach(function (m) { modelActions[m.name] = 'hs_chat_openai'; });
         claudeModels.forEach(function (m) { modelActions[m.name] = 'hs_chat_claude'; });
+        geminiModels.forEach(function (m) { modelActions[m.name] = 'hs_chat_gemini'; });
         $widget.data('hs-model-actions', modelActions);
 
         var foundCurrent = allModels.some(function (m) { return m.name === current; });
@@ -648,9 +790,10 @@
             $select.append('<option value="' + hsEscape(current) + '" selected>' + hsEscape(current) + '</option>');
         }
 
-        function buildOpts($container, models) {
+        function buildOpts($container, models, provider) {
             $.each(models, function (_, m) {
-                var label = m.size ? hsEscape(m.name) + ' &mdash; ' + hsEscape(m.size) : hsEscape(m.name);
+                var label = hsEscape(provider) + ' - ' + hsEscape(m.name);
+                if (m.size) label += ' &mdash; ' + hsEscape(m.size);
                 var sel   = (m.name === current) ? ' selected' : '';
                 $container.append('<option value="' + hsEscape(m.name) + '"' + sel + '>' + label + '</option>');
             });
@@ -659,21 +802,31 @@
         if (useGroups) {
             if (ollamaModels.length) {
                 var $og1 = $('<optgroup label="Ollama">');
-                buildOpts($og1, ollamaModels);
+                buildOpts($og1, ollamaModels, 'Ollama');
                 $select.append($og1);
             }
             if (openaiModels.length) {
                 var $og2 = $('<optgroup label="OpenAI">');
-                buildOpts($og2, openaiModels);
+                buildOpts($og2, openaiModels, 'OpenAI');
                 $select.append($og2);
             }
             if (claudeModels.length) {
                 var $og3 = $('<optgroup label="Claude">');
-                buildOpts($og3, claudeModels);
+                buildOpts($og3, claudeModels, 'Claude');
                 $select.append($og3);
             }
+            if (geminiModels.length) {
+                var $og4 = $('<optgroup label="Gemini">');
+                buildOpts($og4, geminiModels, 'Gemini');
+                $select.append($og4);
+            }
         } else {
-            buildOpts($select, allModels);
+            // Single provider — still prefix so the format is consistent.
+            var singleProvider = ollamaModels.length ? 'Ollama'
+                : openaiModels.length ? 'OpenAI'
+                : claudeModels.length ? 'Claude'
+                : 'Gemini';
+            buildOpts($select, allModels, singleProvider);
         }
         $widget.data('model', $select.val());
 
@@ -683,33 +836,34 @@
         $multiWrap.empty();
         var uid = $widget.attr('id') || '';
 
-        function addCheckboxes(label, models, groupClass) {
+        function addCheckboxes(provider, models, groupClass) {
             if (!models.length) return;
-            if (label) {
-                $multiWrap.append(
-                    '<span class="hs-chat-multi-group-label' + (groupClass ? ' ' + groupClass : '') + '">' + label + '</span>'
-                );
-            }
-            $.each(models, function (_, m) {
-                var cbId   = 'hsmulti-' + uid + '-' + m.name.replace(/[^a-z0-9]/gi, '_');
-                var extra  = m.size ? ' <span class="hs-chat-multi-size">' + hsEscape(m.size) + '</span>' : '';
-                var action = modelActions[m.name] || 'hs_chat';
+            // Sort alphabetically by model name within the provider group.
+            var sorted = models.slice().sort(function (a, b) {
+                return a.name.localeCompare(b.name);
+            });
+            // Provider group header.
+            $multiWrap.append(
+                '<span class="hs-chat-multi-group-label' + (groupClass ? ' ' + groupClass : '') + '">' + hsEscape(provider) + '</span>'
+            );
+            $.each(sorted, function (_, m) {
+                var cbId      = 'hsmulti-' + uid + '-' + m.name.replace(/[^a-z0-9]/gi, '_');
+                var itemLabel = hsEscape(provider) + ' - ' + hsEscape(m.name);
+                var extra     = m.size ? ' <span class="hs-chat-multi-size">' + hsEscape(m.size) + '</span>' : '';
+                var action    = modelActions[m.name] || 'hs_chat';
                 $multiWrap.append(
                     '<label class="hs-chat-multi-model-label" for="' + cbId + '">' +
                     '<input type="checkbox" class="hs-chat-multi-check" id="' + cbId +
                         '" value="' + hsEscape(m.name) + '" data-action="' + action + '">' +
-                    ' ' + hsEscape(m.name) + extra + '</label>'
+                    ' ' + itemLabel + extra + '</label>'
                 );
             });
         }
 
-        if (useGroups) {
-            addCheckboxes('Ollama', ollamaModels, '');
-            addCheckboxes('OpenAI', openaiModels, 'hs-chat-multi-group-openai');
-            addCheckboxes('Claude', claudeModels, 'hs-chat-multi-group-claude');
-        } else {
-            addCheckboxes('', allModels, '');
-        }
+        addCheckboxes('Ollama', ollamaModels, '');
+        addCheckboxes('OpenAI', openaiModels, 'hs-chat-multi-group-openai');
+        addCheckboxes('Claude', claudeModels, 'hs-chat-multi-group-claude');
+        addCheckboxes('Gemini', geminiModels, 'hs-chat-multi-group-gemini');
     }
 
     function hsChatGetAction($widget, model) {
@@ -930,17 +1084,19 @@
         var customUrl = $widget.data('hs-chat-custom-url') || '';
         var openai    = $widget.data('openai') === '1' || $widget.data('openai') === 1;
         var claude    = $widget.data('claude')  === '1' || $widget.data('claude')  === 1;
+        var gemini    = $widget.data('gemini')  === '1' || $widget.data('gemini')  === 1;
         var postData  = { action: 'hs_chat_models', _nonce: nonce };
         if (customUrl) postData.ollama_url = customUrl;
 
         var ollama  = [];
         var oai     = [];
         var ant     = [];
-        var pending = 1 + (openai ? 1 : 0) + (claude ? 1 : 0);
+        var gem     = [];
+        var pending = 1 + (openai ? 1 : 0) + (claude ? 1 : 0) + (gemini ? 1 : 0);
 
         function done() {
             pending--;
-            if (pending === 0) callback(ollama.concat(oai).concat(ant));
+            if (pending === 0) callback(ollama.concat(oai).concat(ant).concat(gem));
         }
 
         $.post(ajaxUrl, postData, function (res) {
@@ -956,6 +1112,12 @@
         if (claude) {
             $.post(ajaxUrl, { action: 'hs_chat_claude_models', _nonce: nonce }, function (res) {
                 if (res.success && res.data && res.data.models) ant = res.data.models;
+            }).always(done);
+        }
+
+        if (gemini) {
+            $.post(ajaxUrl, { action: 'hs_chat_gemini_models', _nonce: nonce }, function (res) {
+                if (res.success && res.data && res.data.models) gem = res.data.models;
             }).always(done);
         }
     }

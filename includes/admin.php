@@ -264,11 +264,26 @@ class Handschelle_Admin {
                 break;
 
             case 'save_ollama':
-                update_option( 'hs_ollama_url',            sanitize_text_field( wp_unslash( $_POST['hs_ollama_url']            ?? 'http://localhost:11434' ) ) );
+                $ollama_mode_save = in_array( $_POST['hs_ollama_mode'] ?? 'local', array( 'local', 'remote' ), true )
+                    ? $_POST['hs_ollama_mode'] : 'local';
+                update_option( 'hs_ollama_mode', $ollama_mode_save );
+                // In local mode always use localhost; in remote mode use the submitted URL.
+                if ( $ollama_mode_save === 'remote' ) {
+                    $url_save = sanitize_text_field( wp_unslash( $_POST['hs_ollama_url'] ?? '' ) );
+                    update_option( 'hs_ollama_url', $url_save ?: 'http://localhost:11434' );
+                } else {
+                    update_option( 'hs_ollama_url', 'http://localhost:11434' );
+                }
                 update_option( 'hs_ollama_default_model',  sanitize_text_field( wp_unslash( $_POST['hs_ollama_default_model']  ?? '' ) ) );
                 update_option( 'hs_ollama_system_prompt',  sanitize_textarea_field( wp_unslash( $_POST['hs_ollama_system_prompt'] ?? '' ) ) );
                 update_option( 'hs_ollama_timeout',        max( 10, intval( $_POST['hs_ollama_timeout'] ?? 120 ) ) );
                 update_option( 'hs_ollama_chat_page',      sanitize_text_field( wp_unslash( $_POST['hs_ollama_chat_page']      ?? '' ) ) );
+                // Ollama Cloud API key (only updated if non-empty to avoid accidental clearing)
+                if ( ! empty( $_POST['hs_ollama_api_key'] ) ) {
+                    update_option( 'hs_ollama_api_key', sanitize_text_field( wp_unslash( $_POST['hs_ollama_api_key'] ) ) );
+                } elseif ( isset( $_POST['hs_ollama_api_key_clear'] ) ) {
+                    delete_option( 'hs_ollama_api_key' );
+                }
                 // OpenAI settings (key only updated if non-empty to avoid accidental clearing)
                 if ( ! empty( $_POST['hs_openai_api_key'] ) ) {
                     update_option( 'hs_openai_api_key', sanitize_text_field( wp_unslash( $_POST['hs_openai_api_key'] ) ) );
@@ -283,6 +298,21 @@ class Handschelle_Admin {
                     delete_option( 'hs_claude_api_key' );
                 }
                 update_option( 'hs_claude_default_model', sanitize_text_field( wp_unslash( $_POST['hs_claude_default_model'] ?? 'claude-3-5-sonnet-20241022' ) ) );
+                // Google Gemini settings
+                if ( ! empty( $_POST['hs_gemini_api_key'] ) ) {
+                    update_option( 'hs_gemini_api_key', sanitize_text_field( wp_unslash( $_POST['hs_gemini_api_key'] ) ) );
+                } elseif ( isset( $_POST['hs_gemini_api_key_clear'] ) ) {
+                    delete_option( 'hs_gemini_api_key' );
+                }
+                update_option( 'hs_gemini_default_model', sanitize_text_field( wp_unslash( $_POST['hs_gemini_default_model'] ?? 'gemini-2.0-flash' ) ) );
+                // AI-Profil settings
+                update_option( 'hs_profile_questions',      sanitize_textarea_field( wp_unslash( $_POST['hs_profile_questions']    ?? '' ) ) );
+                update_option( 'hs_profile_system_prompt',  sanitize_textarea_field( wp_unslash( $_POST['hs_profile_system_prompt'] ?? '' ) ) );
+                $allowed_providers = array( 'ollama', 'openai', 'claude', 'gemini' );
+                $profile_prov = in_array( $_POST['hs_profile_provider'] ?? 'ollama', $allowed_providers, true )
+                    ? $_POST['hs_profile_provider'] : 'ollama';
+                update_option( 'hs_profile_provider', $profile_prov );
+                update_option( 'hs_profile_model',    sanitize_text_field( wp_unslash( $_POST['hs_profile_model'] ?? '' ) ) );
                 $this->redirect( admin_url( 'admin.php?page=handschelle-ollama' ), 'Einstellungen gespeichert.' );
                 break;
         }
@@ -2634,12 +2664,18 @@ class Handschelle_Admin {
        SEITE: DATENBANK
     ================================================================ */
     public function page_ollama() {
-        $nonce          = wp_create_nonce( 'handschelle_admin_action' );
-        $ollama_url     = get_option( 'hs_ollama_url',           'http://localhost:11434' );
-        $default_model  = get_option( 'hs_ollama_default_model', '' );
-        $system_prompt  = get_option( 'hs_ollama_system_prompt', 'Du bist ein hilfreicher Assistent.' );
-        $timeout        = intval( get_option( 'hs_ollama_timeout', 120 ) );
-        $chat_page      = get_option( 'hs_ollama_chat_page',     '/chat/' );
+        $nonce               = wp_create_nonce( 'handschelle_admin_action' );
+        $ollama_mode         = get_option( 'hs_ollama_mode',             'local' );
+        $ollama_url          = get_option( 'hs_ollama_url',              'http://localhost:11434' );
+        $ollama_api_key      = get_option( 'hs_ollama_api_key',          '' );
+        $default_model       = get_option( 'hs_ollama_default_model',    '' );
+        $system_prompt       = get_option( 'hs_ollama_system_prompt',    'Du bist ein hilfreicher Assistent.' );
+        $timeout             = intval( get_option( 'hs_ollama_timeout',  120 ) );
+        $chat_page           = get_option( 'hs_ollama_chat_page',        '/chat/' );
+        $profile_questions   = get_option( 'hs_profile_questions',       '' );
+        $profile_sys_prompt  = get_option( 'hs_profile_system_prompt',   'Du bist ein sachlicher Fakten-Assistent. Antworte knapp und präzise.' );
+        $profile_provider    = get_option( 'hs_profile_provider',        'ollama' );
+        $profile_model       = get_option( 'hs_profile_model',           '' );
         ?>
         <div class="wrap hs-wrap">
             <h1>🤖 Ollama KI-Konfiguration</h1>
@@ -2652,13 +2688,37 @@ class Handschelle_Admin {
                     <div class="hs-form-section">
                         <h3>Verbindung</h3>
                         <div class="hs-form-grid">
-                            <div class="hs-field">
-                                <label for="hs_ollama_url">Ollama Server-URL</label>
-                                <input type="text" id="hs_ollama_url" name="hs_ollama_url"
-                                       value="<?php echo esc_attr( $ollama_url ); ?>"
-                                       placeholder="http://localhost:11434">
-                                <span class="description">Adresse des lokalen oder remote Ollama-Servers.</span>
+                            <div class="hs-field hs-field-full">
+                                <label>Server-Typ</label>
+                                <div style="display:flex;gap:1.5rem;margin-top:.3rem;">
+                                    <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer;">
+                                        <input type="radio" name="hs_ollama_mode" id="hs_ollama_mode_local"
+                                               value="local" <?php checked( $ollama_mode, 'local' ); ?>>
+                                        🖥️ Lokaler Server
+                                    </label>
+                                    <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer;">
+                                        <input type="radio" name="hs_ollama_mode" id="hs_ollama_mode_remote"
+                                               value="remote" <?php checked( $ollama_mode, 'remote' ); ?>>
+                                        ☁️ Remote-Server (Cloud)
+                                    </label>
+                                </div>
+                                <span class="description" id="hs-ollama-mode-hint">
+                                    <?php if ( $ollama_mode === 'remote' ) : ?>
+                                    Remote-Modus: Die URL des Cloud-Servers und ein optionaler API-Key sind erforderlich. Der Chat-Widget erlaubt keine clientseitige URL-Änderung.
+                                    <?php else : ?>
+                                    Lokaler Modus: Ollama läuft auf demselben Server wie WordPress (Standard: <code>http://localhost:11434</code>).
+                                    <?php endif; ?>
+                                </span>
                             </div>
+
+                            <div class="hs-field" id="hs-ollama-url-row" <?php echo $ollama_mode === 'local' ? 'style="display:none"' : ''; ?>>
+                                <label for="hs_ollama_url">Remote Server-URL</label>
+                                <input type="text" id="hs_ollama_url" name="hs_ollama_url"
+                                       value="<?php echo esc_attr( $ollama_url !== 'http://localhost:11434' ? $ollama_url : '' ); ?>"
+                                       placeholder="https://ollama.example.com">
+                                <span class="description">Vollständige URL des Remote-Ollama-Servers inkl. Protokoll und Port.</span>
+                            </div>
+
                             <div class="hs-field">
                                 <label for="hs_ollama_chat_page">Chat-Seiten-URL</label>
                                 <input type="text" id="hs_ollama_chat_page" name="hs_ollama_chat_page"
@@ -2677,7 +2737,52 @@ class Handschelle_Admin {
                                        min="10" max="600" style="width:120px;">
                                 <span class="description">Max. Wartezeit auf eine Antwort (10–600 s).</span>
                             </div>
+
+                            <div class="hs-field" id="hs-ollama-apikey-row" <?php echo $ollama_mode === 'local' ? 'style="display:none"' : ''; ?>>
+                                <label for="hs_ollama_api_key">API-Key (optional)</label>
+                                <?php $has_ollama_key = ! empty( $ollama_api_key ); ?>
+                                <div style="display:flex;gap:.5rem;align-items:center;">
+                                    <input type="password" id="hs_ollama_api_key" name="hs_ollama_api_key"
+                                           value=""
+                                           placeholder="<?php echo $has_ollama_key ? '••••••••  (gesetzt – leer lassen zum Beibehalten)' : 'Bearer-Token …'; ?>"
+                                           autocomplete="new-password" style="flex:1;font-family:monospace;">
+                                    <?php if ( $has_ollama_key ) : ?>
+                                    <label style="white-space:nowrap;font-size:.85rem;display:flex;align-items:center;gap:.3rem;">
+                                        <input type="checkbox" name="hs_ollama_api_key_clear" value="1"> Key löschen
+                                    </label>
+                                    <?php endif; ?>
+                                </div>
+                                <span class="description">
+                                    <?php if ( $has_ollama_key ) : ?>
+                                    ✅ API-Key ist gesetzt. Wird als <code>Authorization: Bearer …</code> Header übermittelt.
+                                    <?php else : ?>
+                                    Für Remote-Server mit Authentifizierung. Wird als <code>Authorization: Bearer …</code> Header gesendet.
+                                    <?php endif; ?>
+                                </span>
+                            </div>
                         </div>
+
+                        <script>
+                        (function() {
+                            var radios   = document.querySelectorAll('input[name="hs_ollama_mode"]');
+                            var urlRow   = document.getElementById('hs-ollama-url-row');
+                            var keyRow   = document.getElementById('hs-ollama-apikey-row');
+                            var hint     = document.getElementById('hs-ollama-mode-hint');
+                            var urlInput = document.getElementById('hs_ollama_url');
+                            function update(mode) {
+                                var isRemote = mode === 'remote';
+                                urlRow.style.display = isRemote ? '' : 'none';
+                                keyRow.style.display = isRemote ? '' : 'none';
+                                if (!isRemote) { urlInput.value = ''; }
+                                hint.innerHTML = isRemote
+                                    ? 'Remote-Modus: Die URL des Cloud-Servers und ein optionaler API-Key sind erforderlich. Der Chat-Widget erlaubt keine clientseitige URL-Änderung.'
+                                    : 'Lokaler Modus: Ollama läuft auf demselben Server wie WordPress (Standard: <code>http://localhost:11434</code>).';
+                            }
+                            radios.forEach(function(r) {
+                                r.addEventListener('change', function() { update(this.value); });
+                            });
+                        })();
+                        </script>
                     </div>
 
                     <div class="hs-form-section">
@@ -2738,7 +2843,7 @@ class Handschelle_Admin {
                             <div class="hs-field">
                                 <label for="hs_openai_default_model">Standard-Modell</label>
                                 <?php
-                                $openai_models = array( 'gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo', 'o1', 'o3-mini' );
+                                $openai_models = array( 'gpt-4.5', 'gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo', 'o4-mini', 'o3', 'o3-mini', 'o1' );
                                 $openai_current = get_option( 'hs_openai_default_model', 'gpt-4o' );
                                 ?>
                                 <select id="hs_openai_default_model" name="hs_openai_default_model" style="max-width:220px;">
@@ -2817,6 +2922,113 @@ class Handschelle_Admin {
                     </div>
 
                     <div class="hs-form-section">
+                        <h3>🤖 Google Gemini</h3>
+                        <p class="description" style="margin-bottom:1rem;">
+                            Trage hier deinen Google AI API-Key ein, damit der Chat-Widget auch Gemini-Modelle nutzen kann.
+                            Den Key erhältst du unter <strong>aistudio.google.com → API keys</strong>.
+                        </p>
+                        <div class="hs-form-grid">
+                            <div class="hs-field">
+                                <label for="hs_gemini_api_key">API-Key</label>
+                                <?php $has_gemini_key = ! empty( get_option( 'hs_gemini_api_key', '' ) ); ?>
+                                <div style="display:flex;gap:.5rem;align-items:center;">
+                                    <input type="password" id="hs_gemini_api_key" name="hs_gemini_api_key"
+                                           value=""
+                                           placeholder="<?php echo $has_gemini_key ? '••••••••  (gesetzt – leer lassen zum Beibehalten)' : 'AIza…'; ?>"
+                                           autocomplete="new-password" style="flex:1;font-family:monospace;">
+                                    <?php if ( $has_gemini_key ) : ?>
+                                    <label style="white-space:nowrap;font-size:.85rem;display:flex;align-items:center;gap:.3rem;">
+                                        <input type="checkbox" name="hs_gemini_api_key_clear" value="1"> Key löschen
+                                    </label>
+                                    <?php endif; ?>
+                                </div>
+                                <span class="description">
+                                    <?php if ( $has_gemini_key ) : ?>
+                                    ✅ API-Key ist gesetzt. Leer lassen, um ihn beizubehalten.
+                                    <?php else : ?>
+                                    Noch kein Key gesetzt. Gemini-Modelle werden erst nach dem Speichern im Frontend angezeigt.
+                                    <?php endif; ?>
+                                </span>
+                            </div>
+                            <div class="hs-field">
+                                <label for="hs_gemini_default_model">Standard-Modell</label>
+                                <?php
+                                $gemini_models  = array( 'gemini-2.5-pro', 'gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-pro', 'gemini-1.5-flash' );
+                                $gemini_current = get_option( 'hs_gemini_default_model', 'gemini-2.0-flash' );
+                                ?>
+                                <select id="hs_gemini_default_model" name="hs_gemini_default_model" style="max-width:260px;">
+                                    <?php foreach ( $gemini_models as $m ) : ?>
+                                    <option value="<?php echo esc_attr( $m ); ?>" <?php selected( $gemini_current, $m ); ?>>
+                                        <?php echo esc_html( $m ); ?>
+                                    </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <span class="description">Vorgabe, wenn Gemini im Chat-Widget aktiv ist.</span>
+                            </div>
+                        </div>
+                        <?php if ( $has_gemini_key ) : ?>
+                        <div style="margin-top:.75rem;">
+                            <button type="button" id="hs-gemini-test-btn" class="button button-secondary">
+                                🔌 Gemini-Verbindung testen
+                            </button>
+                            <span id="hs-gemini-test-result" style="margin-left:.75rem;font-weight:600;"></span>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="hs-form-section">
+                        <h3>🧾 AI-Profil Fragen</h3>
+                        <p class="description" style="margin-bottom:1rem;">
+                            Diese Fragen werden der Reihe nach gestellt, wenn ein Besucher auf den <strong>🤖 AI-Profil</strong>-Button einer Karte klickt.
+                            Nutze die Platzhalter <code>{name}</code>, <code>{partei}</code> und <code>{straftat}</code> – sie werden automatisch ersetzt.
+                        </p>
+                        <div class="hs-form-grid">
+                            <div class="hs-field hs-field-full">
+                                <label for="hs_profile_questions">Fragen <span style="font-weight:400;color:#7f8c8d;">(eine pro Zeile)</span></label>
+                                <textarea id="hs_profile_questions" name="hs_profile_questions"
+                                          rows="6" maxlength="4000"><?php echo esc_textarea( $profile_questions ); ?></textarea>
+                                <span class="description">
+                                    <strong>Verfügbare Platzhalter:</strong><br>
+                                    <code>{name}</code> · <code>{beruf}</code> · <code>{spitzname}</code> · <code>{geburtsort}</code> · <code>{geburtsdatum}</code> · <code>{geburtsland}</code> · <code>{verstorben}</code> · <code>{dod}</code><br>
+                                    <code>{partei}</code> · <code>{aufgabe_partei}</code> · <code>{parlament}</code> · <code>{parlament_name}</code> · <code>{status_aktiv}</code><br>
+                                    <code>{straftat}</code> · <code>{urteil}</code> · <code>{aktenzeichen}</code> · <code>{status_straftat}</code> · <code>{bemerkung}</code><br>
+                                    <br>Beispiel:<br>
+                                    <code>Was weißt du über {name} ({partei}, {parlament})?</code><br>
+                                    <code>Welche Vergehen ({status_straftat}) werden {name} vorgeworfen?</code>
+                                </span>
+                            </div>
+                            <div class="hs-field hs-field-full">
+                                <label for="hs_profile_system_prompt">System-Prompt für AI-Profil</label>
+                                <textarea id="hs_profile_system_prompt" name="hs_profile_system_prompt"
+                                          rows="3" maxlength="2000"><?php echo esc_textarea( $profile_sys_prompt ); ?></textarea>
+                            </div>
+                            <div class="hs-field">
+                                <label for="hs_profile_provider">Anbieter</label>
+                                <select id="hs_profile_provider" name="hs_profile_provider" style="max-width:180px;">
+                                    <option value="ollama" <?php selected( $profile_provider, 'ollama' ); ?>>Ollama</option>
+                                    <?php if ( ! empty( get_option( 'hs_openai_api_key', '' ) ) ) : ?>
+                                    <option value="openai" <?php selected( $profile_provider, 'openai' ); ?>>OpenAI</option>
+                                    <?php endif; ?>
+                                    <?php if ( ! empty( get_option( 'hs_claude_api_key', '' ) ) ) : ?>
+                                    <option value="claude" <?php selected( $profile_provider, 'claude' ); ?>>Claude</option>
+                                    <?php endif; ?>
+                                    <?php if ( ! empty( get_option( 'hs_gemini_api_key', '' ) ) ) : ?>
+                                    <option value="gemini" <?php selected( $profile_provider, 'gemini' ); ?>>Gemini</option>
+                                    <?php endif; ?>
+                                </select>
+                                <span class="description">Welcher LLM-Anbieter für das Profil verwendet wird.</span>
+                            </div>
+                            <div class="hs-field">
+                                <label for="hs_profile_model">Modell</label>
+                                <input type="text" id="hs_profile_model" name="hs_profile_model"
+                                       value="<?php echo esc_attr( $profile_model ); ?>"
+                                       placeholder="z.B. llama3.2 oder gpt-4o">
+                                <span class="description">Leer lassen, um das Standard-Modell des gewählten Anbieters zu nutzen.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="hs-form-section">
                         <h3>Verbindungstest (Ollama)</h3>
                         <button type="button" id="hs-ollama-test-btn" class="button button-secondary">
                             🔌 Verbindung testen
@@ -2843,6 +3055,9 @@ class Handschelle_Admin {
                                     <?php endif; ?>
                                     <?php if ( ! empty( get_option( 'hs_claude_api_key', '' ) ) ) : ?>
                                     <option value="claude">Claude</option>
+                                    <?php endif; ?>
+                                    <?php if ( ! empty( get_option( 'hs_gemini_api_key', '' ) ) ) : ?>
+                                    <option value="gemini">Gemini</option>
                                     <?php endif; ?>
                                 </select>
                             </div>
@@ -2959,11 +3174,27 @@ class Handschelle_Admin {
                     .fail(function() { $result.text('❌ Anfrage fehlgeschlagen.').css('color', '#c0392b'); });
             });
 
+            $('#hs-gemini-test-btn').on('click', function() {
+                var $result = $('#hs-gemini-test-result');
+                $result.text('Teste …').css('color', '#7f8c8d');
+                $.post(ajaxUrl, { action: 'hs_chat_gemini_models', _nonce: nonce })
+                    .done(function(res) {
+                        if (res.success && res.data && res.data.models) {
+                            $result.text('✅ API-Key gültig – ' + res.data.models.length + ' Modelle verfügbar.').css('color', '#27ae60');
+                        } else {
+                            var msg = (res.data && res.data.message) ? res.data.message : 'Fehler.';
+                            $result.text('❌ ' + msg).css('color', '#c0392b');
+                        }
+                    })
+                    .fail(function() { $result.text('❌ Anfrage fehlgeschlagen.').css('color', '#c0392b'); });
+            });
+
             // ── Chat-Test ─────────────────────────────────────────────
             var chatTestProviderActions = {
-                ollama: { models: 'hs_chat_models',        chat: 'hs_chat'        },
-                openai: { models: 'hs_chat_openai_models', chat: 'hs_chat_openai' },
-                claude: { models: 'hs_chat_claude_models', chat: 'hs_chat_claude' }
+                ollama: { models: 'hs_chat_models',         chat: 'hs_chat'         },
+                openai: { models: 'hs_chat_openai_models',  chat: 'hs_chat_openai'  },
+                claude: { models: 'hs_chat_claude_models',  chat: 'hs_chat_claude'  },
+                gemini: { models: 'hs_chat_gemini_models',  chat: 'hs_chat_gemini'  }
             };
 
             function loadChatTestModels(provider) {

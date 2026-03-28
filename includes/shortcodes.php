@@ -94,6 +94,19 @@ class Handschelle_Shortcodes {
         add_action( 'wp_ajax_nopriv_hs_chat_claude',        array( $this, 'ajax_chat_claude' ) );
         add_action( 'wp_ajax_hs_chat_claude_models',        array( $this, 'ajax_chat_claude_models' ) );
         add_action( 'wp_ajax_nopriv_hs_chat_claude_models', array( $this, 'ajax_chat_claude_models' ) );
+
+        // AJAX: Google Gemini Chat
+        add_action( 'wp_ajax_hs_chat_gemini',               array( $this, 'ajax_chat_gemini' ) );
+        add_action( 'wp_ajax_nopriv_hs_chat_gemini',        array( $this, 'ajax_chat_gemini' ) );
+        add_action( 'wp_ajax_hs_chat_gemini_models',        array( $this, 'ajax_chat_gemini_models' ) );
+        add_action( 'wp_ajax_nopriv_hs_chat_gemini_models', array( $this, 'ajax_chat_gemini_models' ) );
+
+        // AJAX: AI-Profil
+        add_action( 'wp_ajax_hs_profile_ask',        array( $this, 'ajax_profile_ask' ) );
+        add_action( 'wp_ajax_nopriv_hs_profile_ask', array( $this, 'ajax_profile_ask' ) );
+
+        // Inject AI-Profil config into page footer
+        add_action( 'wp_footer', array( $this, 'inject_profile_config' ) );
     }
 
     /* ================================================================
@@ -1078,6 +1091,29 @@ class Handschelle_Shortcodes {
                     <?php if ( $e->parlament ) : ?><p class="hs-card-parlament"><?php echo esc_html($e->parlament); ?><?php if ( $e->parlament_name ) echo ' (' . esc_html($e->parlament_name) . ')'; ?></p><?php endif; ?>
                     <p class="hs-card-status"><?php echo $e->status_aktiv ? '<span class="hs-badge hs-badge-aktiv">Aktiv</span>' : '<span class="hs-badge hs-badge-inaktiv">Inaktiv</span>'; ?></p>
                     <?php if ( $is_logged_in ) echo $this->ki_person_link( $e->name, $e->partei ); ?>
+                    <?php if ( $is_logged_in && ! empty( get_option( 'hs_profile_questions', '' ) ) ) : ?>
+                    <button type="button" class="hs-profile-btn hs-ki-name-btn"
+                            data-name="<?php echo esc_attr( $e->name ?? '' ); ?>"
+                            data-beruf="<?php echo esc_attr( $e->beruf ?? '' ); ?>"
+                            data-spitzname="<?php echo esc_attr( $e->spitzname ?? '' ); ?>"
+                            data-geburtsort="<?php echo esc_attr( $e->geburtsort ?? '' ); ?>"
+                            data-geburtsdatum="<?php echo esc_attr( $e->geburtsdatum ?? '' ); ?>"
+                            data-geburtsland="<?php echo esc_attr( $e->geburtsland ?? '' ); ?>"
+                            data-verstorben="<?php echo ( ! empty( $e->verstorben ) ) ? esc_attr__( 'verstorben' ) : ''; ?>"
+                            data-dod="<?php echo esc_attr( $e->dod ?? '' ); ?>"
+                            data-partei="<?php echo esc_attr( $e->partei ?? '' ); ?>"
+                            data-aufgabe-partei="<?php echo esc_attr( $e->aufgabe_partei ?? '' ); ?>"
+                            data-parlament="<?php echo esc_attr( $e->parlament ?? '' ); ?>"
+                            data-parlament-name="<?php echo esc_attr( $e->parlament_name ?? '' ); ?>"
+                            data-status-aktiv="<?php echo ( ! empty( $e->status_aktiv ) ) ? 'Aktiv' : 'Inaktiv'; ?>"
+                            data-straftat="<?php echo esc_attr( $e->straftat ?? '' ); ?>"
+                            data-urteil="<?php echo esc_attr( $e->urteil ?? '' ); ?>"
+                            data-aktenzeichen="<?php echo esc_attr( $e->aktenzeichen ?? '' ); ?>"
+                            data-status-straftat="<?php echo esc_attr( $e->status_straftat ?? '' ); ?>"
+                            data-bemerkung="<?php echo esc_attr( $e->bemerkung ?? '' ); ?>">
+                        🧾 AI-Profil
+                    </button>
+                    <?php endif; ?>
                 </div>
                 <?php if ( $is_author ) : ?>
                 <button type="button"
@@ -2948,8 +2984,10 @@ class Handschelle_Shortcodes {
         $uid             = 'hs-chat-' . wp_rand( 1000, 9999 );
         $nonce           = wp_create_nonce( 'hs_chat_nonce' );
         $ollama_url      = get_option( 'hs_ollama_url', 'http://localhost:11434' );
+        $ollama_mode     = get_option( 'hs_ollama_mode', 'local' ); // 'local' | 'remote'
         $openai_enabled  = ! empty( get_option( 'hs_openai_api_key', '' ) ) ? '1' : '0';
         $claude_enabled  = ! empty( get_option( 'hs_claude_api_key',  '' ) ) ? '1' : '0';
+        $gemini_enabled  = ! empty( get_option( 'hs_gemini_api_key',  '' ) ) ? '1' : '0';
 
         ob_start();
         ?>
@@ -2959,8 +2997,10 @@ class Handschelle_Shortcodes {
              data-nonce="<?php echo esc_attr( $nonce ); ?>"
              data-ajax="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>"
              data-ollama-url="<?php echo esc_attr( $ollama_url ); ?>"
+             data-ollama-mode="<?php echo esc_attr( $ollama_mode ); ?>"
              data-openai="<?php echo esc_attr( $openai_enabled ); ?>"
              data-claude="<?php echo esc_attr( $claude_enabled ); ?>"
+             data-gemini="<?php echo esc_attr( $gemini_enabled ); ?>"
              <?php if ( $atts['urlparam'] !== '' ) : ?>
              data-urlparam="<?php echo esc_attr( $atts['urlparam'] ); ?>"
              <?php endif; ?>>
@@ -2991,6 +3031,7 @@ class Handschelle_Shortcodes {
                         Temperatur <span class="hs-chat-temp-value">0.7</span>
                         <input type="range" class="hs-chat-settings-temp" min="0" max="2" step="0.1" value="0.7">
                     </label>
+                    <?php if ( $ollama_mode === 'local' ) : ?>
                     <label class="hs-chat-settings-label hs-chat-settings-url-row">
                         Ollama URL
                         <div class="hs-chat-settings-url-wrap">
@@ -3002,6 +3043,7 @@ class Handschelle_Shortcodes {
                         </div>
                         <span class="hs-chat-settings-url-hint">Nur localhost / 127.0.0.1 erlaubt</span>
                     </label>
+                    <?php endif; ?>
                     <div class="hs-chat-settings-label hs-chat-settings-multi-row" id="hs-multi-panel-<?php echo esc_attr( $uid ); ?>" hidden>
                         Mehrere Modelle gleichzeitig
                         <div class="hs-chat-multi-models">
@@ -3079,8 +3121,10 @@ class Handschelle_Shortcodes {
         }
         $messages[] = array( 'role' => 'user', 'content' => $message );
 
-        $ollama_url = get_option( 'hs_ollama_url', 'http://localhost:11434' );
-        if ( ! empty( $_POST['ollama_url'] ) ) {
+        $ollama_url  = get_option( 'hs_ollama_url', 'http://localhost:11434' );
+        $ollama_mode = get_option( 'hs_ollama_mode', 'local' );
+        // Client-side URL overrides are only allowed in local mode (SSRF guard).
+        if ( $ollama_mode === 'local' && ! empty( $_POST['ollama_url'] ) ) {
             $override = $this->validate_ollama_url_override( wp_unslash( $_POST['ollama_url'] ) );
             if ( $override ) $ollama_url = $override;
         }
@@ -3095,9 +3139,15 @@ class Handschelle_Shortcodes {
 
         $timeout = max( 10, intval( get_option( 'hs_ollama_timeout', 120 ) ) );
 
+        $headers = array( 'Content-Type' => 'application/json' );
+        $ollama_api_key = get_option( 'hs_ollama_api_key', '' );
+        if ( ! empty( $ollama_api_key ) ) {
+            $headers['Authorization'] = 'Bearer ' . $ollama_api_key;
+        }
+
         $response = wp_remote_post( $endpoint, array(
             'timeout'     => $timeout,
-            'headers'     => array( 'Content-Type' => 'application/json' ),
+            'headers'     => $headers,
             'body'        => $body,
             'data_format' => 'body',
         ) );
@@ -3139,14 +3189,22 @@ class Handschelle_Shortcodes {
     public function ajax_chat_models() {
         check_ajax_referer( 'hs_chat_nonce', '_nonce' );
 
-        $ollama_url = get_option( 'hs_ollama_url', 'http://localhost:11434' );
-        if ( ! empty( $_POST['ollama_url'] ) ) {
+        $ollama_url  = get_option( 'hs_ollama_url', 'http://localhost:11434' );
+        $ollama_mode = get_option( 'hs_ollama_mode', 'local' );
+        // Client-side URL overrides are only allowed in local mode (SSRF guard).
+        if ( $ollama_mode === 'local' && ! empty( $_POST['ollama_url'] ) ) {
             $override = $this->validate_ollama_url_override( wp_unslash( $_POST['ollama_url'] ) );
             if ( $override ) $ollama_url = $override;
         }
         $endpoint = trailingslashit( $ollama_url ) . 'api/tags';
 
-        $response = wp_remote_get( $endpoint, array( 'timeout' => 10 ) );
+        $get_headers = array();
+        $ollama_api_key = get_option( 'hs_ollama_api_key', '' );
+        if ( ! empty( $ollama_api_key ) ) {
+            $get_headers['Authorization'] = 'Bearer ' . $ollama_api_key;
+        }
+
+        $response = wp_remote_get( $endpoint, array( 'timeout' => 10, 'headers' => $get_headers ) );
 
         if ( is_wp_error( $response ) ) {
             wp_send_json_error( array(
@@ -3217,11 +3275,16 @@ class Handschelle_Shortcodes {
         }
         $messages[] = array( 'role' => 'user', 'content' => $message );
 
-        $body = wp_json_encode( array(
-            'model'       => $model,
-            'messages'    => $messages,
-            'temperature' => $temperature,
-        ) );
+        // o-series reasoning models do not support the temperature parameter.
+        $is_o_model = (bool) preg_match( '/^o\d/i', $model );
+        $payload = array(
+            'model'    => $model,
+            'messages' => $messages,
+        );
+        if ( ! $is_o_model ) {
+            $payload['temperature'] = $temperature;
+        }
+        $body = wp_json_encode( $payload );
 
         $timeout    = max( 10, intval( get_option( 'hs_ollama_timeout', 120 ) ) );
         $time_start = microtime( true );
@@ -3279,13 +3342,16 @@ class Handschelle_Shortcodes {
         }
 
         $models = array(
-            array( 'name' => 'gpt-4o',        'size' => 'Flagship'    ),
-            array( 'name' => 'gpt-4o-mini',   'size' => 'Fast & cheap' ),
-            array( 'name' => 'gpt-4-turbo',   'size' => '128k ctx'    ),
-            array( 'name' => 'gpt-4',         'size' => 'Classic'     ),
-            array( 'name' => 'gpt-3.5-turbo', 'size' => 'Legacy'      ),
-            array( 'name' => 'o1',            'size' => 'Reasoning'   ),
-            array( 'name' => 'o3-mini',       'size' => 'Reasoning'   ),
+            array( 'name' => 'gpt-4.5',       'size' => 'Flagship'         ),
+            array( 'name' => 'gpt-4o',        'size' => 'Multimodal'       ),
+            array( 'name' => 'gpt-4o-mini',   'size' => 'Fast & cheap'     ),
+            array( 'name' => 'gpt-4-turbo',   'size' => '128k ctx'         ),
+            array( 'name' => 'gpt-4',         'size' => 'Classic'          ),
+            array( 'name' => 'gpt-3.5-turbo', 'size' => 'Legacy'           ),
+            array( 'name' => 'o4-mini',       'size' => 'Reasoning – fast' ),
+            array( 'name' => 'o3',            'size' => 'Reasoning'        ),
+            array( 'name' => 'o3-mini',       'size' => 'Reasoning – mini' ),
+            array( 'name' => 'o1',            'size' => 'Reasoning – v1'   ),
         );
 
         wp_send_json_success( array( 'models' => $models ) );
@@ -3407,6 +3473,297 @@ class Handschelle_Shortcodes {
         );
 
         wp_send_json_success( array( 'models' => $models ) );
+    }
+
+    /* ================================================================
+       AJAX: Google Gemini Chat
+    ================================================================ */
+
+    /**
+     * AJAX handler – proxies a message to the Google Gemini API.
+     * Expects POST fields: message, model, history (JSON), system, temperature, _nonce
+     */
+    public function ajax_chat_gemini() {
+        check_ajax_referer( 'hs_chat_nonce', '_nonce' );
+
+        $api_key = get_option( 'hs_gemini_api_key', '' );
+        if ( empty( $api_key ) ) {
+            wp_send_json_error( array( 'message' => 'Kein Gemini API-Key konfiguriert.' ), 400 );
+        }
+
+        $message     = sanitize_text_field( wp_unslash( $_POST['message']    ?? '' ) );
+        $model       = sanitize_text_field( wp_unslash( $_POST['model']      ?? 'gemini-2.0-flash' ) );
+        $system      = sanitize_textarea_field( wp_unslash( $_POST['system'] ?? '' ) );
+        $temperature = isset( $_POST['temperature'] ) ? max( 0.0, min( 2.0, (float) $_POST['temperature'] ) ) : 0.7;
+        $history     = json_decode( wp_unslash( $_POST['history'] ?? '[]' ), true );
+        if ( ! is_array( $history ) ) {
+            $history = array();
+        }
+
+        if ( empty( $message ) ) {
+            wp_send_json_error( array( 'message' => 'Leere Nachricht.' ), 400 );
+        }
+
+        // Gemini uses "user" / "model" roles and parts arrays.
+        $contents = array();
+        foreach ( $history as $entry ) {
+            if ( ! isset( $entry['role'], $entry['content'] ) ) continue;
+            $role = sanitize_text_field( $entry['role'] );
+            // Gemini calls the assistant role "model".
+            if ( $role === 'assistant' ) $role = 'model';
+            $contents[] = array(
+                'role'  => $role,
+                'parts' => array( array( 'text' => sanitize_textarea_field( $entry['content'] ) ) ),
+            );
+        }
+        $contents[] = array(
+            'role'  => 'user',
+            'parts' => array( array( 'text' => $message ) ),
+        );
+
+        $body_arr = array(
+            'contents'         => $contents,
+            'generationConfig' => array(
+                'temperature'     => $temperature,
+                'maxOutputTokens' => 8192,
+            ),
+        );
+        if ( ! empty( $system ) ) {
+            $body_arr['system_instruction'] = array( 'parts' => array( array( 'text' => $system ) ) );
+        }
+
+        $endpoint   = 'https://generativelanguage.googleapis.com/v1beta/models/' . rawurlencode( $model ) . ':generateContent?key=' . rawurlencode( $api_key );
+        $timeout    = max( 10, intval( get_option( 'hs_ollama_timeout', 120 ) ) );
+        $time_start = microtime( true );
+
+        $response = wp_remote_post( $endpoint, array(
+            'timeout'     => $timeout,
+            'headers'     => array( 'Content-Type' => 'application/json' ),
+            'body'        => wp_json_encode( $body_arr ),
+            'data_format' => 'body',
+        ) );
+
+        $elapsed = microtime( true ) - $time_start;
+
+        if ( is_wp_error( $response ) ) {
+            wp_send_json_error( array(
+                'message' => 'Gemini nicht erreichbar: ' . $response->get_error_message(),
+            ), 502 );
+        }
+
+        $code = wp_remote_retrieve_response_code( $response );
+        $raw  = wp_remote_retrieve_body( $response );
+        $data = json_decode( $raw, true );
+
+        if ( $code !== 200 || empty( $data['candidates'][0]['content']['parts'][0]['text'] ) ) {
+            $err = $data['error']['message'] ?? ( 'HTTP ' . intval( $code ) );
+            wp_send_json_error( array( 'message' => 'Fehler von Gemini: ' . $err ), 502 );
+        }
+
+        $reply    = $data['candidates'][0]['content']['parts'][0]['text'];
+        $eval_tok = (int) ( $data['usageMetadata']['candidatesTokenCount'] ?? 0 );
+        $toks_sec = $elapsed > 0 ? round( $eval_tok / $elapsed, 1 ) : 0;
+
+        wp_send_json_success( array(
+            'reply'      => $reply,
+            'model'      => $model,
+            'time_s'     => round( $elapsed, 2 ),
+            'toks_sec'   => $toks_sec,
+            'eval_count' => $eval_tok,
+        ) );
+    }
+
+    /**
+     * AJAX handler – returns the curated list of available Gemini models.
+     * Only responds if an API key is configured.
+     */
+    public function ajax_chat_gemini_models() {
+        check_ajax_referer( 'hs_chat_nonce', '_nonce' );
+
+        if ( empty( get_option( 'hs_gemini_api_key', '' ) ) ) {
+            wp_send_json_error( array( 'message' => 'Kein Gemini API-Key konfiguriert.' ), 400 );
+        }
+
+        $models = array(
+            array( 'name' => 'gemini-2.5-pro',        'size' => 'Most capable' ),
+            array( 'name' => 'gemini-2.0-flash',      'size' => 'Fast'         ),
+            array( 'name' => 'gemini-2.0-flash-lite', 'size' => 'Lightweight'  ),
+            array( 'name' => 'gemini-1.5-pro',        'size' => 'Balanced'     ),
+            array( 'name' => 'gemini-1.5-flash',      'size' => 'Fast & cheap' ),
+        );
+
+        wp_send_json_success( array( 'models' => $models ) );
+    }
+
+    /* ================================================================
+       AI-PROFIL: Footer config injection
+    ================================================================ */
+
+    /**
+     * Outputs the profile config as a global JS variable in the page footer.
+     * Only runs if profile questions have been configured.
+     */
+    public function inject_profile_config() {
+        $raw = get_option( 'hs_profile_questions', '' );
+        if ( empty( trim( $raw ) ) ) return;
+
+        $lines = array_values( array_filter(
+            array_map( 'trim', explode( "\n", $raw ) )
+        ) );
+        if ( empty( $lines ) ) return;
+
+        $config = array(
+            'questions'    => $lines,
+            'systemPrompt' => get_option( 'hs_profile_system_prompt', '' ),
+            'provider'     => get_option( 'hs_profile_provider', 'ollama' ),
+            'model'        => get_option( 'hs_profile_model', '' ),
+            'ajaxUrl'      => admin_url( 'admin-ajax.php' ),
+            'nonce'        => wp_create_nonce( 'hs_chat_nonce' ),
+        );
+
+        echo '<script>window.hsProfileConfig = ' . wp_json_encode( $config ) . ';</script>' . "\n";
+    }
+
+    /* ================================================================
+       AI-PROFIL: AJAX handler
+    ================================================================ */
+
+    /**
+     * Handles a single AI-Profil question.
+     * Expects POST: question, system, _nonce
+     * Routes to the provider configured via hs_profile_provider.
+     */
+    public function ajax_profile_ask() {
+        check_ajax_referer( 'hs_chat_nonce', '_nonce' );
+
+        $question = sanitize_textarea_field( wp_unslash( $_POST['question'] ?? '' ) );
+        $system   = sanitize_textarea_field( wp_unslash( $_POST['system']   ?? '' ) );
+        if ( empty( $question ) ) {
+            wp_send_json_error( array( 'message' => 'Leere Frage.' ), 400 );
+        }
+
+        $provider = get_option( 'hs_profile_provider', 'ollama' );
+        $model    = get_option( 'hs_profile_model', '' );
+        $timeout  = max( 10, intval( get_option( 'hs_ollama_timeout', 120 ) ) );
+
+        // ── Ollama ────────────────────────────────────────────────
+        if ( $provider === 'ollama' ) {
+            if ( empty( $model ) ) $model = get_option( 'hs_ollama_default_model', 'llama3.2' ) ?: 'llama3.2';
+            $messages = array();
+            if ( ! empty( $system ) ) $messages[] = array( 'role' => 'system', 'content' => $system );
+            $messages[] = array( 'role' => 'user', 'content' => $question );
+
+            $ollama_url = get_option( 'hs_ollama_url', 'http://localhost:11434' );
+            $headers    = array( 'Content-Type' => 'application/json' );
+            $api_key    = get_option( 'hs_ollama_api_key', '' );
+            if ( ! empty( $api_key ) ) $headers['Authorization'] = 'Bearer ' . $api_key;
+
+            $response = wp_remote_post( trailingslashit( $ollama_url ) . 'api/chat', array(
+                'timeout'     => $timeout,
+                'headers'     => $headers,
+                'body'        => wp_json_encode( array( 'model' => $model, 'messages' => $messages, 'stream' => false ) ),
+                'data_format' => 'body',
+            ) );
+            if ( is_wp_error( $response ) ) {
+                wp_send_json_error( array( 'message' => 'Ollama nicht erreichbar: ' . $response->get_error_message() ), 502 );
+            }
+            $data = json_decode( wp_remote_retrieve_body( $response ), true );
+            if ( wp_remote_retrieve_response_code( $response ) !== 200 || empty( $data['message']['content'] ) ) {
+                wp_send_json_error( array( 'message' => 'Fehler von Ollama (HTTP ' . intval( wp_remote_retrieve_response_code( $response ) ) . ').' ), 502 );
+            }
+            wp_send_json_success( array( 'reply' => $data['message']['content'], 'model' => $model ) );
+        }
+
+        // ── OpenAI ────────────────────────────────────────────────
+        if ( $provider === 'openai' ) {
+            $api_key = get_option( 'hs_openai_api_key', '' );
+            if ( empty( $api_key ) ) wp_send_json_error( array( 'message' => 'Kein OpenAI API-Key konfiguriert.' ), 400 );
+            if ( empty( $model ) ) $model = get_option( 'hs_openai_default_model', 'gpt-4o' ) ?: 'gpt-4o';
+
+            $messages = array();
+            if ( ! empty( $system ) ) $messages[] = array( 'role' => 'system', 'content' => $system );
+            $messages[] = array( 'role' => 'user', 'content' => $question );
+
+            $is_o_model = (bool) preg_match( '/^o\d/i', $model );
+            $payload = array( 'model' => $model, 'messages' => $messages );
+            if ( ! $is_o_model ) $payload['temperature'] = 0.7;
+
+            $response = wp_remote_post( 'https://api.openai.com/v1/chat/completions', array(
+                'timeout'     => $timeout,
+                'headers'     => array( 'Content-Type' => 'application/json', 'Authorization' => 'Bearer ' . $api_key ),
+                'body'        => wp_json_encode( $payload ),
+                'data_format' => 'body',
+            ) );
+            if ( is_wp_error( $response ) ) {
+                wp_send_json_error( array( 'message' => 'OpenAI nicht erreichbar: ' . $response->get_error_message() ), 502 );
+            }
+            $data = json_decode( wp_remote_retrieve_body( $response ), true );
+            if ( wp_remote_retrieve_response_code( $response ) !== 200 || empty( $data['choices'][0]['message']['content'] ) ) {
+                $err = $data['error']['message'] ?? ( 'HTTP ' . intval( wp_remote_retrieve_response_code( $response ) ) );
+                wp_send_json_error( array( 'message' => 'Fehler von OpenAI: ' . $err ), 502 );
+            }
+            wp_send_json_success( array( 'reply' => $data['choices'][0]['message']['content'], 'model' => $model ) );
+        }
+
+        // ── Claude ────────────────────────────────────────────────
+        if ( $provider === 'claude' ) {
+            $api_key = get_option( 'hs_claude_api_key', '' );
+            if ( empty( $api_key ) ) wp_send_json_error( array( 'message' => 'Kein Claude API-Key konfiguriert.' ), 400 );
+            if ( empty( $model ) ) $model = get_option( 'hs_claude_default_model', 'claude-3-5-sonnet-20241022' ) ?: 'claude-3-5-sonnet-20241022';
+
+            $body_arr = array( 'model' => $model, 'max_tokens' => 4096, 'messages' => array( array( 'role' => 'user', 'content' => $question ) ), 'temperature' => 0.7 );
+            if ( ! empty( $system ) ) $body_arr['system'] = $system;
+
+            $response = wp_remote_post( 'https://api.anthropic.com/v1/messages', array(
+                'timeout'     => $timeout,
+                'headers'     => array( 'Content-Type' => 'application/json', 'x-api-key' => $api_key, 'anthropic-version' => '2023-06-01' ),
+                'body'        => wp_json_encode( $body_arr ),
+                'data_format' => 'body',
+            ) );
+            if ( is_wp_error( $response ) ) {
+                wp_send_json_error( array( 'message' => 'Claude nicht erreichbar: ' . $response->get_error_message() ), 502 );
+            }
+            $data = json_decode( wp_remote_retrieve_body( $response ), true );
+            if ( wp_remote_retrieve_response_code( $response ) !== 200 || empty( $data['content'][0]['text'] ) ) {
+                $err = $data['error']['message'] ?? ( 'HTTP ' . intval( wp_remote_retrieve_response_code( $response ) ) );
+                wp_send_json_error( array( 'message' => 'Fehler von Claude: ' . $err ), 502 );
+            }
+            wp_send_json_success( array( 'reply' => $data['content'][0]['text'], 'model' => $model ) );
+        }
+
+        // ── Gemini ────────────────────────────────────────────────
+        if ( $provider === 'gemini' ) {
+            $api_key = get_option( 'hs_gemini_api_key', '' );
+            if ( empty( $api_key ) ) wp_send_json_error( array( 'message' => 'Kein Gemini API-Key konfiguriert.' ), 400 );
+            if ( empty( $model ) ) $model = get_option( 'hs_gemini_default_model', 'gemini-2.0-flash' ) ?: 'gemini-2.0-flash';
+
+            $body_arr = array(
+                'contents'         => array( array( 'role' => 'user', 'parts' => array( array( 'text' => $question ) ) ) ),
+                'generationConfig' => array( 'temperature' => 0.7, 'maxOutputTokens' => 8192 ),
+            );
+            if ( ! empty( $system ) ) {
+                $body_arr['system_instruction'] = array( 'parts' => array( array( 'text' => $system ) ) );
+            }
+
+            $endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/' . rawurlencode( $model ) . ':generateContent?key=' . rawurlencode( $api_key );
+            $response = wp_remote_post( $endpoint, array(
+                'timeout'     => $timeout,
+                'headers'     => array( 'Content-Type' => 'application/json' ),
+                'body'        => wp_json_encode( $body_arr ),
+                'data_format' => 'body',
+            ) );
+            if ( is_wp_error( $response ) ) {
+                wp_send_json_error( array( 'message' => 'Gemini nicht erreichbar: ' . $response->get_error_message() ), 502 );
+            }
+            $data = json_decode( wp_remote_retrieve_body( $response ), true );
+            if ( wp_remote_retrieve_response_code( $response ) !== 200 || empty( $data['candidates'][0]['content']['parts'][0]['text'] ) ) {
+                $err = $data['error']['message'] ?? ( 'HTTP ' . intval( wp_remote_retrieve_response_code( $response ) ) );
+                wp_send_json_error( array( 'message' => 'Fehler von Gemini: ' . $err ), 502 );
+            }
+            wp_send_json_success( array( 'reply' => $data['candidates'][0]['content']['parts'][0]['text'], 'model' => $model ) );
+        }
+
+        wp_send_json_error( array( 'message' => 'Unbekannter Anbieter.' ), 400 );
     }
 
 }
