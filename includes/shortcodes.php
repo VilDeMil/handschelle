@@ -3109,9 +3109,24 @@ class Handschelle_Shortcodes {
             return $v !== '';
         } ) );
 
+        $persons = Handschelle_Database::get_persons_dropdown();
+        $party_by_name = array();
+        foreach ( (array) $persons as $person ) {
+            $nm = isset( $person->name ) ? trim( (string) $person->name ) : '';
+            if ( $nm === '' ) {
+                continue;
+            }
+            $party_by_name[ $nm ] = isset( $person->partei ) ? trim( (string) $person->partei ) : '';
+        }
+
         $raw_fragen = trim( (string) $atts['fragen'] );
+        $fragen_from_admin = false;
         if ( $raw_fragen === '' ) {
-            $raw_fragen = 'Was weißt du über {name}?';
+            $raw_fragen = trim( (string) get_option( 'hs_profile_questions', '' ) );
+            $fragen_from_admin = $raw_fragen !== '';
+        }
+        if ( $raw_fragen === '' ) {
+            $raw_fragen = 'Was weißt du über {name} {partei}?';
         }
 
         $fragen_list = array_values( array_filter( array_map( 'trim', preg_split( '/[|\r\n]+/', $raw_fragen ) ), static function ( $v ) {
@@ -3130,18 +3145,22 @@ class Handschelle_Shortcodes {
                 if ( $nm === '' ) {
                     continue;
                 }
+                $partei = $party_by_name[ $nm ] ?? '';
+                $frage  = str_replace( array( '{name}', '{partei}' ), array( $nm, $partei ), $fr );
                 $pairs[] = array(
                     'name'  => $nm,
-                    'frage' => str_replace( '{name}', $nm, $fr ),
+                    'frage' => $frage,
                 );
             }
         } else {
-            $single_template = count( $fragen_list ) === 1 ? $fragen_list[0] : '';
+            $single_template = ( count( $fragen_list ) === 1 || $fragen_from_admin ) ? ( $fragen_list[0] ?? '' ) : '';
             foreach ( $name_list as $i => $name ) {
-                $frage = $fragen_list[ $i ] ?? $single_template;
+                $frage  = $fragen_list[ $i ] ?? $single_template;
+                $partei = $party_by_name[ $name ] ?? '';
+                $frage  = str_replace( array( '{name}', '{partei}' ), array( $name, $partei ), (string) $frage );
                 $pairs[] = array(
                     'name'  => $name,
-                    'frage' => str_replace( '{name}', $name, (string) $frage ),
+                    'frage' => $frage,
                 );
             }
         }
