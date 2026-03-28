@@ -66,6 +66,7 @@ class Handschelle_Shortcodes {
         add_shortcode( 'handschelle-smart',            array( $this, 'sc_smart_eingabe' ) );
         add_shortcode( 'handschelle-chat',             array( $this, 'sc_chat' ) );
         add_shortcode( 'handschelle-chat-dropdown',    array( $this, 'sc_chat_dropdown' ) );
+        add_shortcode( 'handschelle-profil-tabelle',   array( $this, 'sc_profil_tabelle' ) );
 
         // Submit früh verarbeiten – BEVOR Header gesendet werden
         add_action( 'init', array( $this, 'early_frontend_submit' ) );
@@ -3069,6 +3070,108 @@ class Handschelle_Shortcodes {
                 </button>
             </div>
         </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * Shortcode: [handschelle-profil-tabelle name="Max Mustermann"]
+     *            [handschelle-profil-tabelle urlparam="hs_name"]
+     *
+     * Displays a two-column table with FieldName – FieldContent rows for a person.
+     */
+    public function sc_profil_tabelle( $atts ) {
+        $atts = shortcode_atts( array(
+            'name'     => '',
+            'urlparam' => '',
+        ), $atts, 'handschelle-profil-tabelle' );
+
+        $name = trim( (string) $atts['name'] );
+
+        if ( $name === '' && $atts['urlparam'] !== '' ) {
+            $name = sanitize_text_field( wp_unslash( $_GET[ $atts['urlparam'] ] ?? '' ) );
+        }
+
+        if ( $name === '' ) {
+            return '';
+        }
+
+        $entries = Handschelle_Database::get_all( array(
+            'freigegeben' => 1,
+            'name'        => $name,
+            'orderby'     => 'datum_eintrag',
+            'order'       => 'DESC',
+            'number'      => 1,
+        ) );
+
+        if ( empty( $entries ) ) {
+            return '';
+        }
+
+        $e = $entries[0];
+
+        $age   = handschelle_calc_age( $e->geburtsdatum ?? '' );
+        $rows  = array();
+
+        $rows[] = array( 'Name',   esc_html( $e->name ) );
+
+        if ( ! empty( $e->spitzname ) ) {
+            $rows[] = array( 'Spitzname', esc_html( $e->spitzname ) );
+        }
+        if ( ! empty( $e->beruf ) ) {
+            $rows[] = array( 'Beruf', esc_html( $e->beruf ) );
+        }
+        if ( ! empty( $e->partei ) ) {
+            $val = esc_html( $e->partei );
+            if ( ! empty( $e->aufgabe_partei ) ) {
+                $val .= ' &ndash; ' . esc_html( $e->aufgabe_partei );
+            }
+            $rows[] = array( 'Partei', $val );
+        }
+        if ( ! empty( $e->parlament ) ) {
+            $val = esc_html( $e->parlament );
+            if ( ! empty( $e->parlament_name ) ) {
+                $val .= ' (' . esc_html( $e->parlament_name ) . ')';
+            }
+            $rows[] = array( 'Parlament', $val );
+        }
+
+        $rows[] = array( 'Status', $e->status_aktiv ? 'Aktiv' : 'Inaktiv' );
+
+        if ( ! empty( $e->geburtsdatum ) && $e->geburtsdatum !== '0000-00-00' ) {
+            $val = esc_html( date_i18n( 'd.m.Y', strtotime( $e->geburtsdatum ) ) );
+            if ( $age !== null ) {
+                $val .= ' (Alter: ' . intval( $age ) . ')';
+            }
+            $rows[] = array( 'Geburtsdatum', $val );
+        }
+        if ( ! empty( $e->geburtsort ) ) {
+            $rows[] = array( 'Geburtsort', esc_html( $e->geburtsort ) );
+        }
+        if ( ! empty( $e->geburtsland ) ) {
+            $rows[] = array( 'Geburtsland', esc_html( $e->geburtsland ) );
+        }
+        if ( ! empty( $e->verstorben ) ) {
+            $val = 'Ja';
+            if ( ! empty( $e->dod ) && $e->dod !== '0000-00-00' ) {
+                $val .= ' (' . esc_html( date_i18n( 'd.m.Y', strtotime( $e->dod ) ) ) . ')';
+            }
+            $rows[] = array( 'Verstorben', $val );
+        }
+
+        ob_start();
+        ?>
+        <table class="hs-profil-tabelle">
+            <tbody>
+            <?php foreach ( $rows as $row ) : ?>
+                <tr class="hs-profil-row">
+                    <td class="hs-profil-label"><?php echo esc_html( $row[0] ); ?></td>
+                    <td class="hs-profil-sep">&ndash;</td>
+                    <td class="hs-profil-value"><?php echo $row[1]; ?></td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
         <?php
         return ob_get_clean();
     }

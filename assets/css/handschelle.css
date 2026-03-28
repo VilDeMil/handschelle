@@ -1624,3 +1624,33 @@ a.hs-st-item { display: inline-block; }
 }
 .hs-profile-error { color: var(--hs-accent, #c0392b); font-style: italic; }
 .hs-profile-done  { text-align: center; font-size: .85rem; color: var(--hs-success, #27ae60); font-weight: 600; }
+
+/* ── [handschelle-profil-tabelle] ───────────────────────────────────── */
+.hs-profil-tabelle {
+    border-collapse: collapse;
+    width: 100%;
+    max-width: 560px;
+    font-size: .9rem;
+}
+.hs-profil-row:not(:last-child) td {
+    border-bottom: 1px solid var(--hs-border, #e0e0e0);
+}
+.hs-profil-row td {
+    padding: .45rem .5rem;
+    vertical-align: top;
+}
+.hs-profil-label {
+    font-weight: 600;
+    white-space: nowrap;
+    color: var(--hs-muted, #555);
+    width: 1%;
+}
+.hs-profil-sep {
+    padding-left: .35rem !important;
+    padding-right: .35rem !important;
+    color: var(--hs-muted, #999);
+    width: 1%;
+}
+.hs-profil-value {
+    color: var(--hs-text, #222);
+}
