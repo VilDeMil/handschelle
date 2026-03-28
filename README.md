@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 16.1 |
+| **Version** | 16.2 |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
 | **Lizenz** | GPL-2.0+ |
@@ -123,6 +123,9 @@ Planned features for upcoming versions:
 ---
 
 ## Release Notes
+
+### 16.2 *(2026-03-28)*
+- **Multi-model list: grouped & sorted**: The *Mehrere Modelle gleichzeitig* checkbox list now renders a visible provider header (`Ollama`, `OpenAI`, `Claude`, `Gemini`) before each group, and sorts models alphabetically by name within each group. Version bump 16.1 → 16.2.
 
 ### 16.1 *(2026-03-28)*
 - **Provider prefix in model dropdown & lists**: Every entry in the model selector and multi-model checkbox list now shows `Provider - Model` (e.g. `Ollama - llama3.2`, `OpenAI - gpt-4o`, `Claude - claude-sonnet-4-5`, `Gemini - gemini-2.0-flash`). Applies both when a single provider is active and when multiple providers are combined with optgroups. The group-header rows have been removed from the checkbox list since the provider is already visible in each label. Version bump 16.0 → 16.1.
