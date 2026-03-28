@@ -518,6 +518,19 @@
             $widget.data('model', $(this).val());
         });
 
+        // Dropdown helper for [handschelle-chat-dropdown]
+        $(document).on('change', '.hs-chat-name-select', function () {
+            var $select   = $(this);
+            var $widget   = $select.closest('.hs-chat-widget');
+            var $opt      = $select.find('option:selected');
+            var frageText = ($opt.data('frage') || '').toString().trim();
+            if (!frageText) return;
+
+            var $input = $widget.find('.hs-chat-input');
+            $input.val(frageText).trigger('input');
+            hsChatSend($widget);
+        });
+
         // Multi-LLM toggle
         $(document).on('click', '.hs-chat-multi-btn', function () {
             var $btn    = $(this);
