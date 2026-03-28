@@ -706,13 +706,21 @@
 
         function addCheckboxes(provider, models, groupClass) {
             if (!models.length) return;
-            $.each(models, function (_, m) {
-                var cbId   = 'hsmulti-' + uid + '-' + m.name.replace(/[^a-z0-9]/gi, '_');
+            // Sort alphabetically by model name within the provider group.
+            var sorted = models.slice().sort(function (a, b) {
+                return a.name.localeCompare(b.name);
+            });
+            // Provider group header.
+            $multiWrap.append(
+                '<span class="hs-chat-multi-group-label' + (groupClass ? ' ' + groupClass : '') + '">' + hsEscape(provider) + '</span>'
+            );
+            $.each(sorted, function (_, m) {
+                var cbId      = 'hsmulti-' + uid + '-' + m.name.replace(/[^a-z0-9]/gi, '_');
                 var itemLabel = hsEscape(provider) + ' - ' + hsEscape(m.name);
-                var extra  = m.size ? ' <span class="hs-chat-multi-size">' + hsEscape(m.size) + '</span>' : '';
-                var action = modelActions[m.name] || 'hs_chat';
+                var extra     = m.size ? ' <span class="hs-chat-multi-size">' + hsEscape(m.size) + '</span>' : '';
+                var action    = modelActions[m.name] || 'hs_chat';
                 $multiWrap.append(
-                    '<label class="hs-chat-multi-model-label' + (groupClass ? ' ' + groupClass : '') + '" for="' + cbId + '">' +
+                    '<label class="hs-chat-multi-model-label" for="' + cbId + '">' +
                     '<input type="checkbox" class="hs-chat-multi-check" id="' + cbId +
                         '" value="' + hsEscape(m.name) + '" data-action="' + action + '">' +
                     ' ' + itemLabel + extra + '</label>'
