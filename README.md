@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 16.4 |
+| **Version** | 16.5 |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
 | **Lizenz** | GPL-2.0+ |
@@ -123,6 +123,9 @@ Planned features for upcoming versions:
 ---
 
 ## Release Notes
+
+### 16.5 *(2026-03-28)*
+- **Version bump**: 16.4 → 16.5.
 
 ### 16.4 *(2026-03-28)*
 - **AI-Profil: all field placeholders**: Expanded placeholder support from 3 to 19 fields. The AI-Profil button now passes every relevant entry field as a `data-*` attribute. The JS `replace()` function substitutes all of them before sending each question to the LLM. The admin description lists every available placeholder. New placeholders: `{beruf}`, `{spitzname}`, `{geburtsort}`, `{geburtsdatum}`, `{geburtsland}`, `{verstorben}`, `{dod}`, `{aufgabe_partei}`, `{parlament}`, `{parlament_name}`, `{status_aktiv}`, `{urteil}`, `{aktenzeichen}`, `{status_straftat}`, `{bemerkung}`. Version bump 16.3 → 16.4.
