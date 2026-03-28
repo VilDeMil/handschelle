@@ -1,4 +1,9 @@
 add other LLM Provodera for chat
+---
+
+create [handschelle-chat-dropdown]
+same as [handschelle-chat]
+add dropdown at the top with <NAME> when selected ask <FRAGEN>
 
 ----
 
