@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 16.3 |
+| **Version** | 16.4 |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
 | **Lizenz** | GPL-2.0+ |
@@ -123,6 +123,9 @@ Planned features for upcoming versions:
 ---
 
 ## Release Notes
+
+### 16.4 *(2026-03-28)*
+- **AI-Profil: all field placeholders**: Expanded placeholder support from 3 to 19 fields. The AI-Profil button now passes every relevant entry field as a `data-*` attribute. The JS `replace()` function substitutes all of them before sending each question to the LLM. The admin description lists every available placeholder. New placeholders: `{beruf}`, `{spitzname}`, `{geburtsort}`, `{geburtsdatum}`, `{geburtsland}`, `{verstorben}`, `{dod}`, `{aufgabe_partei}`, `{parlament}`, `{parlament_name}`, `{status_aktiv}`, `{urteil}`, `{aktenzeichen}`, `{status_straftat}`, `{bemerkung}`. Version bump 16.3 → 16.4.
 
 ### 16.3 *(2026-03-28)*
 - **AI-Profil button**: Every entry card (for logged-in users) now shows a **🧾 AI-Profil** button when at least one profile question is configured. Clicking it opens a modal overlay that fires the configured questions one by one to the selected LLM, displaying each Q&A pair as the answer arrives with a pulsing `…` loading indicator. A **✅ Fertig** line appears when all questions are answered. The modal can be closed with ✕, a click on the backdrop, or Escape.

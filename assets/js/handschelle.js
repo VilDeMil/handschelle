@@ -588,11 +588,28 @@
 
         // ── AI-Profil ─────────────────────────────────────────────
         $(document).on('click', '.hs-profile-btn', function () {
-            var $btn     = $(this);
-            var name     = $btn.data('name')     || '';
-            var partei   = $btn.data('partei')   || '';
-            var straftat = $btn.data('straftat') || '';
-            hsProfileOpen(name, partei, straftat);
+            var $btn = $(this);
+            var ctx = {
+                name:            $btn.data('name')           || '',
+                beruf:           $btn.data('beruf')          || '',
+                spitzname:       $btn.data('spitzname')      || '',
+                geburtsort:      $btn.data('geburtsort')     || '',
+                geburtsdatum:    $btn.data('geburtsdatum')   || '',
+                geburtsland:     $btn.data('geburtsland')    || '',
+                verstorben:      $btn.data('verstorben')     || '',
+                dod:             $btn.data('dod')            || '',
+                partei:          $btn.data('partei')         || '',
+                aufgabe_partei:  $btn.data('aufgabe-partei') || '',
+                parlament:       $btn.data('parlament')      || '',
+                parlament_name:  $btn.data('parlament-name') || '',
+                status_aktiv:    $btn.data('status-aktiv')   || '',
+                straftat:        $btn.data('straftat')       || '',
+                urteil:          $btn.data('urteil')         || '',
+                aktenzeichen:    $btn.data('aktenzeichen')   || '',
+                status_straftat: $btn.data('status-straftat')|| '',
+                bemerkung:       $btn.data('bemerkung')      || ''
+            };
+            hsProfileOpen(ctx);
         });
 
         $(document).on('click', '.hs-profile-modal-close, .hs-profile-modal-overlay', function (e) {
@@ -607,7 +624,7 @@
 
     /* ── AI-Profil modal ────────────────────────────────────────── */
 
-    function hsProfileOpen(name, partei, straftat) {
+    function hsProfileOpen(ctx) {
         var config    = window.hsProfileConfig || {};
         var questions = config.questions || [];
         if (!questions.length) return;
@@ -615,6 +632,7 @@
         // Remove stale modal
         $('#hs-profile-modal').remove();
 
+        var name  = ctx.name || '';
         var title = name ? '🧾 AI-Profil: ' + name : '🧾 AI-Profil';
 
         var $modal = $(
@@ -637,9 +655,24 @@
 
         function replace(tpl) {
             return tpl
-                .replace(/\{name\}/g,     name)
-                .replace(/\{partei\}/g,   partei)
-                .replace(/\{straftat\}/g, straftat);
+                .replace(/\{name\}/g,            ctx.name            || '')
+                .replace(/\{beruf\}/g,            ctx.beruf           || '')
+                .replace(/\{spitzname\}/g,        ctx.spitzname       || '')
+                .replace(/\{geburtsort\}/g,       ctx.geburtsort      || '')
+                .replace(/\{geburtsdatum\}/g,     ctx.geburtsdatum    || '')
+                .replace(/\{geburtsland\}/g,      ctx.geburtsland     || '')
+                .replace(/\{verstorben\}/g,       ctx.verstorben      || '')
+                .replace(/\{dod\}/g,              ctx.dod             || '')
+                .replace(/\{partei\}/g,           ctx.partei          || '')
+                .replace(/\{aufgabe_partei\}/g,   ctx.aufgabe_partei  || '')
+                .replace(/\{parlament\}/g,        ctx.parlament       || '')
+                .replace(/\{parlament_name\}/g,   ctx.parlament_name  || '')
+                .replace(/\{status_aktiv\}/g,     ctx.status_aktiv    || '')
+                .replace(/\{straftat\}/g,         ctx.straftat        || '')
+                .replace(/\{urteil\}/g,           ctx.urteil          || '')
+                .replace(/\{aktenzeichen\}/g,     ctx.aktenzeichen    || '')
+                .replace(/\{status_straftat\}/g,  ctx.status_straftat || '')
+                .replace(/\{bemerkung\}/g,        ctx.bemerkung       || '');
         }
 
         function askNext(idx) {

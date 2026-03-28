@@ -2987,10 +2987,14 @@ class Handschelle_Admin {
                                 <label for="hs_profile_questions">Fragen <span style="font-weight:400;color:#7f8c8d;">(eine pro Zeile)</span></label>
                                 <textarea id="hs_profile_questions" name="hs_profile_questions"
                                           rows="6" maxlength="4000"><?php echo esc_textarea( $profile_questions ); ?></textarea>
-                                <span class="description">Beispiel:<br>
-                                    <code>Was weißt du über {name} von {partei}?</code><br>
-                                    <code>Welche Vergehen werden {name} vorgeworfen?</code><br>
-                                    <code>Wie bewertet die Öffentlichkeit {name}?</code>
+                                <span class="description">
+                                    <strong>Verfügbare Platzhalter:</strong><br>
+                                    <code>{name}</code> · <code>{beruf}</code> · <code>{spitzname}</code> · <code>{geburtsort}</code> · <code>{geburtsdatum}</code> · <code>{geburtsland}</code> · <code>{verstorben}</code> · <code>{dod}</code><br>
+                                    <code>{partei}</code> · <code>{aufgabe_partei}</code> · <code>{parlament}</code> · <code>{parlament_name}</code> · <code>{status_aktiv}</code><br>
+                                    <code>{straftat}</code> · <code>{urteil}</code> · <code>{aktenzeichen}</code> · <code>{status_straftat}</code> · <code>{bemerkung}</code><br>
+                                    <br>Beispiel:<br>
+                                    <code>Was weißt du über {name} ({partei}, {parlament})?</code><br>
+                                    <code>Welche Vergehen ({status_straftat}) werden {name} vorgeworfen?</code>
                                 </span>
                             </div>
                             <div class="hs-field hs-field-full">
