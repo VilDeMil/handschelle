@@ -3285,6 +3285,8 @@ class Handschelle_Shortcodes {
              data-urlparam="<?php echo esc_attr( $atts['urlparam'] ); ?>"
              <?php endif; ?>>
 
+            <div class="hs-chat-dropdown-heading">KI-Zusammenfassung</div>
+
             <div class="hs-chat-dropdown-top">
                 <label class="hs-chat-dropdown-label" for="hs-chat-name-select-<?php echo esc_attr( $uid ); ?>">👤 Name auswählen</label>
                 <select class="hs-chat-name-select" id="hs-chat-name-select-<?php echo esc_attr( $uid ); ?>" aria-label="Name auswählen">

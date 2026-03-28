@@ -1058,6 +1058,15 @@ a.hs-st-item { display: inline-block; }
     margin: 0 auto;
 }
 
+.hs-chat-dropdown-heading {
+    background: var(--hs-accent, #c0392b);
+    color: #fff;
+    font-size: .95rem;
+    font-weight: 700;
+    padding: .6rem 1rem;
+    letter-spacing: .02em;
+}
+
 .hs-chat-dropdown-top {
     display: flex;
     flex-direction: column;
