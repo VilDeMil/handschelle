@@ -3098,18 +3098,30 @@ class Handschelle_Shortcodes {
         $claude_enabled  = ! empty( get_option( 'hs_claude_api_key',  '' ) ) ? '1' : '0';
         $gemini_enabled  = ! empty( get_option( 'hs_gemini_api_key',  '' ) ) ? '1' : '0';
 
-        $name_list = array_filter( array_map( 'trim', explode( '|', (string) $atts['names'] ) ), static function ( $v ) {
-            return $v !== '';
-        } );
+        $raw_names = trim( (string) $atts['names'] );
+        if ( $raw_names === '' ) {
+            $name_list = Handschelle_Database::get_distinct_namen();
+        } else {
+            $name_list = preg_split( '/[|,\r\n]+/', $raw_names );
+        }
 
-        $fragen_list = array_values( array_filter( array_map( 'trim', explode( '|', (string) $atts['fragen'] ) ), static function ( $v ) {
+        $name_list = array_values( array_filter( array_map( 'trim', (array) $name_list ), static function ( $v ) {
+            return $v !== '';
+        } ) );
+
+        $raw_fragen = trim( (string) $atts['fragen'] );
+        if ( $raw_fragen === '' ) {
+            $raw_fragen = 'Was weißt du über {name}?';
+        }
+
+        $fragen_list = array_values( array_filter( array_map( 'trim', preg_split( '/[|\r\n]+/', $raw_fragen ) ), static function ( $v ) {
             return $v !== '';
         } ) );
         $pairs = array();
 
         // Alternative compact format in `fragen`: "Name::Frage|Name::Frage".
-        if ( empty( $name_list ) && ! empty( $fragen_list ) && strpos( (string) $atts['fragen'], '::' ) !== false ) {
-            foreach ( explode( '|', (string) $atts['fragen'] ) as $row ) {
+        if ( empty( $atts['names'] ) && ! empty( $fragen_list ) && strpos( $raw_fragen, '::' ) !== false ) {
+            foreach ( preg_split( '/[|\r\n]+/', $raw_fragen ) as $row ) {
                 $row = trim( $row );
                 if ( $row === '' || strpos( $row, '::' ) === false ) {
                     continue;
@@ -3125,7 +3137,7 @@ class Handschelle_Shortcodes {
             }
         } else {
             $single_template = count( $fragen_list ) === 1 ? $fragen_list[0] : '';
-            foreach ( array_values( $name_list ) as $i => $name ) {
+            foreach ( $name_list as $i => $name ) {
                 $frage = $fragen_list[ $i ] ?? $single_template;
                 $pairs[] = array(
                     'name'  => $name,
@@ -3154,6 +3166,9 @@ class Handschelle_Shortcodes {
                 <label class="hs-chat-dropdown-label" for="hs-chat-name-select-<?php echo esc_attr( $uid ); ?>">👤 Name auswählen</label>
                 <select class="hs-chat-name-select" id="hs-chat-name-select-<?php echo esc_attr( $uid ); ?>" aria-label="Name auswählen">
                     <option value="">Bitte wählen …</option>
+                    <?php if ( empty( $pairs ) ) : ?>
+                        <option value="" disabled>Keine Namen verfügbar</option>
+                    <?php endif; ?>
                     <?php foreach ( $pairs as $pair ) : ?>
                         <option value="<?php echo esc_attr( $pair['name'] ); ?>" data-frage="<?php echo esc_attr( $pair['frage'] ); ?>">
                             <?php echo esc_html( $pair['name'] ); ?>
