@@ -658,9 +658,10 @@
             $select.append('<option value="' + hsEscape(current) + '" selected>' + hsEscape(current) + '</option>');
         }
 
-        function buildOpts($container, models) {
+        function buildOpts($container, models, provider) {
             $.each(models, function (_, m) {
-                var label = m.size ? hsEscape(m.name) + ' &mdash; ' + hsEscape(m.size) : hsEscape(m.name);
+                var label = hsEscape(provider) + ' - ' + hsEscape(m.name);
+                if (m.size) label += ' &mdash; ' + hsEscape(m.size);
                 var sel   = (m.name === current) ? ' selected' : '';
                 $container.append('<option value="' + hsEscape(m.name) + '"' + sel + '>' + label + '</option>');
             });
@@ -669,26 +670,31 @@
         if (useGroups) {
             if (ollamaModels.length) {
                 var $og1 = $('<optgroup label="Ollama">');
-                buildOpts($og1, ollamaModels);
+                buildOpts($og1, ollamaModels, 'Ollama');
                 $select.append($og1);
             }
             if (openaiModels.length) {
                 var $og2 = $('<optgroup label="OpenAI">');
-                buildOpts($og2, openaiModels);
+                buildOpts($og2, openaiModels, 'OpenAI');
                 $select.append($og2);
             }
             if (claudeModels.length) {
                 var $og3 = $('<optgroup label="Claude">');
-                buildOpts($og3, claudeModels);
+                buildOpts($og3, claudeModels, 'Claude');
                 $select.append($og3);
             }
             if (geminiModels.length) {
                 var $og4 = $('<optgroup label="Gemini">');
-                buildOpts($og4, geminiModels);
+                buildOpts($og4, geminiModels, 'Gemini');
                 $select.append($og4);
             }
         } else {
-            buildOpts($select, allModels);
+            // Single provider — still prefix so the format is consistent.
+            var singleProvider = ollamaModels.length ? 'Ollama'
+                : openaiModels.length ? 'OpenAI'
+                : claudeModels.length ? 'Claude'
+                : 'Gemini';
+            buildOpts($select, allModels, singleProvider);
         }
         $widget.data('model', $select.val());
 
@@ -698,34 +704,26 @@
         $multiWrap.empty();
         var uid = $widget.attr('id') || '';
 
-        function addCheckboxes(label, models, groupClass) {
+        function addCheckboxes(provider, models, groupClass) {
             if (!models.length) return;
-            if (label) {
-                $multiWrap.append(
-                    '<span class="hs-chat-multi-group-label' + (groupClass ? ' ' + groupClass : '') + '">' + label + '</span>'
-                );
-            }
             $.each(models, function (_, m) {
                 var cbId   = 'hsmulti-' + uid + '-' + m.name.replace(/[^a-z0-9]/gi, '_');
+                var itemLabel = hsEscape(provider) + ' - ' + hsEscape(m.name);
                 var extra  = m.size ? ' <span class="hs-chat-multi-size">' + hsEscape(m.size) + '</span>' : '';
                 var action = modelActions[m.name] || 'hs_chat';
                 $multiWrap.append(
-                    '<label class="hs-chat-multi-model-label" for="' + cbId + '">' +
+                    '<label class="hs-chat-multi-model-label' + (groupClass ? ' ' + groupClass : '') + '" for="' + cbId + '">' +
                     '<input type="checkbox" class="hs-chat-multi-check" id="' + cbId +
                         '" value="' + hsEscape(m.name) + '" data-action="' + action + '">' +
-                    ' ' + hsEscape(m.name) + extra + '</label>'
+                    ' ' + itemLabel + extra + '</label>'
                 );
             });
         }
 
-        if (useGroups) {
-            addCheckboxes('Ollama', ollamaModels, '');
-            addCheckboxes('OpenAI', openaiModels, 'hs-chat-multi-group-openai');
-            addCheckboxes('Claude', claudeModels, 'hs-chat-multi-group-claude');
-            addCheckboxes('Gemini', geminiModels, 'hs-chat-multi-group-gemini');
-        } else {
-            addCheckboxes('', allModels, '');
-        }
+        addCheckboxes('Ollama', ollamaModels, '');
+        addCheckboxes('OpenAI', openaiModels, 'hs-chat-multi-group-openai');
+        addCheckboxes('Claude', claudeModels, 'hs-chat-multi-group-claude');
+        addCheckboxes('Gemini', geminiModels, 'hs-chat-multi-group-gemini');
     }
 
     function hsChatGetAction($widget, model) {

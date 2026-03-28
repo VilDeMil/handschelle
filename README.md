@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 16.0 |
+| **Version** | 16.1 |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
 | **Lizenz** | GPL-2.0+ |
@@ -123,6 +123,9 @@ Planned features for upcoming versions:
 ---
 
 ## Release Notes
+
+### 16.1 *(2026-03-28)*
+- **Provider prefix in model dropdown & lists**: Every entry in the model selector and multi-model checkbox list now shows `Provider - Model` (e.g. `Ollama - llama3.2`, `OpenAI - gpt-4o`, `Claude - claude-sonnet-4-5`, `Gemini - gemini-2.0-flash`). Applies both when a single provider is active and when multiple providers are combined with optgroups. The group-header rows have been removed from the checkbox list since the provider is already visible in each label. Version bump 16.0 → 16.1.
 
 ### 16.0 *(2026-03-28)*
 - **Google Gemini integration**: Added full Gemini support as a fourth LLM provider. New *🤖 Google Gemini* section in the *Ollama KI* admin page with API-key field (placeholder `AIza…`), set/clear flow, model dropdown (`gemini-2.5-pro`, `gemini-2.0-flash`, `gemini-2.0-flash-lite`, `gemini-1.5-pro`, `gemini-1.5-flash`), and connection-test button. Two new AJAX handlers (`ajax_chat_gemini`, `ajax_chat_gemini_models`) call the Google Generative Language API with the correct `contents`/`parts` format and optional `system_instruction`. The JS chat widget loads Gemini models in parallel, displays them in an optgroup, maps them to `hs_chat_gemini`, and includes them in multi-model mode and the repost picker. Gemini also appears in the admin Chat-Test panel. Version bump 15.9 → 16.0.
