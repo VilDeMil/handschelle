@@ -1093,9 +1093,24 @@ class Handschelle_Shortcodes {
                     <?php if ( $is_logged_in ) echo $this->ki_person_link( $e->name, $e->partei ); ?>
                     <?php if ( $is_logged_in && ! empty( get_option( 'hs_profile_questions', '' ) ) ) : ?>
                     <button type="button" class="hs-profile-btn hs-ki-name-btn"
-                            data-name="<?php echo esc_attr( $e->name ); ?>"
+                            data-name="<?php echo esc_attr( $e->name ?? '' ); ?>"
+                            data-beruf="<?php echo esc_attr( $e->beruf ?? '' ); ?>"
+                            data-spitzname="<?php echo esc_attr( $e->spitzname ?? '' ); ?>"
+                            data-geburtsort="<?php echo esc_attr( $e->geburtsort ?? '' ); ?>"
+                            data-geburtsdatum="<?php echo esc_attr( $e->geburtsdatum ?? '' ); ?>"
+                            data-geburtsland="<?php echo esc_attr( $e->geburtsland ?? '' ); ?>"
+                            data-verstorben="<?php echo ( ! empty( $e->verstorben ) ) ? esc_attr__( 'verstorben' ) : ''; ?>"
+                            data-dod="<?php echo esc_attr( $e->dod ?? '' ); ?>"
                             data-partei="<?php echo esc_attr( $e->partei ?? '' ); ?>"
-                            data-straftat="<?php echo esc_attr( $e->straftat ?? '' ); ?>">
+                            data-aufgabe-partei="<?php echo esc_attr( $e->aufgabe_partei ?? '' ); ?>"
+                            data-parlament="<?php echo esc_attr( $e->parlament ?? '' ); ?>"
+                            data-parlament-name="<?php echo esc_attr( $e->parlament_name ?? '' ); ?>"
+                            data-status-aktiv="<?php echo ( ! empty( $e->status_aktiv ) ) ? 'Aktiv' : 'Inaktiv'; ?>"
+                            data-straftat="<?php echo esc_attr( $e->straftat ?? '' ); ?>"
+                            data-urteil="<?php echo esc_attr( $e->urteil ?? '' ); ?>"
+                            data-aktenzeichen="<?php echo esc_attr( $e->aktenzeichen ?? '' ); ?>"
+                            data-status-straftat="<?php echo esc_attr( $e->status_straftat ?? '' ); ?>"
+                            data-bemerkung="<?php echo esc_attr( $e->bemerkung ?? '' ); ?>">
                         🧾 AI-Profil
                     </button>
                     <?php endif; ?>
