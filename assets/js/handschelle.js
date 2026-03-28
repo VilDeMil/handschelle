@@ -523,11 +523,19 @@
             var $select   = $(this);
             var $widget   = $select.closest('.hs-chat-widget');
             var $opt      = $select.find('option:selected');
-            var frageText = ($opt.data('frage') || '').toString().trim();
-            if (!frageText) return;
 
+            var fragenList = [];
+            try {
+                fragenList = JSON.parse($opt.attr('data-fragen') || '[]');
+            } catch (e) {}
+            fragenList = $.grep(fragenList, function (f) { return f.trim() !== ''; });
+
+            if (!fragenList.length) return;
+
+            // Queue remaining questions; send the first immediately
+            $widget.data('hs-chat-queue', fragenList.slice(1));
             var $input = $widget.find('.hs-chat-input');
-            $input.val(frageText).trigger('input');
+            $input.val(fragenList[0]).trigger('input');
             hsChatSend($widget);
         });
 
@@ -955,23 +963,25 @@
                     );
                     // exchangeIdx = position of this exchange in history (history not yet updated)
                     var exchangeIdx = history.length / 2;
-                    // Status line: model · time · tok/s · repost button
+                    // Status line: model · time · tok/s · repost button (not shown in dropdown variant)
                     var statusParts = [];
                     if (d.model)    statusParts.push(hsEscape(d.model));
                     if (d.time_s)   statusParts.push(d.time_s + 's');
                     if (d.toks_sec) statusParts.push(d.toks_sec + ' tok/s');
                     if (statusParts.length) {
                         var $status = $('<div class="hs-chat-status"></div>');
-                        $status.html(
-                            statusParts.join('<span class="hs-chat-status-sep"> · </span>') +
-                            '<span class="hs-chat-status-sep"> · </span>' +
-                            '<button type="button" class="hs-chat-repost-btn" data-exchange-idx="' + exchangeIdx + '" title="Nochmal mit anderem Modell senden">\u21bb Repost</button>' +
-                            '<span class="hs-chat-repost-controls" hidden>' +
-                            '<select class="hs-chat-repost-select" aria-label="Modell f\u00fcr Repost"></select>' +
-                            '<button type="button" class="hs-chat-repost-go" title="Senden">\u2713</button>' +
-                            '<button type="button" class="hs-chat-repost-cancel" title="Abbrechen">\u2715</button>' +
-                            '</span>'
-                        );
+                        var statusHtml = statusParts.join('<span class="hs-chat-status-sep"> · </span>');
+                        if (!$widget.hasClass('hs-chat-widget-dropdown')) {
+                            statusHtml +=
+                                '<span class="hs-chat-status-sep"> · </span>' +
+                                '<button type="button" class="hs-chat-repost-btn" data-exchange-idx="' + exchangeIdx + '" title="Nochmal mit anderem Modell senden">\u21bb Repost</button>' +
+                                '<span class="hs-chat-repost-controls" hidden>' +
+                                '<select class="hs-chat-repost-select" aria-label="Modell f\u00fcr Repost"></select>' +
+                                '<button type="button" class="hs-chat-repost-go" title="Senden">\u2713</button>' +
+                                '<button type="button" class="hs-chat-repost-cancel" title="Abbrechen">\u2715</button>' +
+                                '</span>';
+                        }
+                        $status.html(statusHtml);
                         $msgs.append($status);
                     }
                     // Update history
@@ -995,6 +1005,15 @@
                 $sendBtn.prop('disabled', false);
                 $input.focus();
                 $msgs.scrollTop($msgs[0].scrollHeight);
+
+                // Process queued messages (used by dropdown to send all fragen)
+                var queue = $widget.data('hs-chat-queue') || [];
+                if (queue.length) {
+                    var nextMsg = queue.shift();
+                    $widget.data('hs-chat-queue', queue);
+                    $input.val(nextMsg).trigger('input');
+                    setTimeout(function () { hsChatSend($widget); }, 50);
+                }
             }
         });
     }

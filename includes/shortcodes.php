@@ -3148,19 +3148,20 @@ class Handschelle_Shortcodes {
                 $partei = $party_by_name[ $nm ] ?? '';
                 $frage  = str_replace( array( '{name}', '{partei}' ), array( $nm, $partei ), $fr );
                 $pairs[] = array(
-                    'name'  => $nm,
-                    'frage' => $frage,
+                    'name'   => $nm,
+                    'fragen' => array( $frage ),
                 );
             }
         } else {
-            $single_template = ( count( $fragen_list ) === 1 || $fragen_from_admin ) ? ( $fragen_list[0] ?? '' ) : '';
-            foreach ( $name_list as $i => $name ) {
-                $frage  = $fragen_list[ $i ] ?? $single_template;
-                $partei = $party_by_name[ $name ] ?? '';
-                $frage  = str_replace( array( '{name}', '{partei}' ), array( $name, $partei ), (string) $frage );
+            foreach ( $name_list as $name ) {
+                $partei      = $party_by_name[ $name ] ?? '';
+                $name_fragen = array();
+                foreach ( $fragen_list as $fr_template ) {
+                    $name_fragen[] = str_replace( array( '{name}', '{partei}' ), array( $name, $partei ), (string) $fr_template );
+                }
                 $pairs[] = array(
-                    'name'  => $name,
-                    'frage' => $frage,
+                    'name'   => $name,
+                    'fragen' => $name_fragen,
                 );
             }
         }
@@ -3189,7 +3190,7 @@ class Handschelle_Shortcodes {
                         <option value="" disabled>Keine Namen verfügbar</option>
                     <?php endif; ?>
                     <?php foreach ( $pairs as $pair ) : ?>
-                        <option value="<?php echo esc_attr( $pair['name'] ); ?>" data-frage="<?php echo esc_attr( $pair['frage'] ); ?>">
+                        <option value="<?php echo esc_attr( $pair['name'] ); ?>" data-fragen="<?php echo esc_attr( wp_json_encode( $pair['fragen'] ) ); ?>">
                             <?php echo esc_html( $pair['name'] ); ?>
                         </option>
                     <?php endforeach; ?>
