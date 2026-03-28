@@ -65,6 +65,7 @@ class Handschelle_Shortcodes {
 
         add_shortcode( 'handschelle-smart',            array( $this, 'sc_smart_eingabe' ) );
         add_shortcode( 'handschelle-chat',             array( $this, 'sc_chat' ) );
+        add_shortcode( 'handschelle-chat-dropdown',    array( $this, 'sc_chat_dropdown' ) );
 
         // Submit früh verarbeiten – BEVOR Header gesendet werden
         add_action( 'init', array( $this, 'early_frontend_submit' ) );
@@ -3004,6 +3005,196 @@ class Handschelle_Shortcodes {
              <?php if ( $atts['urlparam'] !== '' ) : ?>
              data-urlparam="<?php echo esc_attr( $atts['urlparam'] ); ?>"
              <?php endif; ?>>
+
+            <div class="hs-chat-header">
+                <span class="hs-chat-title"><?php echo esc_html( $atts['title'] ); ?></span>
+                <select class="hs-chat-model-select" aria-label="Modell auswählen" title="Modell auswählen">
+                    <option value="<?php echo esc_attr( $atts['model'] ); ?>" selected>
+                        <?php echo esc_html( $atts['model'] ); ?>
+                    </option>
+                </select>
+                <button type="button" class="hs-chat-settings-btn" title="Einstellungen" aria-expanded="false">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                </button>
+                <button type="button" class="hs-chat-multi-btn" title="Mehrere Modelle gleichzeitig befragen" aria-pressed="false">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="18" rx="1"/></svg>
+                </button>
+                <button type="button" class="hs-chat-clear-btn" title="Verlauf löschen">&#10006;</button>
+            </div>
+
+            <div class="hs-chat-settings-panel" hidden>
+                <div class="hs-chat-settings-grid">
+                    <label class="hs-chat-settings-label">
+                        System-Prompt
+                        <textarea class="hs-chat-settings-system" rows="3" maxlength="2000"><?php echo esc_textarea( $atts['system'] ); ?></textarea>
+                    </label>
+                    <label class="hs-chat-settings-label">
+                        Temperatur <span class="hs-chat-temp-value">0.7</span>
+                        <input type="range" class="hs-chat-settings-temp" min="0" max="2" step="0.1" value="0.7">
+                    </label>
+                    <?php if ( $ollama_mode === 'local' ) : ?>
+                    <label class="hs-chat-settings-label hs-chat-settings-url-row">
+                        Ollama URL
+                        <div class="hs-chat-settings-url-wrap">
+                            <input type="text" class="hs-chat-settings-url"
+                                   value="<?php echo esc_attr( $ollama_url ); ?>"
+                                   placeholder="http://localhost:11434"
+                                   spellcheck="false" autocomplete="off">
+                            <button type="button" class="hs-chat-settings-url-apply">↻</button>
+                        </div>
+                        <span class="hs-chat-settings-url-hint">Nur localhost / 127.0.0.1 erlaubt</span>
+                    </label>
+                    <?php endif; ?>
+                    <div class="hs-chat-settings-label hs-chat-settings-multi-row" id="hs-multi-panel-<?php echo esc_attr( $uid ); ?>" hidden>
+                        Mehrere Modelle gleichzeitig
+                        <div class="hs-chat-multi-models">
+                            <em class="hs-chat-multi-hint">Modelle werden geladen …</em>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hs-chat-messages" role="log" aria-live="polite"></div>
+
+            <div class="hs-chat-input-row">
+                <textarea
+                    class="hs-chat-input"
+                    rows="1"
+                    placeholder="<?php echo esc_attr( $atts['placeholder'] ); ?>"
+                    aria-label="Nachricht eingeben"
+                    maxlength="4000"
+                ></textarea>
+                <button type="button" class="hs-chat-send-btn" aria-label="Senden">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                </button>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * Shortcode: [handschelle-chat-dropdown names="Name 1|Name 2" fragen="Frage 1|Frage 2"]
+     *
+     * Same widget as [handschelle-chat], but adds a top dropdown.
+     * Selecting a name auto-sends its configured question.
+     */
+    public function sc_chat_dropdown( $atts ) {
+        $atts = shortcode_atts( array(
+            'model'       => get_option( 'hs_ollama_default_model', 'llama3.2' ) ?: 'llama3.2',
+            'placeholder' => 'Schreibe eine Nachricht …',
+            'title'       => 'KI-Assistent',
+            'system'      => get_option( 'hs_ollama_system_prompt', 'Du bist ein hilfreicher Assistent.' ) ?: 'Du bist ein hilfreicher Assistent.',
+            'urlparam'    => '',
+            'names'       => '',
+            'fragen'      => '',
+        ), $atts, 'handschelle-chat-dropdown' );
+
+        $uid             = 'hs-chat-' . wp_rand( 1000, 9999 );
+        $nonce           = wp_create_nonce( 'hs_chat_nonce' );
+        $ollama_url      = get_option( 'hs_ollama_url', 'http://localhost:11434' );
+        $ollama_mode     = get_option( 'hs_ollama_mode', 'local' ); // 'local' | 'remote'
+        $openai_enabled  = ! empty( get_option( 'hs_openai_api_key', '' ) ) ? '1' : '0';
+        $claude_enabled  = ! empty( get_option( 'hs_claude_api_key',  '' ) ) ? '1' : '0';
+        $gemini_enabled  = ! empty( get_option( 'hs_gemini_api_key',  '' ) ) ? '1' : '0';
+
+        $raw_names = trim( (string) $atts['names'] );
+        if ( $raw_names === '' ) {
+            $name_list = Handschelle_Database::get_distinct_namen();
+        } else {
+            $name_list = preg_split( '/[|,\r\n]+/', $raw_names );
+        }
+
+        $name_list = array_values( array_filter( array_map( 'trim', (array) $name_list ), static function ( $v ) {
+            return $v !== '';
+        } ) );
+
+        $persons = Handschelle_Database::get_persons_dropdown();
+        $party_by_name = array();
+        foreach ( (array) $persons as $person ) {
+            $nm = isset( $person->name ) ? trim( (string) $person->name ) : '';
+            if ( $nm === '' ) {
+                continue;
+            }
+            $party_by_name[ $nm ] = isset( $person->partei ) ? trim( (string) $person->partei ) : '';
+        }
+
+        $raw_fragen = trim( (string) $atts['fragen'] );
+        $fragen_from_admin = false;
+        if ( $raw_fragen === '' ) {
+            $raw_fragen = trim( (string) get_option( 'hs_profile_questions', '' ) );
+            $fragen_from_admin = $raw_fragen !== '';
+        }
+        if ( $raw_fragen === '' ) {
+            $raw_fragen = 'Was weißt du über {name} {partei}?';
+        }
+
+        $fragen_list = array_values( array_filter( array_map( 'trim', preg_split( '/[|\r\n]+/', $raw_fragen ) ), static function ( $v ) {
+            return $v !== '';
+        } ) );
+        $pairs = array();
+
+        // Alternative compact format in `fragen`: "Name::Frage|Name::Frage".
+        if ( empty( $atts['names'] ) && ! empty( $fragen_list ) && strpos( $raw_fragen, '::' ) !== false ) {
+            foreach ( preg_split( '/[|\r\n]+/', $raw_fragen ) as $row ) {
+                $row = trim( $row );
+                if ( $row === '' || strpos( $row, '::' ) === false ) {
+                    continue;
+                }
+                list( $nm, $fr ) = array_map( 'trim', explode( '::', $row, 2 ) );
+                if ( $nm === '' ) {
+                    continue;
+                }
+                $partei = $party_by_name[ $nm ] ?? '';
+                $frage  = str_replace( array( '{name}', '{partei}' ), array( $nm, $partei ), $fr );
+                $pairs[] = array(
+                    'name'  => $nm,
+                    'frage' => $frage,
+                );
+            }
+        } else {
+            $single_template = ( count( $fragen_list ) === 1 || $fragen_from_admin ) ? ( $fragen_list[0] ?? '' ) : '';
+            foreach ( $name_list as $i => $name ) {
+                $frage  = $fragen_list[ $i ] ?? $single_template;
+                $partei = $party_by_name[ $name ] ?? '';
+                $frage  = str_replace( array( '{name}', '{partei}' ), array( $name, $partei ), (string) $frage );
+                $pairs[] = array(
+                    'name'  => $name,
+                    'frage' => $frage,
+                );
+            }
+        }
+
+        ob_start();
+        ?>
+        <div class="hs-chat-widget hs-chat-widget-dropdown" id="<?php echo esc_attr( $uid ); ?>"
+             data-model="<?php echo esc_attr( $atts['model'] ); ?>"
+             data-system="<?php echo esc_attr( $atts['system'] ); ?>"
+             data-nonce="<?php echo esc_attr( $nonce ); ?>"
+             data-ajax="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>"
+             data-ollama-url="<?php echo esc_attr( $ollama_url ); ?>"
+             data-ollama-mode="<?php echo esc_attr( $ollama_mode ); ?>"
+             data-openai="<?php echo esc_attr( $openai_enabled ); ?>"
+             data-claude="<?php echo esc_attr( $claude_enabled ); ?>"
+             data-gemini="<?php echo esc_attr( $gemini_enabled ); ?>"
+             <?php if ( $atts['urlparam'] !== '' ) : ?>
+             data-urlparam="<?php echo esc_attr( $atts['urlparam'] ); ?>"
+             <?php endif; ?>>
+
+            <div class="hs-chat-dropdown-top">
+                <label class="hs-chat-dropdown-label" for="hs-chat-name-select-<?php echo esc_attr( $uid ); ?>">👤 Name auswählen</label>
+                <select class="hs-chat-name-select" id="hs-chat-name-select-<?php echo esc_attr( $uid ); ?>" aria-label="Name auswählen">
+                    <option value="">Bitte wählen …</option>
+                    <?php if ( empty( $pairs ) ) : ?>
+                        <option value="" disabled>Keine Namen verfügbar</option>
+                    <?php endif; ?>
+                    <?php foreach ( $pairs as $pair ) : ?>
+                        <option value="<?php echo esc_attr( $pair['name'] ); ?>" data-frage="<?php echo esc_attr( $pair['frage'] ); ?>">
+                            <?php echo esc_html( $pair['name'] ); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
 
             <div class="hs-chat-header">
                 <span class="hs-chat-title"><?php echo esc_html( $atts['title'] ); ?></span>
