@@ -3237,11 +3237,16 @@ class Handschelle_Shortcodes {
         }
         $messages[] = array( 'role' => 'user', 'content' => $message );
 
-        $body = wp_json_encode( array(
-            'model'       => $model,
-            'messages'    => $messages,
-            'temperature' => $temperature,
-        ) );
+        // o-series reasoning models do not support the temperature parameter.
+        $is_o_model = (bool) preg_match( '/^o\d/i', $model );
+        $payload = array(
+            'model'    => $model,
+            'messages' => $messages,
+        );
+        if ( ! $is_o_model ) {
+            $payload['temperature'] = $temperature;
+        }
+        $body = wp_json_encode( $payload );
 
         $timeout    = max( 10, intval( get_option( 'hs_ollama_timeout', 120 ) ) );
         $time_start = microtime( true );
@@ -3299,13 +3304,16 @@ class Handschelle_Shortcodes {
         }
 
         $models = array(
-            array( 'name' => 'gpt-4o',        'size' => 'Flagship'    ),
-            array( 'name' => 'gpt-4o-mini',   'size' => 'Fast & cheap' ),
-            array( 'name' => 'gpt-4-turbo',   'size' => '128k ctx'    ),
-            array( 'name' => 'gpt-4',         'size' => 'Classic'     ),
-            array( 'name' => 'gpt-3.5-turbo', 'size' => 'Legacy'      ),
-            array( 'name' => 'o1',            'size' => 'Reasoning'   ),
-            array( 'name' => 'o3-mini',       'size' => 'Reasoning'   ),
+            array( 'name' => 'gpt-4.5',       'size' => 'Flagship'         ),
+            array( 'name' => 'gpt-4o',        'size' => 'Multimodal'       ),
+            array( 'name' => 'gpt-4o-mini',   'size' => 'Fast & cheap'     ),
+            array( 'name' => 'gpt-4-turbo',   'size' => '128k ctx'         ),
+            array( 'name' => 'gpt-4',         'size' => 'Classic'          ),
+            array( 'name' => 'gpt-3.5-turbo', 'size' => 'Legacy'           ),
+            array( 'name' => 'o4-mini',       'size' => 'Reasoning – fast' ),
+            array( 'name' => 'o3',            'size' => 'Reasoning'        ),
+            array( 'name' => 'o3-mini',       'size' => 'Reasoning – mini' ),
+            array( 'name' => 'o1',            'size' => 'Reasoning – v1'   ),
         );
 
         wp_send_json_success( array( 'models' => $models ) );

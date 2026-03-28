@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 15.8 |
+| **Version** | 15.9 |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
 | **Lizenz** | GPL-2.0+ |
@@ -123,6 +123,9 @@ Planned features for upcoming versions:
 ---
 
 ## Release Notes
+
+### 15.9 *(2026-03-28)*
+- **ChatGPT model update**: Added `gpt-4.5`, `o3`, and `o4-mini` to the OpenAI model list in the admin dropdown and the `ajax_chat_openai_models` endpoint. Fixed `ajax_chat_openai` to omit the `temperature` parameter for o-series reasoning models (o1, o3, o3-mini, o4-mini), which do not support it. Version bump 15.8 → 15.9.
 
 ### 15.8 *(2026-03-27)*
 - **Ollama Local / Remote toggle**: Added a **Server-Typ** radio selector (*🖥️ Lokaler Server* / *☁️ Remote-Server*) to the Ollama KI admin page. In **local** mode the URL is always forced to `http://localhost:11434` and the URL/API-key fields are hidden. In **remote** mode the URL and API-key fields appear; the chat widget hides its URL-override row and all server-side AJAX handlers ignore any client-supplied URL, keeping the remote endpoint fully admin-controlled. Version bump 15.7 → 15.8.

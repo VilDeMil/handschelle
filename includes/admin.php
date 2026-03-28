@@ -2824,7 +2824,7 @@ class Handschelle_Admin {
                             <div class="hs-field">
                                 <label for="hs_openai_default_model">Standard-Modell</label>
                                 <?php
-                                $openai_models = array( 'gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo', 'o1', 'o3-mini' );
+                                $openai_models = array( 'gpt-4.5', 'gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo', 'o4-mini', 'o3', 'o3-mini', 'o1' );
                                 $openai_current = get_option( 'hs_openai_default_model', 'gpt-4o' );
                                 ?>
                                 <select id="hs_openai_default_model" name="hs_openai_default_model" style="max-width:220px;">
