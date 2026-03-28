@@ -596,18 +596,20 @@
         var customUrl = $widget.data('hs-chat-custom-url') || '';
         var openai    = $widget.data('openai') === '1' || $widget.data('openai') === 1;
         var claude    = $widget.data('claude')  === '1' || $widget.data('claude')  === 1;
+        var gemini    = $widget.data('gemini')  === '1' || $widget.data('gemini')  === 1;
 
         $select.prop('disabled', true);
 
-        var ollamaModels = [];
-        var openaiModels = [];
-        var claudeModels = [];
-        var pending = 1 + (openai ? 1 : 0) + (claude ? 1 : 0);
+        var ollamaModels  = [];
+        var openaiModels  = [];
+        var claudeModels  = [];
+        var geminiModels  = [];
+        var pending = 1 + (openai ? 1 : 0) + (claude ? 1 : 0) + (gemini ? 1 : 0);
 
         function finish() {
             pending--;
             if (pending > 0) return;
-            hsBuildModelsUI($widget, $select, current, ollamaModels, openaiModels, claudeModels);
+            hsBuildModelsUI($widget, $select, current, ollamaModels, openaiModels, claudeModels, geminiModels);
             $select.prop('disabled', false);
             if (typeof onReady === 'function') onReady();
         }
@@ -629,17 +631,25 @@
                 if (res.success && res.data && res.data.models) claudeModels = res.data.models;
             }).always(finish);
         }
+
+        if (gemini) {
+            $.post(ajaxUrl, { action: 'hs_chat_gemini_models', _nonce: nonce }, function (res) {
+                if (res.success && res.data && res.data.models) geminiModels = res.data.models;
+            }).always(finish);
+        }
     }
 
-    function hsBuildModelsUI($widget, $select, current, ollamaModels, openaiModels, claudeModels) {
+    function hsBuildModelsUI($widget, $select, current, ollamaModels, openaiModels, claudeModels, geminiModels) {
         claudeModels = claudeModels || [];
-        var providerCount = (ollamaModels.length > 0 ? 1 : 0) + (openaiModels.length > 0 ? 1 : 0) + (claudeModels.length > 0 ? 1 : 0);
+        geminiModels = geminiModels || [];
+        var providerCount = (ollamaModels.length > 0 ? 1 : 0) + (openaiModels.length > 0 ? 1 : 0) + (claudeModels.length > 0 ? 1 : 0) + (geminiModels.length > 0 ? 1 : 0);
         var useGroups = providerCount > 1;
-        var allModels = ollamaModels.concat(openaiModels).concat(claudeModels);
+        var allModels = ollamaModels.concat(openaiModels).concat(claudeModels).concat(geminiModels);
         var modelActions = {};
         ollamaModels.forEach(function (m) { modelActions[m.name] = 'hs_chat'; });
         openaiModels.forEach(function (m) { modelActions[m.name] = 'hs_chat_openai'; });
         claudeModels.forEach(function (m) { modelActions[m.name] = 'hs_chat_claude'; });
+        geminiModels.forEach(function (m) { modelActions[m.name] = 'hs_chat_gemini'; });
         $widget.data('hs-model-actions', modelActions);
 
         var foundCurrent = allModels.some(function (m) { return m.name === current; });
@@ -648,9 +658,10 @@
             $select.append('<option value="' + hsEscape(current) + '" selected>' + hsEscape(current) + '</option>');
         }
 
-        function buildOpts($container, models) {
+        function buildOpts($container, models, provider) {
             $.each(models, function (_, m) {
-                var label = m.size ? hsEscape(m.name) + ' &mdash; ' + hsEscape(m.size) : hsEscape(m.name);
+                var label = hsEscape(provider) + ' - ' + hsEscape(m.name);
+                if (m.size) label += ' &mdash; ' + hsEscape(m.size);
                 var sel   = (m.name === current) ? ' selected' : '';
                 $container.append('<option value="' + hsEscape(m.name) + '"' + sel + '>' + label + '</option>');
             });
@@ -659,21 +670,31 @@
         if (useGroups) {
             if (ollamaModels.length) {
                 var $og1 = $('<optgroup label="Ollama">');
-                buildOpts($og1, ollamaModels);
+                buildOpts($og1, ollamaModels, 'Ollama');
                 $select.append($og1);
             }
             if (openaiModels.length) {
                 var $og2 = $('<optgroup label="OpenAI">');
-                buildOpts($og2, openaiModels);
+                buildOpts($og2, openaiModels, 'OpenAI');
                 $select.append($og2);
             }
             if (claudeModels.length) {
                 var $og3 = $('<optgroup label="Claude">');
-                buildOpts($og3, claudeModels);
+                buildOpts($og3, claudeModels, 'Claude');
                 $select.append($og3);
             }
+            if (geminiModels.length) {
+                var $og4 = $('<optgroup label="Gemini">');
+                buildOpts($og4, geminiModels, 'Gemini');
+                $select.append($og4);
+            }
         } else {
-            buildOpts($select, allModels);
+            // Single provider — still prefix so the format is consistent.
+            var singleProvider = ollamaModels.length ? 'Ollama'
+                : openaiModels.length ? 'OpenAI'
+                : claudeModels.length ? 'Claude'
+                : 'Gemini';
+            buildOpts($select, allModels, singleProvider);
         }
         $widget.data('model', $select.val());
 
@@ -683,33 +704,26 @@
         $multiWrap.empty();
         var uid = $widget.attr('id') || '';
 
-        function addCheckboxes(label, models, groupClass) {
+        function addCheckboxes(provider, models, groupClass) {
             if (!models.length) return;
-            if (label) {
-                $multiWrap.append(
-                    '<span class="hs-chat-multi-group-label' + (groupClass ? ' ' + groupClass : '') + '">' + label + '</span>'
-                );
-            }
             $.each(models, function (_, m) {
                 var cbId   = 'hsmulti-' + uid + '-' + m.name.replace(/[^a-z0-9]/gi, '_');
+                var itemLabel = hsEscape(provider) + ' - ' + hsEscape(m.name);
                 var extra  = m.size ? ' <span class="hs-chat-multi-size">' + hsEscape(m.size) + '</span>' : '';
                 var action = modelActions[m.name] || 'hs_chat';
                 $multiWrap.append(
-                    '<label class="hs-chat-multi-model-label" for="' + cbId + '">' +
+                    '<label class="hs-chat-multi-model-label' + (groupClass ? ' ' + groupClass : '') + '" for="' + cbId + '">' +
                     '<input type="checkbox" class="hs-chat-multi-check" id="' + cbId +
                         '" value="' + hsEscape(m.name) + '" data-action="' + action + '">' +
-                    ' ' + hsEscape(m.name) + extra + '</label>'
+                    ' ' + itemLabel + extra + '</label>'
                 );
             });
         }
 
-        if (useGroups) {
-            addCheckboxes('Ollama', ollamaModels, '');
-            addCheckboxes('OpenAI', openaiModels, 'hs-chat-multi-group-openai');
-            addCheckboxes('Claude', claudeModels, 'hs-chat-multi-group-claude');
-        } else {
-            addCheckboxes('', allModels, '');
-        }
+        addCheckboxes('Ollama', ollamaModels, '');
+        addCheckboxes('OpenAI', openaiModels, 'hs-chat-multi-group-openai');
+        addCheckboxes('Claude', claudeModels, 'hs-chat-multi-group-claude');
+        addCheckboxes('Gemini', geminiModels, 'hs-chat-multi-group-gemini');
     }
 
     function hsChatGetAction($widget, model) {
@@ -930,17 +944,19 @@
         var customUrl = $widget.data('hs-chat-custom-url') || '';
         var openai    = $widget.data('openai') === '1' || $widget.data('openai') === 1;
         var claude    = $widget.data('claude')  === '1' || $widget.data('claude')  === 1;
+        var gemini    = $widget.data('gemini')  === '1' || $widget.data('gemini')  === 1;
         var postData  = { action: 'hs_chat_models', _nonce: nonce };
         if (customUrl) postData.ollama_url = customUrl;
 
         var ollama  = [];
         var oai     = [];
         var ant     = [];
-        var pending = 1 + (openai ? 1 : 0) + (claude ? 1 : 0);
+        var gem     = [];
+        var pending = 1 + (openai ? 1 : 0) + (claude ? 1 : 0) + (gemini ? 1 : 0);
 
         function done() {
             pending--;
-            if (pending === 0) callback(ollama.concat(oai).concat(ant));
+            if (pending === 0) callback(ollama.concat(oai).concat(ant).concat(gem));
         }
 
         $.post(ajaxUrl, postData, function (res) {
@@ -956,6 +972,12 @@
         if (claude) {
             $.post(ajaxUrl, { action: 'hs_chat_claude_models', _nonce: nonce }, function (res) {
                 if (res.success && res.data && res.data.models) ant = res.data.models;
+            }).always(done);
+        }
+
+        if (gemini) {
+            $.post(ajaxUrl, { action: 'hs_chat_gemini_models', _nonce: nonce }, function (res) {
+                if (res.success && res.data && res.data.models) gem = res.data.models;
             }).always(done);
         }
     }
