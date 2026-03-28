@@ -298,6 +298,13 @@ class Handschelle_Admin {
                     delete_option( 'hs_claude_api_key' );
                 }
                 update_option( 'hs_claude_default_model', sanitize_text_field( wp_unslash( $_POST['hs_claude_default_model'] ?? 'claude-3-5-sonnet-20241022' ) ) );
+                // Google Gemini settings
+                if ( ! empty( $_POST['hs_gemini_api_key'] ) ) {
+                    update_option( 'hs_gemini_api_key', sanitize_text_field( wp_unslash( $_POST['hs_gemini_api_key'] ) ) );
+                } elseif ( isset( $_POST['hs_gemini_api_key_clear'] ) ) {
+                    delete_option( 'hs_gemini_api_key' );
+                }
+                update_option( 'hs_gemini_default_model', sanitize_text_field( wp_unslash( $_POST['hs_gemini_default_model'] ?? 'gemini-2.0-flash' ) ) );
                 $this->redirect( admin_url( 'admin.php?page=handschelle-ollama' ), 'Einstellungen gespeichert.' );
                 break;
         }
@@ -2903,6 +2910,61 @@ class Handschelle_Admin {
                     </div>
 
                     <div class="hs-form-section">
+                        <h3>🤖 Google Gemini</h3>
+                        <p class="description" style="margin-bottom:1rem;">
+                            Trage hier deinen Google AI API-Key ein, damit der Chat-Widget auch Gemini-Modelle nutzen kann.
+                            Den Key erhältst du unter <strong>aistudio.google.com → API keys</strong>.
+                        </p>
+                        <div class="hs-form-grid">
+                            <div class="hs-field">
+                                <label for="hs_gemini_api_key">API-Key</label>
+                                <?php $has_gemini_key = ! empty( get_option( 'hs_gemini_api_key', '' ) ); ?>
+                                <div style="display:flex;gap:.5rem;align-items:center;">
+                                    <input type="password" id="hs_gemini_api_key" name="hs_gemini_api_key"
+                                           value=""
+                                           placeholder="<?php echo $has_gemini_key ? '••••••••  (gesetzt – leer lassen zum Beibehalten)' : 'AIza…'; ?>"
+                                           autocomplete="new-password" style="flex:1;font-family:monospace;">
+                                    <?php if ( $has_gemini_key ) : ?>
+                                    <label style="white-space:nowrap;font-size:.85rem;display:flex;align-items:center;gap:.3rem;">
+                                        <input type="checkbox" name="hs_gemini_api_key_clear" value="1"> Key löschen
+                                    </label>
+                                    <?php endif; ?>
+                                </div>
+                                <span class="description">
+                                    <?php if ( $has_gemini_key ) : ?>
+                                    ✅ API-Key ist gesetzt. Leer lassen, um ihn beizubehalten.
+                                    <?php else : ?>
+                                    Noch kein Key gesetzt. Gemini-Modelle werden erst nach dem Speichern im Frontend angezeigt.
+                                    <?php endif; ?>
+                                </span>
+                            </div>
+                            <div class="hs-field">
+                                <label for="hs_gemini_default_model">Standard-Modell</label>
+                                <?php
+                                $gemini_models  = array( 'gemini-2.5-pro', 'gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-pro', 'gemini-1.5-flash' );
+                                $gemini_current = get_option( 'hs_gemini_default_model', 'gemini-2.0-flash' );
+                                ?>
+                                <select id="hs_gemini_default_model" name="hs_gemini_default_model" style="max-width:260px;">
+                                    <?php foreach ( $gemini_models as $m ) : ?>
+                                    <option value="<?php echo esc_attr( $m ); ?>" <?php selected( $gemini_current, $m ); ?>>
+                                        <?php echo esc_html( $m ); ?>
+                                    </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <span class="description">Vorgabe, wenn Gemini im Chat-Widget aktiv ist.</span>
+                            </div>
+                        </div>
+                        <?php if ( $has_gemini_key ) : ?>
+                        <div style="margin-top:.75rem;">
+                            <button type="button" id="hs-gemini-test-btn" class="button button-secondary">
+                                🔌 Gemini-Verbindung testen
+                            </button>
+                            <span id="hs-gemini-test-result" style="margin-left:.75rem;font-weight:600;"></span>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="hs-form-section">
                         <h3>Verbindungstest (Ollama)</h3>
                         <button type="button" id="hs-ollama-test-btn" class="button button-secondary">
                             🔌 Verbindung testen
@@ -2929,6 +2991,9 @@ class Handschelle_Admin {
                                     <?php endif; ?>
                                     <?php if ( ! empty( get_option( 'hs_claude_api_key', '' ) ) ) : ?>
                                     <option value="claude">Claude</option>
+                                    <?php endif; ?>
+                                    <?php if ( ! empty( get_option( 'hs_gemini_api_key', '' ) ) ) : ?>
+                                    <option value="gemini">Gemini</option>
                                     <?php endif; ?>
                                 </select>
                             </div>
@@ -3045,11 +3110,27 @@ class Handschelle_Admin {
                     .fail(function() { $result.text('❌ Anfrage fehlgeschlagen.').css('color', '#c0392b'); });
             });
 
+            $('#hs-gemini-test-btn').on('click', function() {
+                var $result = $('#hs-gemini-test-result');
+                $result.text('Teste …').css('color', '#7f8c8d');
+                $.post(ajaxUrl, { action: 'hs_chat_gemini_models', _nonce: nonce })
+                    .done(function(res) {
+                        if (res.success && res.data && res.data.models) {
+                            $result.text('✅ API-Key gültig – ' + res.data.models.length + ' Modelle verfügbar.').css('color', '#27ae60');
+                        } else {
+                            var msg = (res.data && res.data.message) ? res.data.message : 'Fehler.';
+                            $result.text('❌ ' + msg).css('color', '#c0392b');
+                        }
+                    })
+                    .fail(function() { $result.text('❌ Anfrage fehlgeschlagen.').css('color', '#c0392b'); });
+            });
+
             // ── Chat-Test ─────────────────────────────────────────────
             var chatTestProviderActions = {
-                ollama: { models: 'hs_chat_models',        chat: 'hs_chat'        },
-                openai: { models: 'hs_chat_openai_models', chat: 'hs_chat_openai' },
-                claude: { models: 'hs_chat_claude_models', chat: 'hs_chat_claude' }
+                ollama: { models: 'hs_chat_models',         chat: 'hs_chat'         },
+                openai: { models: 'hs_chat_openai_models',  chat: 'hs_chat_openai'  },
+                claude: { models: 'hs_chat_claude_models',  chat: 'hs_chat_claude'  },
+                gemini: { models: 'hs_chat_gemini_models',  chat: 'hs_chat_gemini'  }
             };
 
             function loadChatTestModels(provider) {

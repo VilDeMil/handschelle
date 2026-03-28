@@ -596,18 +596,20 @@
         var customUrl = $widget.data('hs-chat-custom-url') || '';
         var openai    = $widget.data('openai') === '1' || $widget.data('openai') === 1;
         var claude    = $widget.data('claude')  === '1' || $widget.data('claude')  === 1;
+        var gemini    = $widget.data('gemini')  === '1' || $widget.data('gemini')  === 1;
 
         $select.prop('disabled', true);
 
-        var ollamaModels = [];
-        var openaiModels = [];
-        var claudeModels = [];
-        var pending = 1 + (openai ? 1 : 0) + (claude ? 1 : 0);
+        var ollamaModels  = [];
+        var openaiModels  = [];
+        var claudeModels  = [];
+        var geminiModels  = [];
+        var pending = 1 + (openai ? 1 : 0) + (claude ? 1 : 0) + (gemini ? 1 : 0);
 
         function finish() {
             pending--;
             if (pending > 0) return;
-            hsBuildModelsUI($widget, $select, current, ollamaModels, openaiModels, claudeModels);
+            hsBuildModelsUI($widget, $select, current, ollamaModels, openaiModels, claudeModels, geminiModels);
             $select.prop('disabled', false);
             if (typeof onReady === 'function') onReady();
         }
@@ -629,17 +631,25 @@
                 if (res.success && res.data && res.data.models) claudeModels = res.data.models;
             }).always(finish);
         }
+
+        if (gemini) {
+            $.post(ajaxUrl, { action: 'hs_chat_gemini_models', _nonce: nonce }, function (res) {
+                if (res.success && res.data && res.data.models) geminiModels = res.data.models;
+            }).always(finish);
+        }
     }
 
-    function hsBuildModelsUI($widget, $select, current, ollamaModels, openaiModels, claudeModels) {
+    function hsBuildModelsUI($widget, $select, current, ollamaModels, openaiModels, claudeModels, geminiModels) {
         claudeModels = claudeModels || [];
-        var providerCount = (ollamaModels.length > 0 ? 1 : 0) + (openaiModels.length > 0 ? 1 : 0) + (claudeModels.length > 0 ? 1 : 0);
+        geminiModels = geminiModels || [];
+        var providerCount = (ollamaModels.length > 0 ? 1 : 0) + (openaiModels.length > 0 ? 1 : 0) + (claudeModels.length > 0 ? 1 : 0) + (geminiModels.length > 0 ? 1 : 0);
         var useGroups = providerCount > 1;
-        var allModels = ollamaModels.concat(openaiModels).concat(claudeModels);
+        var allModels = ollamaModels.concat(openaiModels).concat(claudeModels).concat(geminiModels);
         var modelActions = {};
         ollamaModels.forEach(function (m) { modelActions[m.name] = 'hs_chat'; });
         openaiModels.forEach(function (m) { modelActions[m.name] = 'hs_chat_openai'; });
         claudeModels.forEach(function (m) { modelActions[m.name] = 'hs_chat_claude'; });
+        geminiModels.forEach(function (m) { modelActions[m.name] = 'hs_chat_gemini'; });
         $widget.data('hs-model-actions', modelActions);
 
         var foundCurrent = allModels.some(function (m) { return m.name === current; });
@@ -671,6 +681,11 @@
                 var $og3 = $('<optgroup label="Claude">');
                 buildOpts($og3, claudeModels);
                 $select.append($og3);
+            }
+            if (geminiModels.length) {
+                var $og4 = $('<optgroup label="Gemini">');
+                buildOpts($og4, geminiModels);
+                $select.append($og4);
             }
         } else {
             buildOpts($select, allModels);
@@ -707,6 +722,7 @@
             addCheckboxes('Ollama', ollamaModels, '');
             addCheckboxes('OpenAI', openaiModels, 'hs-chat-multi-group-openai');
             addCheckboxes('Claude', claudeModels, 'hs-chat-multi-group-claude');
+            addCheckboxes('Gemini', geminiModels, 'hs-chat-multi-group-gemini');
         } else {
             addCheckboxes('', allModels, '');
         }
@@ -930,17 +946,19 @@
         var customUrl = $widget.data('hs-chat-custom-url') || '';
         var openai    = $widget.data('openai') === '1' || $widget.data('openai') === 1;
         var claude    = $widget.data('claude')  === '1' || $widget.data('claude')  === 1;
+        var gemini    = $widget.data('gemini')  === '1' || $widget.data('gemini')  === 1;
         var postData  = { action: 'hs_chat_models', _nonce: nonce };
         if (customUrl) postData.ollama_url = customUrl;
 
         var ollama  = [];
         var oai     = [];
         var ant     = [];
-        var pending = 1 + (openai ? 1 : 0) + (claude ? 1 : 0);
+        var gem     = [];
+        var pending = 1 + (openai ? 1 : 0) + (claude ? 1 : 0) + (gemini ? 1 : 0);
 
         function done() {
             pending--;
-            if (pending === 0) callback(ollama.concat(oai).concat(ant));
+            if (pending === 0) callback(ollama.concat(oai).concat(ant).concat(gem));
         }
 
         $.post(ajaxUrl, postData, function (res) {
@@ -956,6 +974,12 @@
         if (claude) {
             $.post(ajaxUrl, { action: 'hs_chat_claude_models', _nonce: nonce }, function (res) {
                 if (res.success && res.data && res.data.models) ant = res.data.models;
+            }).always(done);
+        }
+
+        if (gemini) {
+            $.post(ajaxUrl, { action: 'hs_chat_gemini_models', _nonce: nonce }, function (res) {
+                if (res.success && res.data && res.data.models) gem = res.data.models;
             }).always(done);
         }
     }

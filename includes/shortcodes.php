@@ -94,6 +94,12 @@ class Handschelle_Shortcodes {
         add_action( 'wp_ajax_nopriv_hs_chat_claude',        array( $this, 'ajax_chat_claude' ) );
         add_action( 'wp_ajax_hs_chat_claude_models',        array( $this, 'ajax_chat_claude_models' ) );
         add_action( 'wp_ajax_nopriv_hs_chat_claude_models', array( $this, 'ajax_chat_claude_models' ) );
+
+        // AJAX: Google Gemini Chat
+        add_action( 'wp_ajax_hs_chat_gemini',               array( $this, 'ajax_chat_gemini' ) );
+        add_action( 'wp_ajax_nopriv_hs_chat_gemini',        array( $this, 'ajax_chat_gemini' ) );
+        add_action( 'wp_ajax_hs_chat_gemini_models',        array( $this, 'ajax_chat_gemini_models' ) );
+        add_action( 'wp_ajax_nopriv_hs_chat_gemini_models', array( $this, 'ajax_chat_gemini_models' ) );
     }
 
     /* ================================================================
@@ -2951,6 +2957,7 @@ class Handschelle_Shortcodes {
         $ollama_mode     = get_option( 'hs_ollama_mode', 'local' ); // 'local' | 'remote'
         $openai_enabled  = ! empty( get_option( 'hs_openai_api_key', '' ) ) ? '1' : '0';
         $claude_enabled  = ! empty( get_option( 'hs_claude_api_key',  '' ) ) ? '1' : '0';
+        $gemini_enabled  = ! empty( get_option( 'hs_gemini_api_key',  '' ) ) ? '1' : '0';
 
         ob_start();
         ?>
@@ -2963,6 +2970,7 @@ class Handschelle_Shortcodes {
              data-ollama-mode="<?php echo esc_attr( $ollama_mode ); ?>"
              data-openai="<?php echo esc_attr( $openai_enabled ); ?>"
              data-claude="<?php echo esc_attr( $claude_enabled ); ?>"
+             data-gemini="<?php echo esc_attr( $gemini_enabled ); ?>"
              <?php if ( $atts['urlparam'] !== '' ) : ?>
              data-urlparam="<?php echo esc_attr( $atts['urlparam'] ); ?>"
              <?php endif; ?>>
@@ -3432,6 +3440,126 @@ class Handschelle_Shortcodes {
             array( 'name' => 'claude-3-5-haiku-20241022',    'size' => 'Fast & cheap' ),
             array( 'name' => 'claude-3-opus-20240229',       'size' => 'Powerful'     ),
             array( 'name' => 'claude-3-haiku-20240307',      'size' => 'Lightweight'  ),
+        );
+
+        wp_send_json_success( array( 'models' => $models ) );
+    }
+
+    /* ================================================================
+       AJAX: Google Gemini Chat
+    ================================================================ */
+
+    /**
+     * AJAX handler – proxies a message to the Google Gemini API.
+     * Expects POST fields: message, model, history (JSON), system, temperature, _nonce
+     */
+    public function ajax_chat_gemini() {
+        check_ajax_referer( 'hs_chat_nonce', '_nonce' );
+
+        $api_key = get_option( 'hs_gemini_api_key', '' );
+        if ( empty( $api_key ) ) {
+            wp_send_json_error( array( 'message' => 'Kein Gemini API-Key konfiguriert.' ), 400 );
+        }
+
+        $message     = sanitize_text_field( wp_unslash( $_POST['message']    ?? '' ) );
+        $model       = sanitize_text_field( wp_unslash( $_POST['model']      ?? 'gemini-2.0-flash' ) );
+        $system      = sanitize_textarea_field( wp_unslash( $_POST['system'] ?? '' ) );
+        $temperature = isset( $_POST['temperature'] ) ? max( 0.0, min( 2.0, (float) $_POST['temperature'] ) ) : 0.7;
+        $history     = json_decode( wp_unslash( $_POST['history'] ?? '[]' ), true );
+        if ( ! is_array( $history ) ) {
+            $history = array();
+        }
+
+        if ( empty( $message ) ) {
+            wp_send_json_error( array( 'message' => 'Leere Nachricht.' ), 400 );
+        }
+
+        // Gemini uses "user" / "model" roles and parts arrays.
+        $contents = array();
+        foreach ( $history as $entry ) {
+            if ( ! isset( $entry['role'], $entry['content'] ) ) continue;
+            $role = sanitize_text_field( $entry['role'] );
+            // Gemini calls the assistant role "model".
+            if ( $role === 'assistant' ) $role = 'model';
+            $contents[] = array(
+                'role'  => $role,
+                'parts' => array( array( 'text' => sanitize_textarea_field( $entry['content'] ) ) ),
+            );
+        }
+        $contents[] = array(
+            'role'  => 'user',
+            'parts' => array( array( 'text' => $message ) ),
+        );
+
+        $body_arr = array(
+            'contents'         => $contents,
+            'generationConfig' => array(
+                'temperature'     => $temperature,
+                'maxOutputTokens' => 8192,
+            ),
+        );
+        if ( ! empty( $system ) ) {
+            $body_arr['system_instruction'] = array( 'parts' => array( array( 'text' => $system ) ) );
+        }
+
+        $endpoint   = 'https://generativelanguage.googleapis.com/v1beta/models/' . rawurlencode( $model ) . ':generateContent?key=' . rawurlencode( $api_key );
+        $timeout    = max( 10, intval( get_option( 'hs_ollama_timeout', 120 ) ) );
+        $time_start = microtime( true );
+
+        $response = wp_remote_post( $endpoint, array(
+            'timeout'     => $timeout,
+            'headers'     => array( 'Content-Type' => 'application/json' ),
+            'body'        => wp_json_encode( $body_arr ),
+            'data_format' => 'body',
+        ) );
+
+        $elapsed = microtime( true ) - $time_start;
+
+        if ( is_wp_error( $response ) ) {
+            wp_send_json_error( array(
+                'message' => 'Gemini nicht erreichbar: ' . $response->get_error_message(),
+            ), 502 );
+        }
+
+        $code = wp_remote_retrieve_response_code( $response );
+        $raw  = wp_remote_retrieve_body( $response );
+        $data = json_decode( $raw, true );
+
+        if ( $code !== 200 || empty( $data['candidates'][0]['content']['parts'][0]['text'] ) ) {
+            $err = $data['error']['message'] ?? ( 'HTTP ' . intval( $code ) );
+            wp_send_json_error( array( 'message' => 'Fehler von Gemini: ' . $err ), 502 );
+        }
+
+        $reply    = $data['candidates'][0]['content']['parts'][0]['text'];
+        $eval_tok = (int) ( $data['usageMetadata']['candidatesTokenCount'] ?? 0 );
+        $toks_sec = $elapsed > 0 ? round( $eval_tok / $elapsed, 1 ) : 0;
+
+        wp_send_json_success( array(
+            'reply'      => $reply,
+            'model'      => $model,
+            'time_s'     => round( $elapsed, 2 ),
+            'toks_sec'   => $toks_sec,
+            'eval_count' => $eval_tok,
+        ) );
+    }
+
+    /**
+     * AJAX handler – returns the curated list of available Gemini models.
+     * Only responds if an API key is configured.
+     */
+    public function ajax_chat_gemini_models() {
+        check_ajax_referer( 'hs_chat_nonce', '_nonce' );
+
+        if ( empty( get_option( 'hs_gemini_api_key', '' ) ) ) {
+            wp_send_json_error( array( 'message' => 'Kein Gemini API-Key konfiguriert.' ), 400 );
+        }
+
+        $models = array(
+            array( 'name' => 'gemini-2.5-pro',        'size' => 'Most capable' ),
+            array( 'name' => 'gemini-2.0-flash',      'size' => 'Fast'         ),
+            array( 'name' => 'gemini-2.0-flash-lite', 'size' => 'Lightweight'  ),
+            array( 'name' => 'gemini-1.5-pro',        'size' => 'Balanced'     ),
+            array( 'name' => 'gemini-1.5-flash',      'size' => 'Fast & cheap' ),
         );
 
         wp_send_json_success( array( 'models' => $models ) );
