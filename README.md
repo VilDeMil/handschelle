@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 16.2 |
+| **Version** | 16.3 |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
 | **Lizenz** | GPL-2.0+ |
@@ -123,6 +123,12 @@ Planned features for upcoming versions:
 ---
 
 ## Release Notes
+
+### 16.3 *(2026-03-28)*
+- **AI-Profil button**: Every entry card (for logged-in users) now shows a **🧾 AI-Profil** button when at least one profile question is configured. Clicking it opens a modal overlay that fires the configured questions one by one to the selected LLM, displaying each Q&A pair as the answer arrives with a pulsing `…` loading indicator. A **✅ Fertig** line appears when all questions are answered. The modal can be closed with ✕, a click on the backdrop, or Escape.
+  - **Admin config** (*Ollama KI → 🧾 AI-Profil Fragen*): textarea for questions (one per line, `{name}` / `{partei}` / `{straftat}` placeholders), system-prompt field, provider dropdown (Ollama / OpenAI / Claude / Gemini — only shows providers with a configured key), and model text input.
+  - **Backend**: `ajax_profile_ask` AJAX handler routes to the selected provider; `inject_profile_config()` injects `window.hsProfileConfig` into the page footer.
+  - Version bump 16.2 → 16.3.
 
 ### 16.2 *(2026-03-28)*
 - **Multi-model list: grouped & sorted**: The *Mehrere Modelle gleichzeitig* checkbox list now renders a visible provider header (`Ollama`, `OpenAI`, `Claude`, `Gemini`) before each group, and sorts models alphabetically by name within each group. Version bump 16.1 → 16.2.

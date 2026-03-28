@@ -305,6 +305,14 @@ class Handschelle_Admin {
                     delete_option( 'hs_gemini_api_key' );
                 }
                 update_option( 'hs_gemini_default_model', sanitize_text_field( wp_unslash( $_POST['hs_gemini_default_model'] ?? 'gemini-2.0-flash' ) ) );
+                // AI-Profil settings
+                update_option( 'hs_profile_questions',      sanitize_textarea_field( wp_unslash( $_POST['hs_profile_questions']    ?? '' ) ) );
+                update_option( 'hs_profile_system_prompt',  sanitize_textarea_field( wp_unslash( $_POST['hs_profile_system_prompt'] ?? '' ) ) );
+                $allowed_providers = array( 'ollama', 'openai', 'claude', 'gemini' );
+                $profile_prov = in_array( $_POST['hs_profile_provider'] ?? 'ollama', $allowed_providers, true )
+                    ? $_POST['hs_profile_provider'] : 'ollama';
+                update_option( 'hs_profile_provider', $profile_prov );
+                update_option( 'hs_profile_model',    sanitize_text_field( wp_unslash( $_POST['hs_profile_model'] ?? '' ) ) );
                 $this->redirect( admin_url( 'admin.php?page=handschelle-ollama' ), 'Einstellungen gespeichert.' );
                 break;
         }
@@ -2656,14 +2664,18 @@ class Handschelle_Admin {
        SEITE: DATENBANK
     ================================================================ */
     public function page_ollama() {
-        $nonce          = wp_create_nonce( 'handschelle_admin_action' );
-        $ollama_mode    = get_option( 'hs_ollama_mode',          'local' ); // 'local' | 'remote'
-        $ollama_url     = get_option( 'hs_ollama_url',           'http://localhost:11434' );
-        $ollama_api_key = get_option( 'hs_ollama_api_key',       '' );
-        $default_model  = get_option( 'hs_ollama_default_model', '' );
-        $system_prompt  = get_option( 'hs_ollama_system_prompt', 'Du bist ein hilfreicher Assistent.' );
-        $timeout        = intval( get_option( 'hs_ollama_timeout', 120 ) );
-        $chat_page      = get_option( 'hs_ollama_chat_page',     '/chat/' );
+        $nonce               = wp_create_nonce( 'handschelle_admin_action' );
+        $ollama_mode         = get_option( 'hs_ollama_mode',             'local' );
+        $ollama_url          = get_option( 'hs_ollama_url',              'http://localhost:11434' );
+        $ollama_api_key      = get_option( 'hs_ollama_api_key',          '' );
+        $default_model       = get_option( 'hs_ollama_default_model',    '' );
+        $system_prompt       = get_option( 'hs_ollama_system_prompt',    'Du bist ein hilfreicher Assistent.' );
+        $timeout             = intval( get_option( 'hs_ollama_timeout',  120 ) );
+        $chat_page           = get_option( 'hs_ollama_chat_page',        '/chat/' );
+        $profile_questions   = get_option( 'hs_profile_questions',       '' );
+        $profile_sys_prompt  = get_option( 'hs_profile_system_prompt',   'Du bist ein sachlicher Fakten-Assistent. Antworte knapp und präzise.' );
+        $profile_provider    = get_option( 'hs_profile_provider',        'ollama' );
+        $profile_model       = get_option( 'hs_profile_model',           '' );
         ?>
         <div class="wrap hs-wrap">
             <h1>🤖 Ollama KI-Konfiguration</h1>
@@ -2962,6 +2974,54 @@ class Handschelle_Admin {
                             <span id="hs-gemini-test-result" style="margin-left:.75rem;font-weight:600;"></span>
                         </div>
                         <?php endif; ?>
+                    </div>
+
+                    <div class="hs-form-section">
+                        <h3>🧾 AI-Profil Fragen</h3>
+                        <p class="description" style="margin-bottom:1rem;">
+                            Diese Fragen werden der Reihe nach gestellt, wenn ein Besucher auf den <strong>🤖 AI-Profil</strong>-Button einer Karte klickt.
+                            Nutze die Platzhalter <code>{name}</code>, <code>{partei}</code> und <code>{straftat}</code> – sie werden automatisch ersetzt.
+                        </p>
+                        <div class="hs-form-grid">
+                            <div class="hs-field hs-field-full">
+                                <label for="hs_profile_questions">Fragen <span style="font-weight:400;color:#7f8c8d;">(eine pro Zeile)</span></label>
+                                <textarea id="hs_profile_questions" name="hs_profile_questions"
+                                          rows="6" maxlength="4000"><?php echo esc_textarea( $profile_questions ); ?></textarea>
+                                <span class="description">Beispiel:<br>
+                                    <code>Was weißt du über {name} von {partei}?</code><br>
+                                    <code>Welche Vergehen werden {name} vorgeworfen?</code><br>
+                                    <code>Wie bewertet die Öffentlichkeit {name}?</code>
+                                </span>
+                            </div>
+                            <div class="hs-field hs-field-full">
+                                <label for="hs_profile_system_prompt">System-Prompt für AI-Profil</label>
+                                <textarea id="hs_profile_system_prompt" name="hs_profile_system_prompt"
+                                          rows="3" maxlength="2000"><?php echo esc_textarea( $profile_sys_prompt ); ?></textarea>
+                            </div>
+                            <div class="hs-field">
+                                <label for="hs_profile_provider">Anbieter</label>
+                                <select id="hs_profile_provider" name="hs_profile_provider" style="max-width:180px;">
+                                    <option value="ollama" <?php selected( $profile_provider, 'ollama' ); ?>>Ollama</option>
+                                    <?php if ( ! empty( get_option( 'hs_openai_api_key', '' ) ) ) : ?>
+                                    <option value="openai" <?php selected( $profile_provider, 'openai' ); ?>>OpenAI</option>
+                                    <?php endif; ?>
+                                    <?php if ( ! empty( get_option( 'hs_claude_api_key', '' ) ) ) : ?>
+                                    <option value="claude" <?php selected( $profile_provider, 'claude' ); ?>>Claude</option>
+                                    <?php endif; ?>
+                                    <?php if ( ! empty( get_option( 'hs_gemini_api_key', '' ) ) ) : ?>
+                                    <option value="gemini" <?php selected( $profile_provider, 'gemini' ); ?>>Gemini</option>
+                                    <?php endif; ?>
+                                </select>
+                                <span class="description">Welcher LLM-Anbieter für das Profil verwendet wird.</span>
+                            </div>
+                            <div class="hs-field">
+                                <label for="hs_profile_model">Modell</label>
+                                <input type="text" id="hs_profile_model" name="hs_profile_model"
+                                       value="<?php echo esc_attr( $profile_model ); ?>"
+                                       placeholder="z.B. llama3.2 oder gpt-4o">
+                                <span class="description">Leer lassen, um das Standard-Modell des gewählten Anbieters zu nutzen.</span>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="hs-form-section">

@@ -586,7 +586,106 @@
             hsChatRepost($widget, exchIdx, newModel, $status);
         });
 
+        // ── AI-Profil ─────────────────────────────────────────────
+        $(document).on('click', '.hs-profile-btn', function () {
+            var $btn     = $(this);
+            var name     = $btn.data('name')     || '';
+            var partei   = $btn.data('partei')   || '';
+            var straftat = $btn.data('straftat') || '';
+            hsProfileOpen(name, partei, straftat);
+        });
+
+        $(document).on('click', '.hs-profile-modal-close, .hs-profile-modal-overlay', function (e) {
+            if (e.target === this) $('#hs-profile-modal').remove();
+        });
+
+        $(document).on('keydown.hsprofile', function (e) {
+            if (e.key === 'Escape') $('#hs-profile-modal').remove();
+        });
+
     });
+
+    /* ── AI-Profil modal ────────────────────────────────────────── */
+
+    function hsProfileOpen(name, partei, straftat) {
+        var config    = window.hsProfileConfig || {};
+        var questions = config.questions || [];
+        if (!questions.length) return;
+
+        // Remove stale modal
+        $('#hs-profile-modal').remove();
+
+        var title = name ? '🧾 AI-Profil: ' + name : '🧾 AI-Profil';
+
+        var $modal = $(
+            '<div id="hs-profile-modal" class="hs-profile-modal" role="dialog" aria-modal="true">' +
+              '<div class="hs-profile-modal-overlay"></div>' +
+              '<div class="hs-profile-modal-box">' +
+                '<div class="hs-profile-modal-header">' +
+                  '<span class="hs-profile-modal-title">' + hsEscape(title) + '</span>' +
+                  '<button type="button" class="hs-profile-modal-close" aria-label="Schließen">✕</button>' +
+                '</div>' +
+                '<div class="hs-profile-modal-body"></div>' +
+              '</div>' +
+            '</div>'
+        );
+        $('body').append($modal);
+
+        var $body    = $modal.find('.hs-profile-modal-body');
+        var provider = config.provider || 'ollama';
+        var model    = config.model    || '';
+
+        function replace(tpl) {
+            return tpl
+                .replace(/\{name\}/g,     name)
+                .replace(/\{partei\}/g,   partei)
+                .replace(/\{straftat\}/g, straftat);
+        }
+
+        function askNext(idx) {
+            if (idx >= questions.length) {
+                $body.append('<p class="hs-profile-done">✅ Fertig</p>');
+                return;
+            }
+
+            var q = replace(questions[idx]);
+
+            var $qa = $(
+                '<div class="hs-profile-qa">' +
+                  '<div class="hs-profile-question">' + hsEscape(q) + '</div>' +
+                  '<div class="hs-profile-answer"><span class="hs-profile-loading">…</span></div>' +
+                '</div>'
+            );
+            $body.append($qa);
+            // Scroll to the new block
+            $modal.find('.hs-profile-modal-box').scrollTop(99999);
+
+            $.post(config.ajaxUrl, {
+                action:   'hs_profile_ask',
+                question: q,
+                system:   config.systemPrompt || '',
+                _nonce:   config.nonce
+            })
+            .done(function (res) {
+                if (res.success && res.data && res.data.reply) {
+                    var html = hsEscape(res.data.reply).replace(/\n/g, '<br>');
+                    $qa.find('.hs-profile-answer').html(html);
+                } else {
+                    var msg = (res.data && res.data.message) ? res.data.message : 'Fehler.';
+                    $qa.find('.hs-profile-answer').html('<em class="hs-profile-error">' + hsEscape(msg) + '</em>');
+                }
+            })
+            .fail(function () {
+                $qa.find('.hs-profile-answer').html('<em class="hs-profile-error">Verbindungsfehler.</em>');
+            })
+            .always(function () {
+                $modal.find('.hs-profile-modal-box').scrollTop(99999);
+                askNext(idx + 1);
+            });
+        }
+
+        askNext(0);
+    }
 
     function hsChatLoadModels($widget, onReady) {
         var $select   = $widget.find('.hs-chat-model-select');

@@ -100,6 +100,13 @@ class Handschelle_Shortcodes {
         add_action( 'wp_ajax_nopriv_hs_chat_gemini',        array( $this, 'ajax_chat_gemini' ) );
         add_action( 'wp_ajax_hs_chat_gemini_models',        array( $this, 'ajax_chat_gemini_models' ) );
         add_action( 'wp_ajax_nopriv_hs_chat_gemini_models', array( $this, 'ajax_chat_gemini_models' ) );
+
+        // AJAX: AI-Profil
+        add_action( 'wp_ajax_hs_profile_ask',        array( $this, 'ajax_profile_ask' ) );
+        add_action( 'wp_ajax_nopriv_hs_profile_ask', array( $this, 'ajax_profile_ask' ) );
+
+        // Inject AI-Profil config into page footer
+        add_action( 'wp_footer', array( $this, 'inject_profile_config' ) );
     }
 
     /* ================================================================
@@ -1084,6 +1091,14 @@ class Handschelle_Shortcodes {
                     <?php if ( $e->parlament ) : ?><p class="hs-card-parlament"><?php echo esc_html($e->parlament); ?><?php if ( $e->parlament_name ) echo ' (' . esc_html($e->parlament_name) . ')'; ?></p><?php endif; ?>
                     <p class="hs-card-status"><?php echo $e->status_aktiv ? '<span class="hs-badge hs-badge-aktiv">Aktiv</span>' : '<span class="hs-badge hs-badge-inaktiv">Inaktiv</span>'; ?></p>
                     <?php if ( $is_logged_in ) echo $this->ki_person_link( $e->name, $e->partei ); ?>
+                    <?php if ( $is_logged_in && ! empty( get_option( 'hs_profile_questions', '' ) ) ) : ?>
+                    <button type="button" class="hs-profile-btn hs-ki-name-btn"
+                            data-name="<?php echo esc_attr( $e->name ); ?>"
+                            data-partei="<?php echo esc_attr( $e->partei ?? '' ); ?>"
+                            data-straftat="<?php echo esc_attr( $e->straftat ?? '' ); ?>">
+                        🧾 AI-Profil
+                    </button>
+                    <?php endif; ?>
                 </div>
                 <?php if ( $is_author ) : ?>
                 <button type="button"
@@ -3563,6 +3578,177 @@ class Handschelle_Shortcodes {
         );
 
         wp_send_json_success( array( 'models' => $models ) );
+    }
+
+    /* ================================================================
+       AI-PROFIL: Footer config injection
+    ================================================================ */
+
+    /**
+     * Outputs the profile config as a global JS variable in the page footer.
+     * Only runs if profile questions have been configured.
+     */
+    public function inject_profile_config() {
+        $raw = get_option( 'hs_profile_questions', '' );
+        if ( empty( trim( $raw ) ) ) return;
+
+        $lines = array_values( array_filter(
+            array_map( 'trim', explode( "\n", $raw ) )
+        ) );
+        if ( empty( $lines ) ) return;
+
+        $config = array(
+            'questions'    => $lines,
+            'systemPrompt' => get_option( 'hs_profile_system_prompt', '' ),
+            'provider'     => get_option( 'hs_profile_provider', 'ollama' ),
+            'model'        => get_option( 'hs_profile_model', '' ),
+            'ajaxUrl'      => admin_url( 'admin-ajax.php' ),
+            'nonce'        => wp_create_nonce( 'hs_chat_nonce' ),
+        );
+
+        echo '<script>window.hsProfileConfig = ' . wp_json_encode( $config ) . ';</script>' . "\n";
+    }
+
+    /* ================================================================
+       AI-PROFIL: AJAX handler
+    ================================================================ */
+
+    /**
+     * Handles a single AI-Profil question.
+     * Expects POST: question, system, _nonce
+     * Routes to the provider configured via hs_profile_provider.
+     */
+    public function ajax_profile_ask() {
+        check_ajax_referer( 'hs_chat_nonce', '_nonce' );
+
+        $question = sanitize_textarea_field( wp_unslash( $_POST['question'] ?? '' ) );
+        $system   = sanitize_textarea_field( wp_unslash( $_POST['system']   ?? '' ) );
+        if ( empty( $question ) ) {
+            wp_send_json_error( array( 'message' => 'Leere Frage.' ), 400 );
+        }
+
+        $provider = get_option( 'hs_profile_provider', 'ollama' );
+        $model    = get_option( 'hs_profile_model', '' );
+        $timeout  = max( 10, intval( get_option( 'hs_ollama_timeout', 120 ) ) );
+
+        // ── Ollama ────────────────────────────────────────────────
+        if ( $provider === 'ollama' ) {
+            if ( empty( $model ) ) $model = get_option( 'hs_ollama_default_model', 'llama3.2' ) ?: 'llama3.2';
+            $messages = array();
+            if ( ! empty( $system ) ) $messages[] = array( 'role' => 'system', 'content' => $system );
+            $messages[] = array( 'role' => 'user', 'content' => $question );
+
+            $ollama_url = get_option( 'hs_ollama_url', 'http://localhost:11434' );
+            $headers    = array( 'Content-Type' => 'application/json' );
+            $api_key    = get_option( 'hs_ollama_api_key', '' );
+            if ( ! empty( $api_key ) ) $headers['Authorization'] = 'Bearer ' . $api_key;
+
+            $response = wp_remote_post( trailingslashit( $ollama_url ) . 'api/chat', array(
+                'timeout'     => $timeout,
+                'headers'     => $headers,
+                'body'        => wp_json_encode( array( 'model' => $model, 'messages' => $messages, 'stream' => false ) ),
+                'data_format' => 'body',
+            ) );
+            if ( is_wp_error( $response ) ) {
+                wp_send_json_error( array( 'message' => 'Ollama nicht erreichbar: ' . $response->get_error_message() ), 502 );
+            }
+            $data = json_decode( wp_remote_retrieve_body( $response ), true );
+            if ( wp_remote_retrieve_response_code( $response ) !== 200 || empty( $data['message']['content'] ) ) {
+                wp_send_json_error( array( 'message' => 'Fehler von Ollama (HTTP ' . intval( wp_remote_retrieve_response_code( $response ) ) . ').' ), 502 );
+            }
+            wp_send_json_success( array( 'reply' => $data['message']['content'], 'model' => $model ) );
+        }
+
+        // ── OpenAI ────────────────────────────────────────────────
+        if ( $provider === 'openai' ) {
+            $api_key = get_option( 'hs_openai_api_key', '' );
+            if ( empty( $api_key ) ) wp_send_json_error( array( 'message' => 'Kein OpenAI API-Key konfiguriert.' ), 400 );
+            if ( empty( $model ) ) $model = get_option( 'hs_openai_default_model', 'gpt-4o' ) ?: 'gpt-4o';
+
+            $messages = array();
+            if ( ! empty( $system ) ) $messages[] = array( 'role' => 'system', 'content' => $system );
+            $messages[] = array( 'role' => 'user', 'content' => $question );
+
+            $is_o_model = (bool) preg_match( '/^o\d/i', $model );
+            $payload = array( 'model' => $model, 'messages' => $messages );
+            if ( ! $is_o_model ) $payload['temperature'] = 0.7;
+
+            $response = wp_remote_post( 'https://api.openai.com/v1/chat/completions', array(
+                'timeout'     => $timeout,
+                'headers'     => array( 'Content-Type' => 'application/json', 'Authorization' => 'Bearer ' . $api_key ),
+                'body'        => wp_json_encode( $payload ),
+                'data_format' => 'body',
+            ) );
+            if ( is_wp_error( $response ) ) {
+                wp_send_json_error( array( 'message' => 'OpenAI nicht erreichbar: ' . $response->get_error_message() ), 502 );
+            }
+            $data = json_decode( wp_remote_retrieve_body( $response ), true );
+            if ( wp_remote_retrieve_response_code( $response ) !== 200 || empty( $data['choices'][0]['message']['content'] ) ) {
+                $err = $data['error']['message'] ?? ( 'HTTP ' . intval( wp_remote_retrieve_response_code( $response ) ) );
+                wp_send_json_error( array( 'message' => 'Fehler von OpenAI: ' . $err ), 502 );
+            }
+            wp_send_json_success( array( 'reply' => $data['choices'][0]['message']['content'], 'model' => $model ) );
+        }
+
+        // ── Claude ────────────────────────────────────────────────
+        if ( $provider === 'claude' ) {
+            $api_key = get_option( 'hs_claude_api_key', '' );
+            if ( empty( $api_key ) ) wp_send_json_error( array( 'message' => 'Kein Claude API-Key konfiguriert.' ), 400 );
+            if ( empty( $model ) ) $model = get_option( 'hs_claude_default_model', 'claude-3-5-sonnet-20241022' ) ?: 'claude-3-5-sonnet-20241022';
+
+            $body_arr = array( 'model' => $model, 'max_tokens' => 4096, 'messages' => array( array( 'role' => 'user', 'content' => $question ) ), 'temperature' => 0.7 );
+            if ( ! empty( $system ) ) $body_arr['system'] = $system;
+
+            $response = wp_remote_post( 'https://api.anthropic.com/v1/messages', array(
+                'timeout'     => $timeout,
+                'headers'     => array( 'Content-Type' => 'application/json', 'x-api-key' => $api_key, 'anthropic-version' => '2023-06-01' ),
+                'body'        => wp_json_encode( $body_arr ),
+                'data_format' => 'body',
+            ) );
+            if ( is_wp_error( $response ) ) {
+                wp_send_json_error( array( 'message' => 'Claude nicht erreichbar: ' . $response->get_error_message() ), 502 );
+            }
+            $data = json_decode( wp_remote_retrieve_body( $response ), true );
+            if ( wp_remote_retrieve_response_code( $response ) !== 200 || empty( $data['content'][0]['text'] ) ) {
+                $err = $data['error']['message'] ?? ( 'HTTP ' . intval( wp_remote_retrieve_response_code( $response ) ) );
+                wp_send_json_error( array( 'message' => 'Fehler von Claude: ' . $err ), 502 );
+            }
+            wp_send_json_success( array( 'reply' => $data['content'][0]['text'], 'model' => $model ) );
+        }
+
+        // ── Gemini ────────────────────────────────────────────────
+        if ( $provider === 'gemini' ) {
+            $api_key = get_option( 'hs_gemini_api_key', '' );
+            if ( empty( $api_key ) ) wp_send_json_error( array( 'message' => 'Kein Gemini API-Key konfiguriert.' ), 400 );
+            if ( empty( $model ) ) $model = get_option( 'hs_gemini_default_model', 'gemini-2.0-flash' ) ?: 'gemini-2.0-flash';
+
+            $body_arr = array(
+                'contents'         => array( array( 'role' => 'user', 'parts' => array( array( 'text' => $question ) ) ) ),
+                'generationConfig' => array( 'temperature' => 0.7, 'maxOutputTokens' => 8192 ),
+            );
+            if ( ! empty( $system ) ) {
+                $body_arr['system_instruction'] = array( 'parts' => array( array( 'text' => $system ) ) );
+            }
+
+            $endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/' . rawurlencode( $model ) . ':generateContent?key=' . rawurlencode( $api_key );
+            $response = wp_remote_post( $endpoint, array(
+                'timeout'     => $timeout,
+                'headers'     => array( 'Content-Type' => 'application/json' ),
+                'body'        => wp_json_encode( $body_arr ),
+                'data_format' => 'body',
+            ) );
+            if ( is_wp_error( $response ) ) {
+                wp_send_json_error( array( 'message' => 'Gemini nicht erreichbar: ' . $response->get_error_message() ), 502 );
+            }
+            $data = json_decode( wp_remote_retrieve_body( $response ), true );
+            if ( wp_remote_retrieve_response_code( $response ) !== 200 || empty( $data['candidates'][0]['content']['parts'][0]['text'] ) ) {
+                $err = $data['error']['message'] ?? ( 'HTTP ' . intval( wp_remote_retrieve_response_code( $response ) ) );
+                wp_send_json_error( array( 'message' => 'Fehler von Gemini: ' . $err ), 502 );
+            }
+            wp_send_json_success( array( 'reply' => $data['candidates'][0]['content']['parts'][0]['text'], 'model' => $model ) );
+        }
+
+        wp_send_json_error( array( 'message' => 'Unbekannter Anbieter.' ), 400 );
     }
 
 }
