@@ -532,6 +532,11 @@
 
             if (!fragenList.length) return;
 
+            // Clear previous conversation and cancel any pending queue
+            $widget.data('hs-chat-history', []);
+            $widget.data('hs-chat-queue', []);
+            $widget.find('.hs-chat-messages').empty();
+
             // Queue remaining questions; send the first immediately
             $widget.data('hs-chat-queue', fragenList.slice(1));
             var $input = $widget.find('.hs-chat-input');
@@ -918,7 +923,7 @@
 
         var model       = $widget.find('.hs-chat-model-select').val() || $widget.data('model') || 'llama3.2';
         var $panel      = $widget.find('.hs-chat-settings-panel');
-        var system      = $panel.find('.hs-chat-settings-system').val().trim() || $widget.data('system') || '';
+        var system      = ($panel.find('.hs-chat-settings-system').val() || '').trim() || $widget.data('system') || '';
         var temperature = parseFloat($panel.find('.hs-chat-settings-temp').val()) || 0.7;
         var customUrl   = $widget.data('hs-chat-custom-url') || '';
         var nonce       = $widget.data('nonce');
