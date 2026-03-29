@@ -504,11 +504,30 @@
             }
             hsChatLoadModels($w, function () {
                 var param = $w.data('urlparam');
-                if (!param) return;
-                var msg = new URLSearchParams(window.location.search).get(param);
-                if (!msg) return;
-                $w.find('.hs-chat-input').val(msg.trim());
-                hsChatSend($w);
+                if (param) {
+                    var msg = new URLSearchParams(window.location.search).get(param);
+                    if (msg) {
+                        $w.find('.hs-chat-input').val(msg.trim());
+                        hsChatSend($w);
+                        return;
+                    }
+                }
+                var hsName = $w.data('hs-name');
+                if (hsName) {
+                    var $nameSelect = $w.find('.hs-chat-name-select');
+                    if ($nameSelect.length) {
+                        // Dropdown widget: auto-select matching name option
+                        $nameSelect.find('option').each(function () {
+                            if ($(this).val().toLowerCase() === hsName.trim().toLowerCase()) {
+                                $nameSelect.val($(this).val()).trigger('change');
+                                return false;
+                            }
+                        });
+                    } else {
+                        $w.find('.hs-chat-input').val(hsName.trim());
+                        hsChatSend($w);
+                    }
+                }
             });
         });
 
