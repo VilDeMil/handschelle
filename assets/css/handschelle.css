@@ -531,6 +531,53 @@
 .hs-bild-tooltip .hs-bild-tooltip-straftat { color:#000000; margin-top:5px; opacity:1; }
 
 /* ================================================================
+   [handschelle-slideshow]
+================================================================ */
+.hs-slideshow-wrap {
+    overflow: hidden;
+    border: 1px solid var(--hs-border);
+    border-radius: var(--hs-radius);
+    background: #fff;
+    box-shadow: var(--hs-shadow);
+}
+.hs-slideshow-track {
+    display: inline-flex;
+    align-items: center;
+    gap: 1rem;
+    white-space: nowrap;
+    will-change: transform;
+    animation: hs-slideshow-scroll linear infinite;
+    padding: .85rem 1rem;
+}
+.hs-slide-item {
+    display: inline-flex;
+    align-items: center;
+    gap: .65rem;
+    border-right: 1px solid #ececec;
+    padding-right: 1rem;
+}
+.hs-slide-image {
+    width: auto;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    display: block;
+}
+.hs-slide-text {
+    font-size: .9rem;
+    color: #111;
+    line-height: 1.35;
+    white-space: normal;
+    min-width: 260px;
+    max-width: 560px;
+}
+@keyframes hs-slideshow-scroll {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+/* ================================================================
    V3.0 – Bulk Actions Bar
 ================================================================ */
 .hs-bulk-bar { display:flex; gap:.7rem; align-items:center; padding:.6rem 0 .8rem; flex-wrap:wrap; }
