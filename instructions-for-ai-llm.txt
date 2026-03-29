@@ -10,10 +10,10 @@ Update the version string in **all three places** — they must always be in syn
 
 | File | Location | Example |
 |---|---|---|
-| `die-handschelle.php` | `* Version:` header comment (line ~6) | `* Version:     6.4` |
-| `die-handschelle.php` | `HANDSCHELLE_VERSION` constant (line ~24) | `define( 'HANDSCHELLE_VERSION', '6.4' );` |
-| `includes/admin.php` | `<span class="hs-version">` in admin header | `<span class="hs-version">6.4</span>` |
-| `README.md` | Version row in the header table | `\| **Version** \| 6.4 \|` |
+| `die-handschelle.php` | `* Version:` header comment (line ~6) | `* Version:     16.6` |
+| `die-handschelle.php` | `HANDSCHELLE_VERSION` constant (line ~24) | `define( 'HANDSCHELLE_VERSION', '16.6' );` |
+| `includes/admin.php` | `<span class="hs-version">` in admin header | `<span class="hs-version">16.6</span>` |
+| `README.md` | Version row in the header table | `\| **Version** \| 16.6 \|` |
 
 **How to calculate the new version:**
 Take the current version shown in `README.md` → add `0.1` → round to one decimal place.
@@ -60,4 +60,4 @@ When adding a new column:
 ---
 ---
 
-(c) 2026 - "Die-Handschelle" 15.1 - www.die-handschelle.com
+(c) 2026 - "Die-Handschelle" 16.6 - www.die-handschelle.com

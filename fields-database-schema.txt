@@ -138,4 +138,4 @@ Index on `entry_id` for fast lookup.
 ---
 ---
 
-(c) 2026 - "Die-Handschelle" 15.1 - www.die-handschelle.com
+(c) 2026 - "Die-Handschelle" 16.6 - www.die-handschelle.com

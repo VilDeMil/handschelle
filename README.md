@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 16.5 |
+| **Version** | 16.6 |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
 | **Lizenz** | GPL-2.0+ |
@@ -123,6 +123,10 @@ Planned features for upcoming versions:
 ---
 
 ## Release Notes
+
+### 16.6 *(2026-03-29)*
+- **Version bump**: 16.5 → 16.6.
+- **Documentation refresh**: Updated `README.md` and all `*.txt` documentation files to reflect version 16.6.
 
 ### 16.5 *(2026-03-28)*
 - **Version bump**: 16.4 → 16.5.
