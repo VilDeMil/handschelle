@@ -1518,8 +1518,8 @@ class Handschelle_Shortcodes {
             $items[] = array(
                 'img'      => $img_url,
                 'name'     => hs_display_name( $e->name ),
-                'partei'   => hs_display_party( $e->partei ),
-                'straftat' => hs_display_crime( $e->straftat ),
+                'partei'   => trim( (string) ( $e->partei ?? '' ) ),
+                'straftat' => trim( (string) ( $e->straftat ?? '' ) ),
             );
         }
 
