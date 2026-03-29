@@ -21,6 +21,7 @@ class Handschelle_Admin {
         add_action( 'admin_head',    array( $this, 'hide_edit_menu_item' ) );
         add_filter( 'authenticate',  array( $this, 'block_pending_users' ), 30, 3 );
         add_action( 'user_register', array( $this, 'set_new_user_pending' ), 10, 1 );
+        add_action( 'wp_ajax_hs_admin_set_default_model', array( $this, 'ajax_set_default_model' ) );
     }
 
     /* ── Bearbeitungsseite aus Menü ausblenden (bleibt aber erreichbar) ── */
@@ -3312,113 +3313,63 @@ class Handschelle_Admin {
     }
 
     public function page_llm_status() {
-        $nonce = wp_create_nonce( 'hs_chat_nonce' );
+        $models_nonce  = wp_create_nonce( 'hs_chat_nonce' );
+        $default_nonce = wp_create_nonce( 'hs_admin_set_default_model' );
 
-        $ollama_url     = get_option( 'hs_ollama_url', 'http://localhost:11434' );
-        $ollama_mode    = get_option( 'hs_ollama_mode', 'local' );
-        $ollama_model   = get_option( 'hs_ollama_default_model', '' ) ?: '—';
-        $openai_model   = get_option( 'hs_openai_default_model', 'gpt-4o' );
-        $claude_model   = get_option( 'hs_claude_default_model', 'claude-3-5-sonnet-20241022' );
-        $gemini_model   = get_option( 'hs_gemini_default_model', 'gemini-2.0-flash' );
-        $has_openai     = ! empty( get_option( 'hs_openai_api_key', '' ) );
-        $has_claude     = ! empty( get_option( 'hs_claude_api_key', '' ) );
-        $has_gemini     = ! empty( get_option( 'hs_gemini_api_key', '' ) );
+        $defaults = array(
+            'ollama' => get_option( 'hs_ollama_default_model', '' ),
+            'openai' => get_option( 'hs_openai_default_model', 'gpt-4o' ),
+            'claude' => get_option( 'hs_claude_default_model', 'claude-3-5-sonnet-20241022' ),
+            'gemini' => get_option( 'hs_gemini_default_model', 'gemini-2.0-flash' ),
+        );
 
         $providers = array(
-            array(
-                'id'         => 'ollama',
-                'provider'   => 'Ollama',
-                'name'       => $ollama_model,
-                'url'        => $ollama_url,
-                'configured' => true,
-                'ajax'       => 'hs_chat_models',
-            ),
-            array(
-                'id'         => 'openai',
-                'provider'   => 'OpenAI',
-                'name'       => $openai_model,
-                'url'        => 'api.openai.com',
-                'configured' => $has_openai,
-                'ajax'       => 'hs_chat_openai_models',
-            ),
-            array(
-                'id'         => 'claude',
-                'provider'   => 'Anthropic (Claude)',
-                'name'       => $claude_model,
-                'url'        => 'api.anthropic.com',
-                'configured' => $has_claude,
-                'ajax'       => 'hs_chat_claude_models',
-            ),
-            array(
-                'id'         => 'gemini',
-                'provider'   => 'Google (Gemini)',
-                'name'       => $gemini_model,
-                'url'        => 'generativelanguage.googleapis.com',
-                'configured' => $has_gemini,
-                'ajax'       => 'hs_chat_gemini_models',
-            ),
+            array( 'id' => 'ollama', 'label' => 'Ollama',             'ajax_models' => 'hs_chat_models',        'configured' => true ),
+            array( 'id' => 'openai', 'label' => 'OpenAI',             'ajax_models' => 'hs_chat_openai_models', 'configured' => ! empty( get_option( 'hs_openai_api_key', '' ) ) ),
+            array( 'id' => 'claude', 'label' => 'Anthropic (Claude)', 'ajax_models' => 'hs_chat_claude_models', 'configured' => ! empty( get_option( 'hs_claude_api_key',  '' ) ) ),
+            array( 'id' => 'gemini', 'label' => 'Google (Gemini)',    'ajax_models' => 'hs_chat_gemini_models', 'configured' => ! empty( get_option( 'hs_gemini_api_key',  '' ) ) ),
         );
         ?>
         <div class="wrap hs-wrap">
             <h1>🔌 LLM Status</h1>
             <p class="description" style="margin-bottom:1.5rem;">
-                Übersicht aller konfigurierten KI-Anbieter und deren Verbindungsstatus.
+                Übersicht aller konfigurierten KI-Anbieter. Klicke auf <strong>Modelle laden</strong>, um die verfügbaren Modelle abzurufen, und setze ein Modell als Standard.
             </p>
 
-            <table class="widefat striped" style="max-width:860px;">
-                <thead>
-                    <tr>
-                        <th>LLM Provider</th>
-                        <th>LLM Name</th>
-                        <th>LLM Version</th>
-                        <th>Konfiguriert</th>
-                        <th>Test</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                <?php foreach ( $providers as $p ) :
-                    // Split name into model-family and version
-                    $model_name    = $p['name'];
-                    $model_version = '—';
-                    if ( preg_match( '/[:\-\/](\d[\d.\w\-]*)/', $model_name, $m ) ) {
-                        $model_version = $m[1];
-                    } elseif ( preg_match( '/(\d[\d.]+)/', $model_name, $m ) ) {
-                        $model_version = $m[1];
-                    }
-                ?>
-                    <tr id="hs-llm-row-<?php echo esc_attr( $p['id'] ); ?>">
-                        <td><strong><?php echo esc_html( $p['provider'] ); ?></strong></td>
-                        <td style="font-family:monospace;"><?php echo esc_html( $model_name ); ?></td>
-                        <td style="font-family:monospace;"><?php echo esc_html( $model_version ); ?></td>
-                        <td>
-                            <?php if ( $p['configured'] ) : ?>
-                                <span style="color:#27ae60;font-weight:600;">✅ Ja</span>
-                            <?php else : ?>
-                                <span style="color:#c0392b;font-weight:600;">❌ Nein</span>
-                            <?php endif; ?>
-                        </td>
-                        <td>
-                            <?php if ( $p['configured'] ) : ?>
-                            <button type="button"
-                                    class="button button-secondary hs-llm-test-btn"
-                                    data-provider="<?php echo esc_attr( $p['id'] ); ?>"
-                                    data-ajax="<?php echo esc_attr( $p['ajax'] ); ?>">
-                                🔌 Testen
-                            </button>
-                            <?php else : ?>
-                            <span style="color:#999;font-size:.85rem;">Kein API-Key</span>
-                            <?php endif; ?>
-                        </td>
-                        <td class="hs-llm-status-cell" id="hs-llm-status-<?php echo esc_attr( $p['id'] ); ?>">
-                            —
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-                </tbody>
-            </table>
+            <?php foreach ( $providers as $p ) : ?>
+            <div class="hs-form-section" style="max-width:860px;margin-bottom:1.5rem;">
+                <h3 style="display:flex;align-items:center;gap:.75rem;">
+                    <?php echo esc_html( $p['label'] ); ?>
+                    <?php if ( $p['configured'] ) : ?>
+                        <span style="font-size:.8rem;font-weight:400;color:#27ae60;">✅ konfiguriert</span>
+                        <button type="button"
+                                class="button button-secondary hs-llm-load-btn"
+                                style="font-size:.8rem;height:24px;line-height:22px;padding:0 .6rem;"
+                                data-provider="<?php echo esc_attr( $p['id'] ); ?>"
+                                data-ajax="<?php echo esc_attr( $p['ajax_models'] ); ?>">
+                            ↻ Modelle laden
+                        </button>
+                    <?php else : ?>
+                        <span style="font-size:.8rem;font-weight:400;color:#c0392b;">❌ kein API-Key</span>
+                    <?php endif; ?>
+                </h3>
+                <p style="margin:.2rem 0 .6rem;font-size:.85rem;color:#646970;">
+                    Standard-Modell:
+                    <strong id="hs-default-label-<?php echo esc_attr( $p['id'] ); ?>" style="font-family:monospace;">
+                        <?php echo esc_html( $defaults[ $p['id'] ] ?: '—' ); ?>
+                    </strong>
+                </p>
+                <div id="hs-model-table-<?php echo esc_attr( $p['id'] ); ?>">
+                    <?php if ( ! $p['configured'] ) : ?>
+                        <p style="color:#999;font-size:.85rem;margin:0;">Kein API-Key gesetzt – <a href="<?php echo esc_url( admin_url( 'admin.php?page=handschelle-ollama' ) ); ?>">Einstellungen öffnen</a>.</p>
+                    <?php else : ?>
+                        <p style="color:#999;font-size:.85rem;margin:0;"><em>Noch nicht geladen – klicke auf „Modelle laden".</em></p>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <?php endforeach; ?>
 
-            <p style="margin-top:1.5rem;">
+            <p style="margin-top:.5rem;">
                 <a href="<?php echo esc_url( admin_url( 'admin.php?page=handschelle-ollama' ) ); ?>" class="button button-secondary">
                     ⚙️ LLM-Einstellungen bearbeiten
                 </a>
@@ -3429,38 +3380,150 @@ class Handschelle_Admin {
 
         <script>
         (function($){
-            var ajaxUrl = '<?php echo esc_js( admin_url( 'admin-ajax.php' ) ); ?>';
-            var nonce   = '<?php echo esc_js( $nonce ); ?>';
+            var ajaxUrl      = '<?php echo esc_js( admin_url( 'admin-ajax.php' ) ); ?>';
+            var modelsNonce  = '<?php echo esc_js( $models_nonce ); ?>';
+            var defaultNonce = '<?php echo esc_js( $default_nonce ); ?>';
+            var defaults     = <?php echo wp_json_encode( $defaults ); ?>;
 
-            $('.hs-llm-test-btn').on('click', function() {
-                var $btn      = $(this);
-                var provider  = $btn.data('provider');
-                var action    = $btn.data('ajax');
-                var $status   = $('#hs-llm-status-' + provider);
+            function escHtml(str) {
+                return $('<span>').text(str).html();
+            }
 
-                $btn.prop('disabled', true).text('Teste …');
-                $status.html('<span style="color:#7f8c8d;">Verbinde …</span>');
+            function buildTable(provider, models) {
+                var currentDefault = defaults[provider] || '';
+                var $wrap = $('#hs-model-table-' + provider);
+                var html  = '<table class="widefat striped" style="margin-top:.4rem;">' +
+                            '<thead><tr>' +
+                            '<th>LLM Name</th><th>LLM Version</th><th>Standard</th><th></th>' +
+                            '</tr></thead><tbody>';
 
-                $.post(ajaxUrl, { action: action, _nonce: nonce })
+                $.each(models, function(_, m) {
+                    var isDefault = (m.name === currentDefault);
+                    var version   = '—';
+                    var vMatch    = m.name.match(/[:\-\/](\d[\d.\w\-]*)/);
+                    if (!vMatch) vMatch = m.name.match(/(\d[\d.]+)/);
+                    if (vMatch) version = vMatch[1];
+
+                    var sizeTip = m.size ? ' <span style="color:#999;font-size:.8rem;">(' + escHtml(m.size) + ')</span>' : '';
+                    var badge   = isDefault
+                        ? '<span style="color:#27ae60;font-weight:600;font-size:.8rem;">✅ Standard</span>'
+                        : '';
+                    var btn     = isDefault ? '' :
+                        '<button type="button" class="button button-secondary hs-llm-set-default" ' +
+                        'style="font-size:.75rem;height:22px;line-height:20px;padding:0 .5rem;" ' +
+                        'data-provider="' + escHtml(provider) + '" data-model="' + escHtml(m.name) + '">' +
+                        'Als Standard</button>';
+
+                    html += '<tr id="hs-model-row-' + escHtml(provider) + '-' + escHtml(m.name) + '">' +
+                            '<td style="font-family:monospace;">' + escHtml(m.name) + sizeTip + '</td>' +
+                            '<td style="font-family:monospace;">' + escHtml(version) + '</td>' +
+                            '<td>' + badge + '</td>' +
+                            '<td>' + btn + '</td>' +
+                            '</tr>';
+                });
+                html += '</tbody></table>';
+                $wrap.html(html);
+            }
+
+            // Load models for a provider
+            $('.hs-llm-load-btn').on('click', function() {
+                var $btn     = $(this);
+                var provider = $btn.data('provider');
+                var action   = $btn.data('ajax');
+                var $wrap    = $('#hs-model-table-' + provider);
+
+                $btn.prop('disabled', true).text('Lade …');
+                $wrap.html('<p style="color:#7f8c8d;font-size:.85rem;"><em>Lade Modelle …</em></p>');
+
+                $.post(ajaxUrl, { action: action, _nonce: modelsNonce })
                     .done(function(res) {
-                        if (res.success && res.data && res.data.models) {
-                            var count = res.data.models.length;
-                            $status.html('<span style="color:#27ae60;font-weight:600;">✅ Verbunden – ' + count + ' Modell(e)</span>');
+                        if (res.success && res.data && res.data.models && res.data.models.length) {
+                            buildTable(provider, res.data.models);
                         } else {
-                            var msg = (res.data && res.data.message) ? res.data.message : 'Verbindung fehlgeschlagen';
-                            $status.html('<span style="color:#c0392b;font-weight:600;">❌ ' + $('<span>').text(msg).html() + '</span>');
+                            var msg = (res.data && res.data.message) ? res.data.message : 'Keine Modelle gefunden.';
+                            $wrap.html('<p style="color:#c0392b;font-size:.85rem;">❌ ' + escHtml(msg) + '</p>');
                         }
                     })
                     .fail(function() {
-                        $status.html('<span style="color:#c0392b;font-weight:600;">❌ Anfrage fehlgeschlagen</span>');
+                        $wrap.html('<p style="color:#c0392b;font-size:.85rem;">❌ Verbindung fehlgeschlagen.</p>');
                     })
                     .always(function() {
-                        $btn.prop('disabled', false).text('🔌 Testen');
+                        $btn.prop('disabled', false).text('↻ Modelle laden');
                     });
+            });
+
+            // Set a model as default
+            $(document).on('click', '.hs-llm-set-default', function() {
+                var $btn     = $(this);
+                var provider = $btn.data('provider');
+                var model    = $btn.data('model');
+
+                $btn.prop('disabled', true).text('Speichere …');
+
+                $.post(ajaxUrl, {
+                    action   : 'hs_admin_set_default_model',
+                    _nonce   : defaultNonce,
+                    provider : provider,
+                    model    : model
+                })
+                .done(function(res) {
+                    if (res.success) {
+                        defaults[provider] = model;
+                        $('#hs-default-label-' + provider).text(model);
+                        // Refresh badges and buttons in the table
+                        var $table = $('#hs-model-table-' + provider);
+                        $table.find('.hs-llm-set-default').each(function() {
+                            var $b = $(this);
+                            var $td = $b.closest('td');
+                            var $badgeTd = $td.prev();
+                            $badgeTd.html('');
+                            $td.html('<button type="button" class="button button-secondary hs-llm-set-default" ' +
+                                'style="font-size:.75rem;height:22px;line-height:20px;padding:0 .5rem;" ' +
+                                'data-provider="' + escHtml(provider) + '" data-model="' + escHtml($b.data('model')) + '">' +
+                                'Als Standard</button>');
+                        });
+                        // Mark new default row
+                        var $row = $('#hs-model-row-' + provider + '-' + model);
+                        $row.find('td').eq(2).html('<span style="color:#27ae60;font-weight:600;font-size:.8rem;">✅ Standard</span>');
+                        $row.find('td').eq(3).html('');
+                    } else {
+                        var msg = (res.data && res.data.message) ? res.data.message : 'Fehler.';
+                        alert('❌ ' + msg);
+                        $btn.prop('disabled', false).text('Als Standard');
+                    }
+                })
+                .fail(function() {
+                    alert('❌ Anfrage fehlgeschlagen.');
+                    $btn.prop('disabled', false).text('Als Standard');
+                });
             });
         })(jQuery);
         </script>
         <?php
+    }
+
+    public function ajax_set_default_model() {
+        check_ajax_referer( 'hs_admin_set_default_model', '_nonce' );
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'message' => 'Keine Berechtigung.' ), 403 );
+        }
+
+        $provider = sanitize_key( wp_unslash( $_POST['provider'] ?? '' ) );
+        $model    = sanitize_text_field( wp_unslash( $_POST['model'] ?? '' ) );
+
+        $option_map = array(
+            'ollama' => 'hs_ollama_default_model',
+            'openai' => 'hs_openai_default_model',
+            'claude' => 'hs_claude_default_model',
+            'gemini' => 'hs_gemini_default_model',
+        );
+
+        if ( ! isset( $option_map[ $provider ] ) || $model === '' ) {
+            wp_send_json_error( array( 'message' => 'Ungültige Parameter.' ), 400 );
+        }
+
+        update_option( $option_map[ $provider ], $model );
+        wp_send_json_success( array( 'provider' => $provider, 'model' => $model ) );
     }
 
     public function page_database() {
