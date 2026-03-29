@@ -266,6 +266,7 @@ class Handschelle_Admin {
                 break;
 
             case 'save_ollama':
+                update_option( 'hs_ki_enabled', isset( $_POST['hs_ki_enabled'] ) ? '1' : '0' );
                 $ollama_mode_save = in_array( $_POST['hs_ollama_mode'] ?? 'local', array( 'local', 'remote' ), true )
                     ? $_POST['hs_ollama_mode'] : 'local';
                 update_option( 'hs_ollama_mode', $ollama_mode_save );
@@ -2693,6 +2694,7 @@ class Handschelle_Admin {
         $interview_sys       = get_option( 'hs_interview_system_prompt', 'Du bist ein sachlicher Fakten-Assistent. Antworte knapp und präzise.' );
         $interview_provider  = get_option( 'hs_interview_provider',      'ollama' );
         $interview_model     = get_option( 'hs_interview_model',         '' );
+        $ki_enabled          = get_option( 'hs_ki_enabled',              '1' );
         ?>
         <div class="wrap hs-wrap">
             <h1>🤖 Ollama KI-Konfiguration</h1>
@@ -2702,6 +2704,19 @@ class Handschelle_Admin {
                 <input type="hidden" name="hs_action" value="save_ollama">
 
                 <div class="hs-form">
+                    <div class="hs-form-section">
+                        <h3>KI-Funktion</h3>
+                        <div class="hs-form-grid">
+                            <div class="hs-field hs-field-full">
+                                <label class="hs-checkbox-label">
+                                    <input type="checkbox" name="hs_ki_enabled" value="1" <?php checked( $ki_enabled, '1' ); ?>>
+                                    KI aktiv (KI-Links und KI-Funktionen im Frontend anzeigen)
+                                </label>
+                                <span class="description">Wenn deaktiviert, werden alle KI-Links (KI-Analyse, KI-Interview, AI-Profil) im Frontend ausgeblendet.</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="hs-form-section">
                         <h3>Verbindung</h3>
                         <div class="hs-form-grid">
