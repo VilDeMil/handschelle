@@ -44,6 +44,7 @@ class Handschelle_Shortcodes {
         add_shortcode( 'handschelle-disclaimer',       array( $this, 'sc_disclaimer' ) );
         add_shortcode( 'handschelle-donate',           array( $this, 'sc_donate' ) );
         add_shortcode( 'handschelle-bilder',           array( $this, 'sc_bilder' ) );
+        add_shortcode( 'handschelle-slideshow',        array( $this, 'sc_slideshow' ) );
         add_shortcode( 'handschelle-karte',            array( $this, 'sc_karte' ) );
         add_shortcode( 'handschelle-asc',              array( $this, 'sc_asc' ) );
         add_shortcode( 'handschelle-asc-link',         array( $this, 'sc_asc_link' ) );
@@ -1492,6 +1493,61 @@ class Handschelle_Shortcodes {
                         <?php endforeach; ?>
                     </div>
                 <?php endif; ?>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /* ================================================================
+       [handschelle-slideshow] – Slideshow aller freigegebenen Bilder
+       Format: <Bild> + "<Name> - <Partei> - <Straftat>"
+    ================================================================ */
+    public function sc_slideshow( $atts ) {
+        $atts = shortcode_atts( array(
+            'speed' => 22, // Sekunden pro Loop
+        ), $atts, 'handschelle-slideshow' );
+
+        $entries = Handschelle_Database::get_all( array( 'freigegeben' => 1 ) );
+        $items   = array();
+
+        foreach ( $entries as $e ) {
+            if ( empty( $e->bild ) ) continue;
+            $img_url = handschelle_get_image_url( $e->bild );
+            if ( ! $img_url ) continue;
+            $items[] = array(
+                'img'      => $img_url,
+                'name'     => hs_display_name( $e->name ),
+                'partei'   => hs_display_party( $e->partei ),
+                'straftat' => hs_display_crime( $e->straftat ),
+            );
+        }
+
+        if ( empty( $items ) ) {
+            return '<div class="hs-frontend hs-full-width"><p class="hs-empty">Keine Bilder für die Slideshow vorhanden.</p></div>';
+        }
+
+        $speed = max( 8, min( 120, intval( $atts['speed'] ) ) );
+
+        ob_start();
+        ?>
+        <div class="hs-frontend hs-full-width">
+            <div class="hs-slideshow-wrap">
+                <div class="hs-slideshow-track" style="animation-duration:<?php echo esc_attr( $speed ); ?>s;">
+                    <?php for ( $loop = 0; $loop < 2; $loop++ ) : ?>
+                        <?php foreach ( $items as $item ) : ?>
+                            <div class="hs-slide-item">
+                                <img src="<?php echo esc_url( $item['img'] ); ?>"
+                                     alt="<?php echo esc_attr( $item['name'] ); ?>"
+                                     class="hs-slide-image"
+                                     loading="lazy">
+                                <span class="hs-slide-text">
+                                    <?php echo esc_html( $item['name'] . ' - ' . $item['partei'] . ' - ' . $item['straftat'] ); ?>
+                                </span>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endfor; ?>
+                </div>
             </div>
         </div>
         <?php
