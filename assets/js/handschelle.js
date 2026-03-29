@@ -503,6 +503,18 @@
                 );
             }
             hsChatLoadModels($w, function () {
+                // Interview widget: auto-send all configured questions
+                var fragenRaw = $w.attr('data-interview-fragen');
+                if (fragenRaw) {
+                    var fragen = [];
+                    try { fragen = JSON.parse(fragenRaw); } catch(e) {}
+                    fragen = $.grep(fragen, function(f){ return f.trim() !== ''; });
+                    if (fragen.length) {
+                        $w.data('hs-chat-queue', fragen.slice(1));
+                        hsChatSend($w, fragen[0]);
+                        return;
+                    }
+                }
                 var param = $w.data('urlparam');
                 if (param) {
                     var msg = new URLSearchParams(window.location.search).get(param);
@@ -943,6 +955,8 @@
         var $panel      = $widget.find('.hs-chat-settings-panel');
         var system      = ($panel.find('.hs-chat-settings-system').val() || '').trim() || $widget.data('system') || '';
         var temperature = parseFloat($panel.find('.hs-chat-settings-temp').val()) || 0.7;
+        // Interview / dropdown widgets may override the AJAX action via data-action
+        var widgetAction = $widget.attr('data-action') || '';
         var customUrl   = $widget.data('hs-chat-custom-url') || '';
         var nonce       = $widget.data('nonce');
         var ajaxUrl     = $widget.data('ajax');
@@ -971,7 +985,7 @@
             url  : ajaxUrl,
             type : 'POST',
             data : {
-                action      : hsChatGetAction( $widget, model ),
+                action      : widgetAction || hsChatGetAction( $widget, model ),
                 _nonce      : nonce,
                 message     : message,
                 model       : model,
