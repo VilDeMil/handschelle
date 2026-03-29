@@ -940,6 +940,9 @@ class Handschelle_Shortcodes {
                 </a>
                 <div class="hs-donate-btc">
                     <p class="hs-donate-btc-title">₿ Bitcoin-Spende</p>
+                    <a href="bitcoin:12hCRdfr5csjze6dDhgRaKjmU9YC6BnqZG" class="hs-btn hs-donate-btn">
+                        ₿ Rechenzeit mit Bitcoin spenden
+                    </a>
                     <p class="hs-donate-btc-address">bitcoin:12hCRdfr5csjze6dDhgRaKjmU9YC6BnqZG</p>
                 </div>
             </div>
