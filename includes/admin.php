@@ -3011,7 +3011,7 @@ class Handschelle_Admin {
                     <div class="hs-form-section">
                         <h3>🧾 AI-Profil Fragen</h3>
                         <p class="description" style="margin-bottom:1rem;">
-                            Diese Fragen werden der Reihe nach gestellt, wenn ein Besucher auf den <strong>🤖 AI-Profil</strong>-Button einer Karte klickt.
+                            Diese Fragen werden der Reihe nach gestellt, wenn ein Besucher auf den <strong>🧾 AI-Profil</strong>-Button einer Karte klickt.
                             Nutze die Platzhalter <code>{name}</code>, <code>{partei}</code> und <code>{straftat}</code> – sie werden automatisch ersetzt.
                         </p>
                         <div class="hs-form-grid">
@@ -3116,7 +3116,7 @@ class Handschelle_Admin {
                     </div>
 
                     <div class="hs-form-section">
-                        <h3>🎤 Interview</h3>
+                        <h3>🎤 Interview Fragen</h3>
                         <p class="description" style="margin-bottom:1rem;">
                             Konfiguriert den <strong>[handschelle-interview]</strong>-Shortcode. Jede Karte zeigt automatisch einen
                             <strong>🎤 KI-Interview</strong>-Link, wenn hier Fragen hinterlegt sind. Der Link öffnet die Interview-Seite
