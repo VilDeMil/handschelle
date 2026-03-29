@@ -3185,7 +3185,6 @@ class Handschelle_Shortcodes {
     public function sc_chat_dropdown( $atts ) {
         $atts = shortcode_atts( array(
             'model'       => get_option( 'hs_ollama_default_model', 'llama3.2' ) ?: 'llama3.2',
-            'placeholder' => 'Schreibe eine Nachricht …',
             'title'       => 'KI-Assistent',
             'system'      => get_option( 'hs_ollama_system_prompt', 'Du bist ein hilfreicher Assistent.' ) ?: 'Du bist ein hilfreicher Assistent.',
             'urlparam'    => '',
@@ -3309,19 +3308,6 @@ class Handschelle_Shortcodes {
 
             <div class="hs-chat-messages" role="log" aria-live="polite"></div>
 
-            <div class="hs-chat-input-row" hidden aria-hidden="true">
-                <textarea
-                    class="hs-chat-input"
-                    rows="1"
-                    placeholder="<?php echo esc_attr( $atts['placeholder'] ); ?>"
-                    aria-label="Nachricht eingeben"
-                    maxlength="4000"
-                    tabindex="-1"
-                ></textarea>
-                <button type="button" class="hs-chat-send-btn" aria-label="Senden" tabindex="-1">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                </button>
-            </div>
         </div>
         <?php
         return ob_get_clean();

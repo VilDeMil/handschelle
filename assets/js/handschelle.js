@@ -539,9 +539,7 @@
 
             // Queue remaining questions; send the first immediately
             $widget.data('hs-chat-queue', fragenList.slice(1));
-            var $input = $widget.find('.hs-chat-input');
-            $input.val(fragenList[0]).trigger('input');
-            hsChatSend($widget);
+            hsChatSend($widget, fragenList[0]);
         });
 
         // Multi-LLM toggle
@@ -897,14 +895,15 @@
         return map[model] || 'hs_chat';
     }
 
-    function hsChatSend($widget) {
+    function hsChatSend($widget, explicitMessage) {
         var $input   = $widget.find('.hs-chat-input');
         var $msgs    = $widget.find('.hs-chat-messages');
         var $sendBtn = $widget.find('.hs-chat-send-btn');
-        var message  = $input.val().trim();
+        var hasSendBtn = $sendBtn.length > 0;
+        var message  = (explicitMessage !== undefined) ? String(explicitMessage).trim() : $input.val().trim();
 
         if (!message) return;
-        if ($sendBtn.prop('disabled')) return;
+        if (hasSendBtn ? $sendBtn.prop('disabled') : $widget.data('hs-chat-busy')) return;
 
         // Multi-model mode: collect checked models and dispatch separately
         if ($widget.data('hs-chat-multi')) {
@@ -937,8 +936,12 @@
         $msgs.append(
             '<div class="hs-chat-bubble hs-chat-bubble-user">' + hsEscape(message) + '</div>'
         );
-        $input.val('').css('height', 'auto');
-        $sendBtn.prop('disabled', true);
+        if (hasSendBtn) {
+            $input.val('').css('height', 'auto');
+            $sendBtn.prop('disabled', true);
+        } else {
+            $widget.data('hs-chat-busy', true);
+        }
 
         // Typing indicator
         var $typing = $('<div class="hs-chat-typing"><span></span><span></span><span></span></div>');
@@ -1007,8 +1010,12 @@
                 );
             },
             complete: function () {
-                $sendBtn.prop('disabled', false);
-                $input.focus();
+                if (hasSendBtn) {
+                    $sendBtn.prop('disabled', false);
+                    $input.focus();
+                } else {
+                    $widget.data('hs-chat-busy', false);
+                }
                 $msgs.scrollTop($msgs[0].scrollHeight);
 
                 // Process queued messages (used by dropdown to send all fragen)
@@ -1016,8 +1023,7 @@
                 if (queue.length) {
                     var nextMsg = queue.shift();
                     $widget.data('hs-chat-queue', queue);
-                    $input.val(nextMsg).trigger('input');
-                    setTimeout(function () { hsChatSend($widget); }, 50);
+                    setTimeout(function () { hsChatSend($widget, nextMsg); }, 50);
                 }
             }
         });
