@@ -47,6 +47,7 @@ class Handschelle_Admin {
         $users_label   = '👥 Benutzer' . ( $pending_count ? ' <span class="awaiting-mod">' . $pending_count . '</span>' : '' );
         add_submenu_page( 'handschelle', 'Benutzer',           $users_label,      'manage_options', 'handschelle-users',          array( $this, 'page_users' ) );
         add_submenu_page( 'handschelle', 'Ollama KI',          'Ollama KI',        'manage_options', 'handschelle-ollama',         array( $this, 'page_ollama' ) );
+        add_submenu_page( 'handschelle', 'LLM Status',         'LLM Status',       'manage_options', 'handschelle-llm-status',     array( $this, 'page_llm_status' ) );
     }
 
     /* ================================================================
@@ -3304,6 +3305,158 @@ class Handschelle_Admin {
                     $input.after($picker);
                     $picker.focus();
                 });
+            });
+        })(jQuery);
+        </script>
+        <?php
+    }
+
+    public function page_llm_status() {
+        $nonce = wp_create_nonce( 'hs_chat_nonce' );
+
+        $ollama_url     = get_option( 'hs_ollama_url', 'http://localhost:11434' );
+        $ollama_mode    = get_option( 'hs_ollama_mode', 'local' );
+        $ollama_model   = get_option( 'hs_ollama_default_model', '' ) ?: '—';
+        $openai_model   = get_option( 'hs_openai_default_model', 'gpt-4o' );
+        $claude_model   = get_option( 'hs_claude_default_model', 'claude-3-5-sonnet-20241022' );
+        $gemini_model   = get_option( 'hs_gemini_default_model', 'gemini-2.0-flash' );
+        $has_openai     = ! empty( get_option( 'hs_openai_api_key', '' ) );
+        $has_claude     = ! empty( get_option( 'hs_claude_api_key', '' ) );
+        $has_gemini     = ! empty( get_option( 'hs_gemini_api_key', '' ) );
+
+        $providers = array(
+            array(
+                'id'         => 'ollama',
+                'provider'   => 'Ollama',
+                'name'       => $ollama_model,
+                'url'        => $ollama_url,
+                'configured' => true,
+                'ajax'       => 'hs_chat_models',
+            ),
+            array(
+                'id'         => 'openai',
+                'provider'   => 'OpenAI',
+                'name'       => $openai_model,
+                'url'        => 'api.openai.com',
+                'configured' => $has_openai,
+                'ajax'       => 'hs_chat_openai_models',
+            ),
+            array(
+                'id'         => 'claude',
+                'provider'   => 'Anthropic (Claude)',
+                'name'       => $claude_model,
+                'url'        => 'api.anthropic.com',
+                'configured' => $has_claude,
+                'ajax'       => 'hs_chat_claude_models',
+            ),
+            array(
+                'id'         => 'gemini',
+                'provider'   => 'Google (Gemini)',
+                'name'       => $gemini_model,
+                'url'        => 'generativelanguage.googleapis.com',
+                'configured' => $has_gemini,
+                'ajax'       => 'hs_chat_gemini_models',
+            ),
+        );
+        ?>
+        <div class="wrap hs-wrap">
+            <h1>🔌 LLM Status</h1>
+            <p class="description" style="margin-bottom:1.5rem;">
+                Übersicht aller konfigurierten KI-Anbieter und deren Verbindungsstatus.
+            </p>
+
+            <table class="widefat striped" style="max-width:860px;">
+                <thead>
+                    <tr>
+                        <th>LLM Provider</th>
+                        <th>LLM Name</th>
+                        <th>LLM Version</th>
+                        <th>Konfiguriert</th>
+                        <th>Test</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php foreach ( $providers as $p ) :
+                    // Split name into model-family and version
+                    $model_name    = $p['name'];
+                    $model_version = '—';
+                    if ( preg_match( '/[:\-\/](\d[\d.\w\-]*)/', $model_name, $m ) ) {
+                        $model_version = $m[1];
+                    } elseif ( preg_match( '/(\d[\d.]+)/', $model_name, $m ) ) {
+                        $model_version = $m[1];
+                    }
+                ?>
+                    <tr id="hs-llm-row-<?php echo esc_attr( $p['id'] ); ?>">
+                        <td><strong><?php echo esc_html( $p['provider'] ); ?></strong></td>
+                        <td style="font-family:monospace;"><?php echo esc_html( $model_name ); ?></td>
+                        <td style="font-family:monospace;"><?php echo esc_html( $model_version ); ?></td>
+                        <td>
+                            <?php if ( $p['configured'] ) : ?>
+                                <span style="color:#27ae60;font-weight:600;">✅ Ja</span>
+                            <?php else : ?>
+                                <span style="color:#c0392b;font-weight:600;">❌ Nein</span>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <?php if ( $p['configured'] ) : ?>
+                            <button type="button"
+                                    class="button button-secondary hs-llm-test-btn"
+                                    data-provider="<?php echo esc_attr( $p['id'] ); ?>"
+                                    data-ajax="<?php echo esc_attr( $p['ajax'] ); ?>">
+                                🔌 Testen
+                            </button>
+                            <?php else : ?>
+                            <span style="color:#999;font-size:.85rem;">Kein API-Key</span>
+                            <?php endif; ?>
+                        </td>
+                        <td class="hs-llm-status-cell" id="hs-llm-status-<?php echo esc_attr( $p['id'] ); ?>">
+                            —
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+
+            <p style="margin-top:1.5rem;">
+                <a href="<?php echo esc_url( admin_url( 'admin.php?page=handschelle-ollama' ) ); ?>" class="button button-secondary">
+                    ⚙️ LLM-Einstellungen bearbeiten
+                </a>
+            </p>
+
+            <?php echo $this->hs_footer(); ?>
+        </div>
+
+        <script>
+        (function($){
+            var ajaxUrl = '<?php echo esc_js( admin_url( 'admin-ajax.php' ) ); ?>';
+            var nonce   = '<?php echo esc_js( $nonce ); ?>';
+
+            $('.hs-llm-test-btn').on('click', function() {
+                var $btn      = $(this);
+                var provider  = $btn.data('provider');
+                var action    = $btn.data('ajax');
+                var $status   = $('#hs-llm-status-' + provider);
+
+                $btn.prop('disabled', true).text('Teste …');
+                $status.html('<span style="color:#7f8c8d;">Verbinde …</span>');
+
+                $.post(ajaxUrl, { action: action, _nonce: nonce })
+                    .done(function(res) {
+                        if (res.success && res.data && res.data.models) {
+                            var count = res.data.models.length;
+                            $status.html('<span style="color:#27ae60;font-weight:600;">✅ Verbunden – ' + count + ' Modell(e)</span>');
+                        } else {
+                            var msg = (res.data && res.data.message) ? res.data.message : 'Verbindung fehlgeschlagen';
+                            $status.html('<span style="color:#c0392b;font-weight:600;">❌ ' + $('<span>').text(msg).html() + '</span>');
+                        }
+                    })
+                    .fail(function() {
+                        $status.html('<span style="color:#c0392b;font-weight:600;">❌ Anfrage fehlgeschlagen</span>');
+                    })
+                    .always(function() {
+                        $btn.prop('disabled', false).text('🔌 Testen');
+                    });
             });
         })(jQuery);
         </script>
