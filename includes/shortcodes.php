@@ -1051,12 +1051,14 @@ class Handschelle_Shortcodes {
      * Only call this for logged-in users.
      */
     private function ki_analyse_link( $name, $partei, $straftat ) {
+        if ( ! get_option( 'hs_ki_enabled', '1' ) ) return '';
         if ( empty( $straftat ) ) return '';
         $url  = '/chat/?frage=' . urlencode( '"Was weist du über" ' . $name . ' ' . $partei . ' ' . $straftat . '?' );
         return '<a href="' . esc_url( $url ) . '" class="hs-search-btn hs-ki-btn">🤖 KI-Analyse</a>';
     }
 
     private function ki_person_link( $name, $partei = '' ) {
+        if ( ! get_option( 'hs_ki_enabled', '1' ) ) return '';
         if ( empty( $name ) ) return '';
         $page  = get_option( 'hs_ollama_chat_page', '/chat/' ) ?: '/chat/';
         $query = 'Was weißt du über ' . $name;
@@ -1067,6 +1069,7 @@ class Handschelle_Shortcodes {
     }
 
     private function ki_interview_link( $name ) {
+        if ( ! get_option( 'hs_ki_enabled', '1' ) ) return '';
         if ( empty( $name ) ) return '';
         $questions = trim( (string) get_option( 'hs_interview_questions', '' ) );
         if ( $questions === '' ) return '';
@@ -1109,7 +1112,7 @@ class Handschelle_Shortcodes {
                     <p class="hs-card-status"><?php echo $e->status_aktiv ? '<span class="hs-badge hs-badge-aktiv">Aktiv</span>' : '<span class="hs-badge hs-badge-inaktiv">Inaktiv</span>'; ?></p>
                     <?php if ( $is_logged_in ) echo $this->ki_person_link( $e->name, $e->partei ); ?>
                     <?php if ( $is_logged_in ) echo $this->ki_interview_link( $e->name ); ?>
-                    <?php if ( $is_logged_in && ! empty( get_option( 'hs_profile_questions', '' ) ) ) : ?>
+                    <?php if ( $is_logged_in && get_option( 'hs_ki_enabled', '1' ) && ! empty( get_option( 'hs_profile_questions', '' ) ) ) : ?>
                     <button type="button" class="hs-profile-btn hs-ki-name-btn"
                             data-name="<?php echo esc_attr( $e->name ?? '' ); ?>"
                             data-beruf="<?php echo esc_attr( $e->beruf ?? '' ); ?>"
