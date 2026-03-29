@@ -67,6 +67,7 @@ class Handschelle_Shortcodes {
         add_shortcode( 'handschelle-chat',             array( $this, 'sc_chat' ) );
         add_shortcode( 'handschelle-chat-dropdown',    array( $this, 'sc_chat_dropdown' ) );
         add_shortcode( 'handschelle-profil-tabelle',   array( $this, 'sc_profil_tabelle' ) );
+        add_shortcode( 'handschelle-interview',        array( $this, 'sc_interview' ) );
 
         // Submit früh verarbeiten – BEVOR Header gesendet werden
         add_action( 'init', array( $this, 'early_frontend_submit' ) );
@@ -1060,6 +1061,15 @@ class Handschelle_Shortcodes {
         return '<a href="' . esc_url( $url ) . '" class="hs-ki-name-btn">🤖 KI-Analyse</a>';
     }
 
+    private function ki_interview_link( $name ) {
+        if ( empty( $name ) ) return '';
+        $questions = trim( (string) get_option( 'hs_interview_questions', '' ) );
+        if ( $questions === '' ) return '';
+        $page = get_option( 'hs_interview_page', '/interview/' ) ?: '/interview/';
+        $url  = $page . '?' . http_build_query( array( 'hs_name' => $name ) );
+        return '<a href="' . esc_url( $url ) . '" class="hs-ki-interview-btn">🎤 KI-Interview</a>';
+    }
+
     public function render_card( $e ) {
         $img_url      = handschelle_get_image_url( $e->bild );
         $status_class = array(
@@ -1093,6 +1103,7 @@ class Handschelle_Shortcodes {
                     <?php if ( $e->parlament ) : ?><p class="hs-card-parlament"><?php echo esc_html($e->parlament); ?><?php if ( $e->parlament_name ) echo ' (' . esc_html($e->parlament_name) . ')'; ?></p><?php endif; ?>
                     <p class="hs-card-status"><?php echo $e->status_aktiv ? '<span class="hs-badge hs-badge-aktiv">Aktiv</span>' : '<span class="hs-badge hs-badge-inaktiv">Inaktiv</span>'; ?></p>
                     <?php if ( $is_logged_in ) echo $this->ki_person_link( $e->name, $e->partei ); ?>
+                    <?php if ( $is_logged_in ) echo $this->ki_interview_link( $e->name ); ?>
                     <?php if ( $is_logged_in && ! empty( get_option( 'hs_profile_questions', '' ) ) ) : ?>
                     <button type="button" class="hs-profile-btn hs-ki-name-btn"
                             data-name="<?php echo esc_attr( $e->name ?? '' ); ?>"
@@ -3172,6 +3183,117 @@ class Handschelle_Shortcodes {
             <?php endforeach; ?>
             </tbody>
         </table>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * Shortcode: [handschelle-interview urlparam="hs_name"]
+     *
+     * Auto-sends all configured interview questions for the person identified
+     * via a URL GET parameter. Questions and settings come from the admin
+     * Interview section (hs_interview_* options).
+     */
+    public function sc_interview( $atts ) {
+        $atts = shortcode_atts( array(
+            'urlparam' => 'hs_name',
+            'title'    => get_option( 'hs_interview_title', 'KI-Interview' ),
+        ), $atts, 'handschelle-interview' );
+
+        $name = sanitize_text_field( wp_unslash( $_GET[ $atts['urlparam'] ] ?? '' ) );
+        if ( $name === '' ) return '';
+
+        // Resolve party from DB
+        $persons = Handschelle_Database::get_persons_dropdown();
+        $partei  = '';
+        foreach ( (array) $persons as $p ) {
+            if ( isset( $p->name ) && trim( $p->name ) === $name ) {
+                $partei = trim( $p->partei ?? '' );
+                break;
+            }
+        }
+
+        // Build question list from admin settings
+        $raw_questions = trim( (string) get_option( 'hs_interview_questions', '' ) );
+        if ( $raw_questions === '' ) return '';
+
+        $fragen_list = array_values( array_filter(
+            array_map( 'trim', preg_split( '/[\r\n]+/', $raw_questions ) ),
+            static function ( $v ) { return $v !== ''; }
+        ) );
+
+        $fragen_json = array();
+        foreach ( $fragen_list as $tmpl ) {
+            $fragen_json[] = str_replace(
+                array( '{name}', '{partei}' ),
+                array( $name,   $partei     ),
+                $tmpl
+            );
+        }
+
+        // Resolve provider/model
+        $provider = get_option( 'hs_interview_provider', 'ollama' );
+        $model    = get_option( 'hs_interview_model', '' );
+        if ( $model === '' ) {
+            $model_map = array(
+                'ollama' => get_option( 'hs_ollama_default_model', 'llama3.2' ) ?: 'llama3.2',
+                'openai' => get_option( 'hs_openai_default_model', 'gpt-4o' ),
+                'claude' => get_option( 'hs_claude_default_model', 'claude-3-5-sonnet-20241022' ),
+                'gemini' => get_option( 'hs_gemini_default_model', 'gemini-2.0-flash' ),
+            );
+            $model = $model_map[ $provider ] ?? 'llama3.2';
+        }
+
+        $action_map = array(
+            'ollama' => 'hs_chat',
+            'openai' => 'hs_chat_openai',
+            'claude' => 'hs_chat_claude',
+            'gemini' => 'hs_chat_gemini',
+        );
+        $ajax_action = $action_map[ $provider ] ?? 'hs_chat';
+
+        $system      = get_option( 'hs_interview_system_prompt', 'Du bist ein sachlicher Fakten-Assistent. Antworte knapp und präzise.' );
+        $ollama_url  = get_option( 'hs_ollama_url', 'http://localhost:11434' );
+        $ollama_mode = get_option( 'hs_ollama_mode', 'local' );
+        $openai_en   = ! empty( get_option( 'hs_openai_api_key', '' ) ) ? '1' : '0';
+        $claude_en   = ! empty( get_option( 'hs_claude_api_key',  '' ) ) ? '1' : '0';
+        $gemini_en   = ! empty( get_option( 'hs_gemini_api_key',  '' ) ) ? '1' : '0';
+        $nonce       = wp_create_nonce( 'hs_chat_nonce' );
+        $uid         = 'hs-interview-' . wp_rand( 1000, 9999 );
+
+        ob_start();
+        ?>
+        <div class="hs-chat-widget hs-chat-widget-dropdown hs-chat-widget-interview"
+             id="<?php echo esc_attr( $uid ); ?>"
+             data-model="<?php echo esc_attr( $model ); ?>"
+             data-action="<?php echo esc_attr( $ajax_action ); ?>"
+             data-system="<?php echo esc_attr( $system ); ?>"
+             data-nonce="<?php echo esc_attr( $nonce ); ?>"
+             data-ajax="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>"
+             data-ollama-url="<?php echo esc_attr( $ollama_url ); ?>"
+             data-ollama-mode="<?php echo esc_attr( $ollama_mode ); ?>"
+             data-openai="<?php echo esc_attr( $openai_en ); ?>"
+             data-claude="<?php echo esc_attr( $claude_en ); ?>"
+             data-gemini="<?php echo esc_attr( $gemini_en ); ?>"
+             data-interview-fragen="<?php echo esc_attr( wp_json_encode( $fragen_json ) ); ?>"
+             data-interview-name="<?php echo esc_attr( $name ); ?>">
+
+            <div class="hs-chat-dropdown-heading">🎤 <?php echo esc_html( $atts['title'] ); ?></div>
+
+            <div class="hs-chat-header">
+                <span class="hs-chat-title"><?php echo esc_html( $name ); ?><?php if ( $partei ) echo ' <span style="font-weight:400;font-size:.85em;">(' . esc_html( $partei ) . ')</span>'; ?></span>
+                <button type="button" class="hs-chat-clear-btn" title="Verlauf löschen">&#10006;</button>
+            </div>
+
+            <div class="hs-chat-messages" role="log" aria-live="polite"></div>
+
+            <div class="hs-chat-input-row" hidden aria-hidden="true">
+                <textarea class="hs-chat-input" rows="1" maxlength="4000" tabindex="-1"></textarea>
+                <button type="button" class="hs-chat-send-btn" aria-label="Senden" tabindex="-1">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                </button>
+            </div>
+        </div>
         <?php
         return ob_get_clean();
     }

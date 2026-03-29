@@ -431,6 +431,8 @@
 .hs-ki-btn:hover { background:var(--hs-accent-h) !important; border-color:var(--hs-accent-h) !important; }
 .hs-ki-name-btn { display:inline-block; margin-top:.4rem; text-decoration:none !important; font-size:.75rem; font-weight:600; padding:.2rem .55rem; border-radius:20px; background:var(--hs-accent); color:#fff; white-space:nowrap; }
 .hs-ki-name-btn:hover { background:var(--hs-accent-h); color:#fff; }
+.hs-ki-interview-btn { display:inline-block; margin-top:.4rem; margin-left:.3rem; text-decoration:none !important; font-size:.75rem; font-weight:600; padding:.2rem .55rem; border-radius:20px; background:#2980b9; color:#fff; white-space:nowrap; }
+.hs-ki-interview-btn:hover { background:#1a6a9a; color:#fff; }
 .hs-cards-single { display:flex; flex-direction:column; gap:1.5rem; width:100%; }
 .hs-card-img-link { display:block; width:100%; height:100%; }
 .hs-card-img-link:hover { opacity:.85; transition:opacity .2s; }

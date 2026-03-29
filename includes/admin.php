@@ -315,6 +315,15 @@ class Handschelle_Admin {
                     ? $_POST['hs_profile_provider'] : 'ollama';
                 update_option( 'hs_profile_provider', $profile_prov );
                 update_option( 'hs_profile_model',    sanitize_text_field( wp_unslash( $_POST['hs_profile_model'] ?? '' ) ) );
+                // Interview settings
+                update_option( 'hs_interview_page',          sanitize_text_field( wp_unslash( $_POST['hs_interview_page']          ?? '/interview/' ) ) );
+                update_option( 'hs_interview_title',         sanitize_text_field( wp_unslash( $_POST['hs_interview_title']         ?? 'KI-Interview' ) ) );
+                update_option( 'hs_interview_questions',     sanitize_textarea_field( wp_unslash( $_POST['hs_interview_questions']     ?? '' ) ) );
+                update_option( 'hs_interview_system_prompt', sanitize_textarea_field( wp_unslash( $_POST['hs_interview_system_prompt'] ?? '' ) ) );
+                $interview_prov = in_array( $_POST['hs_interview_provider'] ?? 'ollama', $allowed_providers, true )
+                    ? $_POST['hs_interview_provider'] : 'ollama';
+                update_option( 'hs_interview_provider', $interview_prov );
+                update_option( 'hs_interview_model',    sanitize_text_field( wp_unslash( $_POST['hs_interview_model'] ?? '' ) ) );
                 $this->redirect( admin_url( 'admin.php?page=handschelle-ollama' ), 'Einstellungen gespeichert.' );
                 break;
         }
@@ -2678,6 +2687,12 @@ class Handschelle_Admin {
         $profile_sys_prompt  = get_option( 'hs_profile_system_prompt',   'Du bist ein sachlicher Fakten-Assistent. Antworte knapp und präzise.' );
         $profile_provider    = get_option( 'hs_profile_provider',        'ollama' );
         $profile_model       = get_option( 'hs_profile_model',           '' );
+        $interview_page      = get_option( 'hs_interview_page',          '/interview/' );
+        $interview_title     = get_option( 'hs_interview_title',         'KI-Interview' );
+        $interview_questions = get_option( 'hs_interview_questions',     '' );
+        $interview_sys       = get_option( 'hs_interview_system_prompt', 'Du bist ein sachlicher Fakten-Assistent. Antworte knapp und präzise.' );
+        $interview_provider  = get_option( 'hs_interview_provider',      'ollama' );
+        $interview_model     = get_option( 'hs_interview_model',         '' );
         ?>
         <div class="wrap hs-wrap">
             <h1>🤖 Ollama KI-Konfiguration</h1>
@@ -3082,6 +3097,68 @@ class Handschelle_Admin {
                         <div id="hs-chattest-result" style="margin-top:.75rem;display:none;border:1px solid #c3c4c7;border-radius:4px;padding:.75rem 1rem;background:#f9f9f9;">
                             <div id="hs-chattest-meta" style="font-size:.8rem;color:#646970;margin-bottom:.4rem;"></div>
                             <div id="hs-chattest-reply" style="white-space:pre-wrap;word-break:break-word;"></div>
+                        </div>
+                    </div>
+
+                    <div class="hs-form-section">
+                        <h3>🎤 Interview</h3>
+                        <p class="description" style="margin-bottom:1rem;">
+                            Konfiguriert den <strong>[handschelle-interview]</strong>-Shortcode. Jede Karte zeigt automatisch einen
+                            <strong>🎤 KI-Interview</strong>-Link, wenn hier Fragen hinterlegt sind. Der Link öffnet die Interview-Seite
+                            und stellt alle Fragen automatisch der Reihe nach.
+                        </p>
+                        <div class="hs-form-grid">
+                            <div class="hs-field">
+                                <label for="hs_interview_page">Interview Seiten-URL</label>
+                                <input type="text" id="hs_interview_page" name="hs_interview_page"
+                                       value="<?php echo esc_attr( $interview_page ); ?>"
+                                       placeholder="/interview/">
+                                <span class="description">URL der Seite, auf der <code>[handschelle-interview]</code> eingebettet ist.</span>
+                            </div>
+                            <div class="hs-field">
+                                <label for="hs_interview_title">Widget-Titel</label>
+                                <input type="text" id="hs_interview_title" name="hs_interview_title"
+                                       value="<?php echo esc_attr( $interview_title ); ?>"
+                                       placeholder="KI-Interview">
+                            </div>
+                            <div class="hs-field hs-field-full">
+                                <label for="hs_interview_questions">Fragen <span style="font-weight:400;color:#7f8c8d;">(eine pro Zeile)</span></label>
+                                <textarea id="hs_interview_questions" name="hs_interview_questions"
+                                          rows="6" maxlength="4000"><?php echo esc_textarea( $interview_questions ); ?></textarea>
+                                <span class="description">
+                                    Platzhalter: <code>{name}</code> · <code>{partei}</code><br>
+                                    Beispiel:<br>
+                                    <code>Was weißt du über {name} ({partei})?</code><br>
+                                    <code>Welche politischen Positionen vertritt {name}?</code>
+                                </span>
+                            </div>
+                            <div class="hs-field hs-field-full">
+                                <label for="hs_interview_system_prompt">System-Prompt</label>
+                                <textarea id="hs_interview_system_prompt" name="hs_interview_system_prompt"
+                                          rows="3" maxlength="2000"><?php echo esc_textarea( $interview_sys ); ?></textarea>
+                            </div>
+                            <div class="hs-field">
+                                <label for="hs_interview_provider">Anbieter</label>
+                                <select id="hs_interview_provider" name="hs_interview_provider" style="max-width:180px;">
+                                    <option value="ollama" <?php selected( $interview_provider, 'ollama' ); ?>>Ollama</option>
+                                    <?php if ( ! empty( get_option( 'hs_openai_api_key', '' ) ) ) : ?>
+                                    <option value="openai" <?php selected( $interview_provider, 'openai' ); ?>>OpenAI</option>
+                                    <?php endif; ?>
+                                    <?php if ( ! empty( get_option( 'hs_claude_api_key', '' ) ) ) : ?>
+                                    <option value="claude" <?php selected( $interview_provider, 'claude' ); ?>>Claude</option>
+                                    <?php endif; ?>
+                                    <?php if ( ! empty( get_option( 'hs_gemini_api_key', '' ) ) ) : ?>
+                                    <option value="gemini" <?php selected( $interview_provider, 'gemini' ); ?>>Gemini</option>
+                                    <?php endif; ?>
+                                </select>
+                            </div>
+                            <div class="hs-field">
+                                <label for="hs_interview_model">Modell</label>
+                                <input type="text" id="hs_interview_model" name="hs_interview_model"
+                                       value="<?php echo esc_attr( $interview_model ); ?>"
+                                       placeholder="z.B. llama3.2 oder gpt-4o">
+                                <span class="description">Leer lassen für das Standard-Modell des gewählten Anbieters.</span>
+                            </div>
                         </div>
                     </div>
 
