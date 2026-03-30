@@ -70,6 +70,7 @@ class Handschelle_Shortcodes {
         add_shortcode( 'handschelle-chat-dropdown',    array( $this, 'sc_chat_dropdown' ) );
         add_shortcode( 'handschelle-profil-tabelle',   array( $this, 'sc_profil_tabelle' ) );
         add_shortcode( 'handschelle-interview',        array( $this, 'sc_interview' ) );
+        add_shortcode( 'handschelle-parlamente-liste', array( $this, 'sc_parlamente_liste' ) );
 
         // Submit früh verarbeiten – BEVOR Header gesendet werden
         add_action( 'init', array( $this, 'early_frontend_submit' ) );
@@ -4230,6 +4231,94 @@ class Handschelle_Shortcodes {
         }
 
         wp_send_json_error( array( 'message' => 'Unbekannter Anbieter.' ), 400 );
+    }
+
+    /* ================================================================
+       [handschelle-parlamente-liste] – Alle Parlamente mit Straftätern je Partei (aktiv/passiv)
+    ================================================================ */
+    public function sc_parlamente_liste( $atts ) {
+        global $wpdb;
+        $table = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
+
+        $rows = $wpdb->get_results(
+            "SELECT parlament, partei,
+                    SUM(CASE WHEN status_aktiv = 1 THEN 1 ELSE 0 END) AS aktiv,
+                    SUM(CASE WHEN status_aktiv = 0 THEN 1 ELSE 0 END) AS passiv,
+                    COUNT(*) AS gesamt
+             FROM `{$table}`
+             WHERE freigegeben = 1 AND parlament != '' AND partei != ''
+             GROUP BY parlament, partei
+             ORDER BY parlament ASC, gesamt DESC, partei ASC"
+        );
+
+        // Group by parlament
+        $parlamente = array();
+        foreach ( $rows as $r ) {
+            $parlamente[ $r->parlament ][] = $r;
+        }
+
+        ob_start();
+        ?>
+        <div class="hs-frontend hs-full-width hs-parlamente-liste">
+            <?php if ( empty( $parlamente ) ) : ?>
+                <p class="hs-empty">Noch keine freigegebenen Einträge vorhanden.</p>
+            <?php else : ?>
+                <?php foreach ( $parlamente as $parlament => $parteien ) :
+                    $gesamt_parlament = array_sum( array_column( $parteien, 'gesamt' ) );
+                    $aktiv_parlament  = array_sum( array_column( $parteien, 'aktiv' ) );
+                    $passiv_parlament = array_sum( array_column( $parteien, 'passiv' ) );
+                ?>
+                <div class="hs-parlament-block">
+                    <div class="hs-parlament-header">
+                        <strong class="hs-parlament-name"><?php echo esc_html( $parlament ); ?></strong>
+                        <span class="hs-parlament-summary">
+                            <?php echo intval( $gesamt_parlament ); ?> Einträge
+                            &mdash; <span class="hs-badge-aktiv"><?php echo intval( $aktiv_parlament ); ?> aktiv</span>
+                            / <span class="hs-badge-passiv"><?php echo intval( $passiv_parlament ); ?> passiv</span>
+                        </span>
+                    </div>
+                    <div class="hs-stat-table-wrap">
+                        <table class="hs-stat-table hs-parlamente-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Partei</th>
+                                    <th class="hs-col-aktiv">Aktiv</th>
+                                    <th class="hs-col-passiv">Passiv</th>
+                                    <th>Gesamt</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            <?php foreach ( $parteien as $i => $r ) : ?>
+                                <tr>
+                                    <td class="hs-stat-rank"><?php echo $i + 1; ?></td>
+                                    <td class="hs-stat-partei">
+                                        <a href="<?php echo esc_url( add_query_arg( array( 'hs_partei' => urlencode( $r->partei ) ), get_permalink() ) ); ?>" class="hs-stat-partei-link">
+                                            <?php echo esc_html( $r->partei ); ?>
+                                        </a>
+                                    </td>
+                                    <td class="hs-col-aktiv"><span class="hs-badge-aktiv"><?php echo intval( $r->aktiv ); ?></span></td>
+                                    <td class="hs-col-passiv"><span class="hs-badge-passiv"><?php echo intval( $r->passiv ); ?></span></td>
+                                    <td class="hs-stat-count"><?php echo intval( $r->gesamt ); ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="2"><strong>Gesamt</strong></td>
+                                    <td class="hs-col-aktiv"><strong><?php echo intval( $aktiv_parlament ); ?></strong></td>
+                                    <td class="hs-col-passiv"><strong><?php echo intval( $passiv_parlament ); ?></strong></td>
+                                    <td><strong><?php echo intval( $gesamt_parlament ); ?></strong></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
+        <?php
+        return ob_get_clean();
     }
 
 }
