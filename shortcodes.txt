@@ -30,6 +30,7 @@ All shortcodes output HTML and can be placed on any WordPress page or post.
 | `[handschelle-login]` | Login form with „stay logged in" checkbox and optional redirect |
 | `[handschelle-privacy]` | Bilingual Datenschutz / Privacy block (DE + EN) |
 | `[handschelle-register]` | Registration form (respects WP „Anyone can register" setting) |
+| `[handschelle-straftaten-liste]` | Plain alphabetical text list of all unique Straftaten |
 
 ---
 
@@ -282,6 +283,20 @@ No attributes.
 
 ---
 
+### `[handschelle-straftaten-liste]`
+
+Renders a plain alphabetical text list of all unique Straftaten (crime types) from approved entries. Each entry appears exactly once, duplicates are removed, and the list is sorted case-insensitively A–Z.
+
+```
+[handschelle-straftaten-liste]
+```
+
+No attributes.
+
+The output is a two-column `<ul>` (single column on mobile). No links, no forms — text only.
+
+---
+
 ### Typical Page Setup
 
 ```
@@ -306,4 +321,4 @@ No attributes.
 ---
 ---
 
-(c) 2026 - "Die-Handschelle" 16.6 - www.die-handschelle.com
+(c) 2026 - "Die-Handschelle" 16.7 - www.die-handschelle.com

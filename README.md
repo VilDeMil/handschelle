@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 16.6 |
+| **Version** | 16.8 |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
 | **Lizenz** | GPL-2.0+ |
@@ -123,6 +123,12 @@ Planned features for upcoming versions:
 ---
 
 ## Release Notes
+
+### 16.8 *(2026-03-30)*
+- **[handschelle-straftaten-liste] CSS**: Output wrapped in `.hs-frontend`; CSS now uses `--hs-font`, `--hs-border`, `--hs-primary` design tokens exclusively — no hardcoded values. Spacing and sizing aligned with `.hs-statistik-ol` pattern. Version bump 16.7 → 16.8.
+
+### 16.7 *(2026-03-30)*
+- **[handschelle-straftaten-liste]**: New shortcode that renders a plain alphabetical text list of all unique Straftaten from approved entries. Duplicates are removed, entries are sorted case-insensitively A–Z, output is a two-column `<ul>` (single column on mobile). Version bump 16.6 → 16.7.
 
 ### 16.6 *(2026-03-29)*
 - **Version bump**: 16.5 → 16.6.
