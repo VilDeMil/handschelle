@@ -53,6 +53,7 @@ class Handschelle_Shortcodes {
         add_shortcode( 'wordcloud-straftat',           array( $this, 'sc_wordcloud_straftat' ) );
         add_shortcode( 'handschelle-ticker',           array( $this, 'sc_ticker' ) );
         add_shortcode( 'handschelle-straftaten',       array( $this, 'sc_straftaten' ) );
+        add_shortcode( 'handschelle-straftaten-liste', array( $this, 'sc_straftaten_liste' ) );
         add_shortcode( 'handschelle-straftat',         array( $this, 'sc_straftat_ticker' ) );
         add_shortcode( 'handschelle-straftat-link',    array( $this, 'sc_straftat_ticker_link' ) );
         add_shortcode( 'handschelle-result',           array( $this, 'sc_result' ) );
@@ -1854,6 +1855,31 @@ class Handschelle_Shortcodes {
                 <?php endif; ?>
             </div>
         </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /* ================================================================
+       [handschelle-straftaten-liste] – Alphabetische Textliste aller Straftaten
+    ================================================================ */
+    public function sc_straftaten_liste( $atts ) {
+        $raw = Handschelle_Database::get_distinct_straftaten();
+
+        // Ensure uniqueness and alphabetical order (PHP-side safety net)
+        $straftaten = array_values( array_unique( $raw ) );
+        usort( $straftaten, 'strnatcasecmp' );
+
+        if ( empty( $straftaten ) ) {
+            return '<p class="hs-straftaten-liste-empty">Keine Straftaten vorhanden.</p>';
+        }
+
+        ob_start();
+        ?>
+        <ul class="hs-straftaten-liste">
+            <?php foreach ( $straftaten as $s ) : ?>
+                <li class="hs-straftaten-liste-item"><?php echo esc_html( $s ); ?></li>
+            <?php endforeach; ?>
+        </ul>
         <?php
         return ob_get_clean();
     }
