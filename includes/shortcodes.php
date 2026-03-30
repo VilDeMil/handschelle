@@ -4257,41 +4257,42 @@ class Handschelle_Shortcodes {
             $parlamente[ $r->parlament ][] = $r;
         }
 
+        $total_aktiv  = 0;
+        $total_passiv = 0;
+        $total_gesamt = 0;
+
         ob_start();
         ?>
         <div class="hs-frontend hs-full-width hs-parlamente-liste">
             <?php if ( empty( $parlamente ) ) : ?>
                 <p class="hs-empty">Noch keine freigegebenen Einträge vorhanden.</p>
             <?php else : ?>
-                <?php foreach ( $parlamente as $parlament => $parteien ) :
-                    $gesamt_parlament = array_sum( array_column( $parteien, 'gesamt' ) );
-                    $aktiv_parlament  = array_sum( array_column( $parteien, 'aktiv' ) );
-                    $passiv_parlament = array_sum( array_column( $parteien, 'passiv' ) );
-                ?>
-                <div class="hs-parlament-block">
-                    <div class="hs-parlament-header">
-                        <strong class="hs-parlament-name"><?php echo esc_html( $parlament ); ?></strong>
-                        <span class="hs-parlament-summary">
-                            <?php echo intval( $gesamt_parlament ); ?> Einträge
-                            &mdash; <span class="hs-badge-aktiv"><?php echo intval( $aktiv_parlament ); ?> aktiv</span>
-                            / <span class="hs-badge-passiv"><?php echo intval( $passiv_parlament ); ?> passiv</span>
-                        </span>
-                    </div>
-                    <div class="hs-stat-table-wrap">
-                        <table class="hs-stat-table hs-parlamente-table">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Partei</th>
-                                    <th class="hs-col-aktiv">Aktiv</th>
-                                    <th class="hs-col-passiv">Passiv</th>
-                                    <th>Gesamt</th>
-                                </tr>
-                            </thead>
-                            <tbody>
+                <div class="hs-stat-table-wrap">
+                    <table class="hs-stat-table hs-parlamente-table">
+                        <thead>
+                            <tr>
+                                <th>Parlament</th>
+                                <th>Partei</th>
+                                <th class="hs-col-aktiv">Aktiv</th>
+                                <th class="hs-col-passiv">Passiv</th>
+                                <th class="hs-stat-count">Gesamt</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        <?php foreach ( $parlamente as $parlament => $parteien ) :
+                            $gesamt_parlament = array_sum( array_column( $parteien, 'gesamt' ) );
+                            $aktiv_parlament  = array_sum( array_column( $parteien, 'aktiv' ) );
+                            $passiv_parlament = array_sum( array_column( $parteien, 'passiv' ) );
+                            $rowspan          = count( $parteien ) + 1; // +1 for the subtotal row
+                            $total_aktiv     += $aktiv_parlament;
+                            $total_passiv    += $passiv_parlament;
+                            $total_gesamt    += $gesamt_parlament;
+                        ?>
                             <?php foreach ( $parteien as $i => $r ) : ?>
                                 <tr>
-                                    <td class="hs-stat-rank"><?php echo $i + 1; ?></td>
+                                    <?php if ( $i === 0 ) : ?>
+                                        <td class="hs-stat-partei hs-parlament-cell" rowspan="<?php echo $rowspan; ?>"><?php echo esc_html( $parlament ); ?></td>
+                                    <?php endif; ?>
                                     <td class="hs-stat-partei">
                                         <a href="<?php echo esc_url( add_query_arg( array( 'hs_partei' => urlencode( $r->partei ) ), get_permalink() ) ); ?>" class="hs-stat-partei-link">
                                             <?php echo esc_html( $r->partei ); ?>
@@ -4302,19 +4303,24 @@ class Handschelle_Shortcodes {
                                     <td class="hs-stat-count"><?php echo intval( $r->gesamt ); ?></td>
                                 </tr>
                             <?php endforeach; ?>
-                            </tbody>
-                            <tfoot>
-                                <tr>
-                                    <td colspan="2"><strong>Gesamt</strong></td>
-                                    <td class="hs-col-aktiv"><strong><?php echo intval( $aktiv_parlament ); ?></strong></td>
-                                    <td class="hs-col-passiv"><strong><?php echo intval( $passiv_parlament ); ?></strong></td>
-                                    <td><strong><?php echo intval( $gesamt_parlament ); ?></strong></td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
+                            <tr class="hs-parlament-subtotal">
+                                <td><strong>Gesamt</strong></td>
+                                <td class="hs-col-aktiv"><strong><?php echo intval( $aktiv_parlament ); ?></strong></td>
+                                <td class="hs-col-passiv"><strong><?php echo intval( $passiv_parlament ); ?></strong></td>
+                                <td class="hs-stat-count"><strong><?php echo intval( $gesamt_parlament ); ?></strong></td>
+                            </tr>
+                        <?php endforeach; ?>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="2"><strong>Gesamt</strong></td>
+                                <td class="hs-col-aktiv"><strong><?php echo intval( $total_aktiv ); ?></strong></td>
+                                <td class="hs-col-passiv"><strong><?php echo intval( $total_passiv ); ?></strong></td>
+                                <td class="hs-stat-count"><strong><?php echo intval( $total_gesamt ); ?></strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
                 </div>
-                <?php endforeach; ?>
             <?php endif; ?>
         </div>
         <?php

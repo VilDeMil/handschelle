@@ -195,13 +195,10 @@
 .hs-stat-bar { height:100%; background:linear-gradient(90deg,var(--hs-accent) 0%,var(--hs-gold) 100%); border-radius:20px; transition:width .6s ease; min-width:4px; }
 
 /* ── Parlamente Liste ───────────────────────────────────────── */
-.hs-parlamente-liste { display:flex; flex-direction:column; gap:1.5rem; }
-.hs-parlament-block { border:1px solid var(--hs-border); border-radius:var(--hs-radius); overflow:hidden; box-shadow:var(--hs-shadow); }
-.hs-parlament-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:.5rem; padding:.85rem 1.2rem; background:var(--hs-primary); color:#fff; }
-.hs-parlament-name { font-size:1rem; font-weight:700; }
-.hs-parlament-summary { font-size:.85rem; opacity:.9; }
+.hs-parlamente-liste { }
 .hs-parlamente-table { margin:0; }
-.hs-parlamente-table .hs-stat-table-wrap { box-shadow:none; border:none; border-radius:0; }
+.hs-parlament-cell { font-weight:700; color:var(--hs-primary); vertical-align:middle; border-right:2px solid var(--hs-border); white-space:nowrap; }
+.hs-parlament-subtotal td { background:#f0f4ff; border-top:1px solid var(--hs-primary); font-size:.85rem; }
 .hs-col-aktiv { text-align:center; }
 .hs-col-passiv { text-align:center; }
 .hs-badge-aktiv { display:inline-block; background:#27ae60; color:#fff; border-radius:20px; padding:.1em .55em; font-size:.82rem; font-weight:700; }
