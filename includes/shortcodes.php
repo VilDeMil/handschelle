@@ -2758,6 +2758,13 @@ class Handschelle_Shortcodes {
                             <span class="hs-wanted-value hs-wanted-value--urteil"><?php echo esc_html( $e->urteil ); ?></span>
                         </div>
                         <?php endif; ?>
+
+                        <?php if ( ! empty( $e->bemerkung_straftat ) ) : ?>
+                        <div class="hs-wanted-row hs-wanted-row--block">
+                            <span class="hs-wanted-label">Bemerkung:</span>
+                            <span class="hs-wanted-value"><?php echo nl2br( esc_html( $e->bemerkung_straftat ) ); ?></span>
+                        </div>
+                        <?php endif; ?>
                     </div>
                 </div>
 

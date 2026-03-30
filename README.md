@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 16.9 |
+| **Version** | 17.0 |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
 | **Lizenz** | GPL-2.0+ |
@@ -123,6 +123,9 @@ Planned features for upcoming versions:
 ---
 
 ## Release Notes
+
+### 17.0 *(2026-03-30)*
+- **bemerkung_straftat in [handschelle-wanted]**: Added "Bemerkung" row to the wanted-poster card, shown after the Urteil row when the field is non-empty. Publicly visible to all visitors.
 
 ### 16.9 *(2026-03-30)*
 - **Bemerkung zur Straftat**: New `bemerkung_straftat` (TEXT) column added to the main table. Stores a public-facing remark about the primary offence — shown in the straftat card section for all visitors, separate from the admin-only `bemerkung` field. Admin edit form updated with a dedicated "Bemerkung zur Straftat" textarea; register/smart forms updated accordingly. CSV export/import and backup/restore include the new column. DB migration in `maybe_upgrade_table()` adds the column automatically on existing installs.
