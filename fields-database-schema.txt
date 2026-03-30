@@ -1,7 +1,7 @@
 ## Fields / Database Schema
 
 **Table name:** `wp_{prefix}_die_handschelle`
-**Total fields:** 34
+**Total fields:** 35
 
 ### Core Fields
 
@@ -38,8 +38,9 @@
 | `urteil` | VARCHAR | 200 | No | Verdict / sentence |
 | `aktenzeichen` | VARCHAR | 50 | No | Case file / docket number |
 | `link_quelle` | TEXT | — | No | Source link (URL to article / document) |
-| `bemerkung_person` | VARCHAR | 500 | No | Remarks about the person (shown in Eintragsdetails) |
-| `bemerkung` | TEXT | — | No | Admin notes / remarks |
+| `bemerkung_person`   | VARCHAR | 500 | No | Remarks about the person (shown in Eintragsdetails) |
+| `bemerkung_straftat` | TEXT    | —   | No | Public remark about the primary offence (shown in straftat card for all visitors) |
+| `bemerkung`          | TEXT    | —   | No | Admin notes / remarks (shown only to logged-in users) |
 
 ### Publication Fields
 
@@ -138,4 +139,4 @@ Index on `entry_id` for fast lookup.
 ---
 ---
 
-(c) 2026 - "Die-Handschelle" 16.6 - www.die-handschelle.com
+(c) 2026 - "Die-Handschelle" 17.0 - www.die-handschelle.com

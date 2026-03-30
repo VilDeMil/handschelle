@@ -218,7 +218,7 @@ class Handschelle_Shortcodes {
                             <div class="hs-field"><label>Urteil <span>(max. 200 Zeichen)</span></label><input type="text" name="urteil" maxlength="200" placeholder="z.B. 2 Jahre auf Bewährung"></div>
                             <div class="hs-field"><label>Link zur Quelle</label><input type="url" name="link_quelle" placeholder="https://…"></div>
                             <div class="hs-field"><label>Aktenzeichen <span>(max. 50 Zeichen)</span></label><input type="text" name="aktenzeichen" maxlength="50" placeholder="z.B. 1 StR 123/24"></div>
-                            <div class="hs-field hs-field-full"><label>Bemerkung</label><textarea name="bemerkung" rows="4" placeholder="Weitere Anmerkungen …"></textarea></div>
+                            <div class="hs-field hs-field-full"><label>Bemerkung zur Straftat</label><textarea name="bemerkung_straftat" rows="4" placeholder="Weitere Anmerkungen zur Straftat …"></textarea></div>
                             <div class="hs-field">
                                 <label>Status der Straftat</label>
                                 <select name="status_straftat">
@@ -1222,9 +1222,10 @@ class Handschelle_Shortcodes {
                         <span class="hs-badge <?php echo esc_attr($status_class[$e->status_straftat] ?? 'hs-status-ermittlung'); ?>"><?php echo esc_html($e->status_straftat); ?></span>
                     </div>
                     <?php if ( $e->urteil ) : ?><div class="hs-card-row"><span class="hs-label">📋 Urteil:</span> <?php echo esc_html($e->urteil); ?></div><?php endif; ?>
+                    <?php if ( ! empty( $e->bemerkung_straftat ) ) : ?><div class="hs-card-bemerkung"><span class="hs-label">💬 Bemerkung:</span><p><?php echo nl2br(esc_html($e->bemerkung_straftat)); ?></p></div><?php endif; ?>
                     <?php if ( $is_logged_in ) : ?>
                         <?php if ( $e->aktenzeichen ) : ?><div class="hs-card-row"><span class="hs-label">📁 Aktenzeichen:</span> <?php echo esc_html($e->aktenzeichen); ?></div><?php endif; ?>
-                        <?php if ( $e->bemerkung ) : ?><div class="hs-card-bemerkung"><span class="hs-label">💬 Bemerkung:</span><p><?php echo nl2br(esc_html($e->bemerkung)); ?></p></div><?php endif; ?>
+                        <?php if ( $e->bemerkung ) : ?><div class="hs-card-bemerkung"><span class="hs-label">💬 Bemerkung (intern):</span><p><?php echo nl2br(esc_html($e->bemerkung)); ?></p></div><?php endif; ?>
                     <?php endif; ?>
                     <?php if ( $is_logged_in ) : ?>
                     <div class="hs-search-buttons">
@@ -2757,6 +2758,13 @@ class Handschelle_Shortcodes {
                             <span class="hs-wanted-value hs-wanted-value--urteil"><?php echo esc_html( $e->urteil ); ?></span>
                         </div>
                         <?php endif; ?>
+
+                        <?php if ( ! empty( $e->bemerkung_straftat ) ) : ?>
+                        <div class="hs-wanted-row hs-wanted-row--block">
+                            <span class="hs-wanted-label">Bemerkung:</span>
+                            <span class="hs-wanted-value"><?php echo nl2br( esc_html( $e->bemerkung_straftat ) ); ?></span>
+                        </div>
+                        <?php endif; ?>
                     </div>
                 </div>
 
@@ -2931,7 +2939,7 @@ class Handschelle_Shortcodes {
                             <div class="hs-field"><label>Urteil <span>(max. 200 Zeichen)</span></label><input type="text" name="urteil" maxlength="200" placeholder="z.B. 2 Jahre auf Bewährung"></div>
                             <div class="hs-field"><label>Link zur Quelle</label><input type="url" name="link_quelle" placeholder="https://…"></div>
                             <div class="hs-field"><label>Aktenzeichen <span>(max. 50 Zeichen)</span></label><input type="text" name="aktenzeichen" maxlength="50" placeholder="z.B. 1 StR 123/24"></div>
-                            <div class="hs-field hs-field-full"><label>Bemerkung</label><textarea name="bemerkung" rows="4" placeholder="Weitere Anmerkungen …"></textarea></div>
+                            <div class="hs-field hs-field-full"><label>Bemerkung zur Straftat</label><textarea name="bemerkung_straftat" rows="4" placeholder="Weitere Anmerkungen zur Straftat …"></textarea></div>
                             <div class="hs-field">
                                 <label>Status der Straftat</label>
                                 <select name="status_straftat">

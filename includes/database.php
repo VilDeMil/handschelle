@@ -41,8 +41,9 @@ class Handschelle_Database {
             `urteil`          VARCHAR(200)     NOT NULL DEFAULT '',
             `link_quelle`     TEXT,
             `aktenzeichen`    VARCHAR(50)      NOT NULL DEFAULT '',
-            `bemerkung_person` VARCHAR(500)    NOT NULL DEFAULT '',
-            `bemerkung`       TEXT,
+            `bemerkung_person`   VARCHAR(500)    NOT NULL DEFAULT '',
+            `bemerkung_straftat` TEXT,
+            `bemerkung`          TEXT,
             `status_straftat` VARCHAR(50)      NOT NULL DEFAULT 'Ermittlungen laufen',
             `sm_facebook`     TEXT,
             `sm_youtube`      TEXT,
@@ -280,6 +281,16 @@ class Handschelle_Database {
             $col_exists = $wpdb->get_var( "SHOW COLUMNS FROM `{$off_table}` LIKE 'freigegeben'" );
             if ( ! $col_exists ) {
                 $wpdb->query( "ALTER TABLE `{$off_table}` ADD COLUMN `freigegeben` TINYINT(1) NOT NULL DEFAULT 0 AFTER `erstellt_am`" );
+            }
+        }
+
+        // v16.9: add bemerkung_straftat column to main table
+        if ( version_compare( $stored, '16.9', '<' ) ) {
+            global $wpdb;
+            $table = $wpdb->prefix . HANDSCHELLE_DB_TABLE;
+            $col_exists = $wpdb->get_var( "SHOW COLUMNS FROM `{$table}` LIKE 'bemerkung_straftat'" );
+            if ( ! $col_exists ) {
+                $wpdb->query( "ALTER TABLE `{$table}` ADD COLUMN `bemerkung_straftat` TEXT NULL AFTER `bemerkung_person`" );
             }
         }
 
