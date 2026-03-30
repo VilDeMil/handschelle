@@ -4264,6 +4264,7 @@ class Handschelle_Shortcodes {
         ob_start();
         ?>
         <div class="hs-frontend hs-full-width hs-parlamente-liste">
+            <h2 class="hs-section-title">In welchen Parlamenten sitzen Straft&auml;ter?</h2>
             <?php if ( empty( $parlamente ) ) : ?>
                 <p class="hs-empty">Noch keine freigegebenen Einträge vorhanden.</p>
             <?php else : ?>
