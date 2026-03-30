@@ -1875,11 +1875,13 @@ class Handschelle_Shortcodes {
 
         ob_start();
         ?>
+        <div class="hs-frontend">
         <ul class="hs-straftaten-liste">
             <?php foreach ( $straftaten as $s ) : ?>
                 <li class="hs-straftaten-liste-item"><?php echo esc_html( $s ); ?></li>
             <?php endforeach; ?>
         </ul>
+        </div>
         <?php
         return ob_get_clean();
     }
