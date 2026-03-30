@@ -345,7 +345,7 @@ class Handschelle_Admin {
         $out  = fopen( 'php://output', 'w' );
         fputs( $out, "\xEF\xBB\xBF" );
 
-        $cols = array( 'id','datum_eintrag','name','spitzname','beruf','geburtsort','geburtsland','geburtsdatum','verstorben','dod','bild','partei','aufgabe_partei','parlament','parlament_name','status_aktiv','private_email','oeffentliche_email','straftat','urteil','link_quelle','aktenzeichen','bemerkung_person','bemerkung','status_straftat','sm_facebook','sm_youtube','sm_personal','sm_twitter','sm_homepage','sm_wikipedia','sm_sonstige','sm_linkedin','sm_xing','sm_truth_social','freigegeben','erstellt_am','geaendert_am' );
+        $cols = array( 'id','datum_eintrag','name','spitzname','beruf','geburtsort','geburtsland','geburtsdatum','verstorben','dod','bild','partei','aufgabe_partei','parlament','parlament_name','status_aktiv','private_email','oeffentliche_email','straftat','urteil','link_quelle','aktenzeichen','bemerkung_person','bemerkung_straftat','bemerkung','status_straftat','sm_facebook','sm_youtube','sm_personal','sm_twitter','sm_homepage','sm_wikipedia','sm_sonstige','sm_linkedin','sm_xing','sm_truth_social','freigegeben','erstellt_am','geaendert_am' );
         // Offence-specific columns (subset of $cols reused)
         $off_cols = array( 'straftat','urteil','link_quelle','aktenzeichen','bemerkung','status_straftat','datum_eintrag' );
 
@@ -465,10 +465,11 @@ class Handschelle_Admin {
                     'urteil'           => substr( sanitize_text_field( $g('urteil') ), 0, 200 ),
                     'link_quelle'      => esc_url_raw( $g('link_quelle') ),
                     'aktenzeichen'     => substr( sanitize_text_field( $g('aktenzeichen') ), 0, 50 ),
-                    'bemerkung_person' => substr( sanitize_textarea_field( $g('bemerkung_person') ), 0, 500 ),
-                    'bemerkung'        => sanitize_textarea_field( $g('bemerkung') ),
-                    'status_straftat'  => sanitize_text_field( $g('status_straftat') ) ?: 'Ermittlungen laufen',
-                    'sm_facebook'      => esc_url_raw( $g('sm_facebook') ),
+                    'bemerkung_person'   => substr( sanitize_textarea_field( $g('bemerkung_person') ), 0, 500 ),
+                    'bemerkung_straftat' => sanitize_textarea_field( $g('bemerkung_straftat') ),
+                    'bemerkung'          => sanitize_textarea_field( $g('bemerkung') ),
+                    'status_straftat'    => sanitize_text_field( $g('status_straftat') ) ?: 'Ermittlungen laufen',
+                    'sm_facebook'        => esc_url_raw( $g('sm_facebook') ),
                     'sm_youtube'       => esc_url_raw( $g('sm_youtube') ),
                     'sm_personal'      => esc_url_raw( $g('sm_personal') ),
                     'sm_twitter'       => esc_url_raw( $g('sm_twitter') ),
@@ -827,7 +828,8 @@ class Handschelle_Admin {
                     <div class="hs-field"><label>Urteil <span>(max. 200 Zeichen)</span></label><input type="text" name="urteil" maxlength="200" value="<?php echo $v('urteil'); ?>" placeholder="z.B. 2 Jahre auf Bewährung"></div>
                     <div class="hs-field"><label>Link zur Quelle</label><input type="url" name="link_quelle" value="<?php echo $v('link_quelle'); ?>" placeholder="https://…"></div>
                     <div class="hs-field"><label>Aktenzeichen <span>(max. 50 Zeichen)</span></label><input type="text" name="aktenzeichen" maxlength="50" value="<?php echo $v('aktenzeichen'); ?>" placeholder="z.B. 1 StR 123/24"></div>
-                    <div class="hs-field hs-field-full"><label>Bemerkung</label><textarea name="bemerkung" rows="4"><?php echo esc_textarea($entry->bemerkung ?? ''); ?></textarea></div>
+                    <div class="hs-field hs-field-full"><label>Bemerkung zur Straftat</label><textarea name="bemerkung_straftat" rows="3"><?php echo esc_textarea($entry->bemerkung_straftat ?? ''); ?></textarea></div>
+                    <div class="hs-field hs-field-full"><label>Bemerkung (intern)</label><textarea name="bemerkung" rows="4"><?php echo esc_textarea($entry->bemerkung ?? ''); ?></textarea></div>
                     <div class="hs-field"><label>Status Straftat</label><select name="status_straftat"><?php foreach ( $st_opts as $s ) : ?><option value="<?php echo esc_attr($s); ?>" <?php selected($v('status_straftat','Ermittlungen laufen'),$s); ?>><?php echo esc_html($s); ?></option><?php endforeach; ?></select></div>
                 </div>
             </div>
@@ -1626,7 +1628,7 @@ class Handschelle_Admin {
         $entries = Handschelle_Database::get_all( array( 'freigegeben' => 'all' ) );
 
         // Build in-memory CSV
-        $cols = array( 'id','datum_eintrag','name','spitzname','beruf','geburtsort','geburtsland','geburtsdatum','verstorben','dod','bild','partei','aufgabe_partei','parlament','parlament_name','status_aktiv','private_email','oeffentliche_email','straftat','urteil','link_quelle','aktenzeichen','bemerkung_person','bemerkung','status_straftat','sm_facebook','sm_youtube','sm_personal','sm_twitter','sm_homepage','sm_wikipedia','sm_sonstige','sm_linkedin','sm_xing','sm_truth_social','freigegeben','erstellt_am','geaendert_am' );
+        $cols = array( 'id','datum_eintrag','name','spitzname','beruf','geburtsort','geburtsland','geburtsdatum','verstorben','dod','bild','partei','aufgabe_partei','parlament','parlament_name','status_aktiv','private_email','oeffentliche_email','straftat','urteil','link_quelle','aktenzeichen','bemerkung_person','bemerkung_straftat','bemerkung','status_straftat','sm_facebook','sm_youtube','sm_personal','sm_twitter','sm_homepage','sm_wikipedia','sm_sonstige','sm_linkedin','sm_xing','sm_truth_social','freigegeben','erstellt_am','geaendert_am' );
         $csv  = "\xEF\xBB\xBF"; // UTF-8 BOM
         $csv .= implode( ';', $cols ) . "\r\n";
         foreach ( $entries as $e ) {
@@ -1839,10 +1841,11 @@ class Handschelle_Admin {
                     'urteil'          => substr( sanitize_text_field( $g( 'urteil' ) ), 0, 200 ),
                     'link_quelle'     => esc_url_raw( $g( 'link_quelle' ) ),
                     'aktenzeichen'    => substr( sanitize_text_field( $g( 'aktenzeichen' ) ), 0, 50 ),
-                    'bemerkung_person' => substr( sanitize_textarea_field( $g( 'bemerkung_person' ) ), 0, 500 ),
-                    'bemerkung'       => sanitize_textarea_field( $g( 'bemerkung' ) ),
-                    'status_straftat' => sanitize_text_field( $g( 'status_straftat' ) ) ?: 'Ermittlungen laufen',
-                    'sm_facebook'     => esc_url_raw( $g( 'sm_facebook' ) ),
+                    'bemerkung_person'   => substr( sanitize_textarea_field( $g( 'bemerkung_person' ) ), 0, 500 ),
+                    'bemerkung_straftat' => sanitize_textarea_field( $g( 'bemerkung_straftat' ) ),
+                    'bemerkung'          => sanitize_textarea_field( $g( 'bemerkung' ) ),
+                    'status_straftat'    => sanitize_text_field( $g( 'status_straftat' ) ) ?: 'Ermittlungen laufen',
+                    'sm_facebook'        => esc_url_raw( $g( 'sm_facebook' ) ),
                     'sm_youtube'      => esc_url_raw( $g( 'sm_youtube' ) ),
                     'sm_personal'     => esc_url_raw( $g( 'sm_personal' ) ),
                     'sm_twitter'      => esc_url_raw( $g( 'sm_twitter' ) ),
