@@ -133,6 +133,7 @@ class Handschelle_Shortcodes {
 
                 <form method="post" enctype="multipart/form-data" class="hs-form" id="hs-eingabe-form">
                     <?php wp_nonce_field( 'hs_frontend_submit', 'hs_nonce' ); ?>
+                    <?php handschelle_captcha_field( 'hs_frontend_submit' ); ?>
                     <input type="hidden" name="hs_submit"     value="1">
                     <input type="hidden" name="hs_return_url" value="<?php echo esc_url( get_permalink() ); ?>">
 
@@ -257,6 +258,7 @@ class Handschelle_Shortcodes {
     ================================================================ */
     public function early_frontend_submit() {
         if ( empty( $_POST['hs_submit'] ) ) return;
+        handschelle_captcha_require( 'hs_frontend_submit' );
 
         if ( ! isset( $_POST['hs_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['hs_nonce'] ) ), 'hs_frontend_submit' ) ) {
             wp_safe_redirect( add_query_arg( 'hs_error', '1', $this->return_url() ) );
@@ -290,6 +292,7 @@ class Handschelle_Shortcodes {
     ================================================================ */
     public function early_frontend_edit() {
         if ( empty( $_POST['hs_edit_submit'] ) ) return;
+        handschelle_captcha_require( 'hs_frontend_edit' );
         if ( ! current_user_can( 'publish_posts' ) ) return; // Author or higher
 
         if ( ! isset( $_POST['hs_edit_nonce'] ) ||
@@ -1086,6 +1089,7 @@ class Handschelle_Shortcodes {
             'Verurteilt'          => 'hs-status-verurteilt',
             'Ermittlungen laufen' => 'hs-status-ermittlung',
             'Eingestellt'         => 'hs-status-eingestellt',
+            'Freispruch'          => 'hs-status-eingestellt',
         );
         $is_logged_in = is_user_logged_in();
         $is_author = current_user_can( 'publish_posts' );
@@ -1289,6 +1293,7 @@ class Handschelle_Shortcodes {
                 </div>
                 <form method="post" enctype="multipart/form-data" class="hs-edit-form">
                     <?php wp_nonce_field( 'hs_frontend_edit', 'hs_edit_nonce' ); ?>
+                    <?php handschelle_captcha_field( 'hs_frontend_edit' ); ?>
                     <input type="hidden" name="hs_edit_submit"  value="1">
                     <input type="hidden" name="hs_edit_id"      value="<?php echo intval($e->id); ?>">
                     <input type="hidden" name="hs_return_url"   value="<?php echo esc_url( get_permalink() ); ?>">
@@ -2072,6 +2077,7 @@ class Handschelle_Shortcodes {
     ================================================================ */
     public function early_login_submit() {
         if ( empty( $_POST['hs_login_submit'] ) ) return;
+        handschelle_captcha_require( 'hs_login' );
         if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['hs_login_nonce'] ?? '' ) ), 'hs_login' ) ) return;
 
         $username   = sanitize_user( wp_unslash( $_POST['hs_login_user'] ?? '' ) );
@@ -2134,6 +2140,7 @@ class Handschelle_Shortcodes {
 
                 <form method="post" class="hs-login-form" autocomplete="on">
                     <?php wp_nonce_field( 'hs_login', 'hs_login_nonce' ); ?>
+                    <?php handschelle_captcha_field( 'hs_login' ); ?>
                     <input type="hidden" name="hs_login_submit"   value="1">
                     <input type="hidden" name="hs_login_redirect" value="<?php echo esc_attr( $redirect ); ?>">
 
@@ -2191,6 +2198,7 @@ class Handschelle_Shortcodes {
     ================================================================ */
     public function early_register_submit() {
         if ( empty( $_POST['hs_register_submit'] ) ) return;
+        handschelle_captcha_require( 'hs_register' );
         if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['hs_register_nonce'] ?? '' ) ), 'hs_register' ) ) return;
 
         $return_url = esc_url_raw( wp_unslash( $_POST['hs_register_redirect'] ?? '' ) );
@@ -2305,6 +2313,7 @@ class Handschelle_Shortcodes {
                 <?php if ( ! $reg_pending ) : ?>
                 <form method="post" class="hs-register-form" autocomplete="on">
                     <?php wp_nonce_field( 'hs_register', 'hs_register_nonce' ); ?>
+                    <?php handschelle_captcha_field( 'hs_register' ); ?>
                     <input type="hidden" name="hs_register_submit"   value="1">
                     <input type="hidden" name="hs_register_redirect" value="<?php echo esc_attr( $redirect ); ?>">
 
@@ -2802,6 +2811,7 @@ class Handschelle_Shortcodes {
 
                 <form method="post" enctype="multipart/form-data" class="hs-form" id="hs-smart-form">
                     <?php wp_nonce_field( 'hs_smart_submit', 'hs_smart_nonce' ); ?>
+                    <?php handschelle_captcha_field( 'hs_smart_submit' ); ?>
                     <input type="hidden" name="hs_smart_submit" value="1">
                     <input type="hidden" name="hs_return_url"   value="<?php echo esc_url( get_permalink() ); ?>">
                     <input type="hidden" name="hs_existing_entry_id" id="hs-smart-entry-id" value="">
@@ -3021,6 +3031,7 @@ class Handschelle_Shortcodes {
     ================================================================ */
     public function early_smart_submit() {
         if ( empty( $_POST['hs_smart_submit'] ) ) return;
+        handschelle_captcha_require( 'hs_smart_submit' );
 
         if ( ! isset( $_POST['hs_smart_nonce'] ) ||
              ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['hs_smart_nonce'] ) ), 'hs_smart_submit' ) ) {

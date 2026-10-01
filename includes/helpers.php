@@ -41,7 +41,7 @@ function handschelle_parlaments() {
 }
 
 function handschelle_status_straftat_options() {
-    return array( 'Ermittlungen laufen', 'Verurteilt', 'Eingestellt', 'Berufung' );
+    return array( 'Ermittlungen laufen', 'Angeklagt', 'Verurteilt', 'Freispruch', 'Eingestellt', 'Berufung', 'Revision' );
 }
 
 function handschelle_laender() {
@@ -175,3 +175,40 @@ function handschelle_calc_age( $geburtsdatum ) {
         return null;
     }
 }
+
+/** Basic first-party CAPTCHA; no third-party requests or cookies. */
+function handschelle_captcha_field( $scope ) {
+    if ( ! defined( 'DONOTCACHEPAGE' ) ) define( 'DONOTCACHEPAGE', true );
+    if ( ! headers_sent() ) nocache_headers();
+    $a = wp_rand( 1, 9 );
+    $b = wp_rand( 1, 9 );
+    $token = wp_generate_password( 32, false, false );
+    set_transient( 'hs_captcha_' . $token, array( 'scope' => $scope, 'answer' => (string) ( $a + $b ) ), 20 * MINUTE_IN_SECONDS );
+    echo '<p class="hs-captcha"><label>Sicherheitsfrage: Wie viel ist ' . esc_html( $a ) . ' + ' . esc_html( $b ) . '? ';
+    echo '<input type="text" name="hs_captcha_answer" inputmode="numeric" pattern="[0-9]{1,2}" maxlength="2" autocomplete="off" required aria-label="Ergebnis der Sicherheitsfrage"></label>';
+    echo '<input type="hidden" name="hs_captcha_token" value="' . esc_attr( $token ) . '">';
+    echo '<small>Bitte die Summe eingeben. Die Aufgabe gilt 20 Minuten.</small></p>';
+}
+
+function handschelle_captcha_valid( $scope, $post ) {
+    $token = $post['hs_captcha_token'] ?? '';
+    $answer = $post['hs_captcha_answer'] ?? '';
+    if ( ! is_string( $token ) || ! is_string( $answer ) || ! preg_match( '/^[A-Za-z0-9]{32}$/D', $token ) ) return false;
+    $key = 'hs_captcha_' . $token;
+    $challenge = get_transient( $key );
+    // Atomically claim a challenge, including failed attempts, to prevent replay.
+    if ( ! is_array( $challenge ) || ! add_option( $key . '_used', time(), '', false ) ) return false;
+    delete_transient( $key );
+    wp_schedule_single_event( time() + 1800, 'handschelle_captcha_cleanup', array( $key . '_used' ) );
+    return $challenge['scope'] === $scope && hash_equals( $challenge['answer'], trim( $answer ) );
+}
+
+function handschelle_captcha_require( $scope ) {
+    if ( ! handschelle_captcha_valid( $scope, $_POST ) ) {
+        wp_die( 'Die Sicherheitsfrage fehlt, ist falsch oder abgelaufen. Bitte das Formular neu laden und erneut ausfüllen.', 'Sicherheitsprüfung', array( 'response' => 400, 'back_link' => true ) );
+    }
+}
+
+add_action( 'handschelle_captcha_cleanup', function( $key ) {
+    if ( is_string( $key ) && preg_match( '/^hs_captcha_[A-Za-z0-9]{32}_used$/D', $key ) ) delete_option( $key );
+} );

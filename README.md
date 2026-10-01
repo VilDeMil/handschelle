@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 17.0 |
+| **Version** | 17.1 |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
 | **Lizenz** | GPL-2.0+ |
@@ -123,6 +123,10 @@ Planned features for upcoming versions:
 ---
 
 ## Release Notes
+
+### 17.1 *(2026-10-01)*
+- **Offence status options**: Added `Angeklagt`, `Freispruch`, and `Revision` to the shared status list used by public submission forms, inline editing, and administration. Existing entries retain their status; no database migration is required. `Freispruch` uses the dismissed-case badge style; the other new statuses use the existing neutral pending-status badge style.
+- **Form CAPTCHA**: Added a first-party arithmetic challenge to the entry, smart entry, edit, login, and registration forms. Challenges expire after 20 minutes, are bound to their form, and are consumed after one attempt. No external CAPTCHA service is required. This does not change the WordPress core login form.
 
 ### 17.0 *(2026-03-30)*
 - **bemerkung_straftat in [handschelle-wanted]**: Added "Bemerkung" row to the wanted-poster card, shown after the Urteil row when the field is non-empty. Publicly visible to all visitors.
@@ -1400,4 +1404,3 @@ IMPORTANT BEHAVIOURS
 ```
 
 ---
-
