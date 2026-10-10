@@ -1,0 +1,49 @@
+HANDSCHELLE REST API
+===================
+
+Base URL: https://example.com/wp-json/handschelle/v1
+
+Authentication
+--------------
+All endpoints require HTTPS and WordPress authentication for a user with the
+manage_options capability. Use a WordPress Application Password over HTTP Basic
+authentication. Never put credentials in scripts, URLs, or reports.
+
+GET /entries
+------------
+Lists records. Query parameters:
+  freigegeben=all|0|1   default: all
+  search=TEXT           searches name, offence, and party
+  partei=TEXT           exact party filter
+  limit=1..500          default: 100
+  offset=INTEGER        default: 0
+
+GET /entries/{id}
+-----------------
+Returns one record, or 404 when it does not exist.
+
+POST /entries
+-------------
+Creates a record. JSON must include non-empty "name" and "straftat". All new
+records are forced to freigegeben=0 for editorial review, even if the request
+contains another value. Private email is ignored.
+
+PATCH /entries/{id}
+------------------
+Updates supplied editable fields on an existing record. The freigegeben flag,
+private email, ID, and timestamps cannot be changed through this endpoint.
+
+Example request body:
+{
+  "name": "Beispielname",
+  "partei": "Beispielpartei",
+  "straftat": "Ermittlungsverfahren wegen ...",
+  "status_straftat": "Ermittlungen laufen",
+  "link_quelle": "https://example.org/mitteilung",
+  "bemerkung_straftat": "Quellenstand 2026-10-09; Recherche 2026-10-09. Unschuldsvermutung."
+}
+
+Supported status_straftat values are the options returned by the plugin's
+handschelle_status_straftat_options() function. REST responses omit private
+email. Use the API to check for existing records before creating a new one, and
+read back each write to confirm that it remains pending.

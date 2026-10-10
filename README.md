@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 17.1 |
+| **Version** | 17.2 |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
 | **Lizenz** | GPL-2.0+ |
@@ -21,6 +21,7 @@
 - [Release Notes](#release-notes)
 - [Installation from GitHub](installation-from-github.txt)
 - [Shortcodes](shortcodes.txt)
+- [Authenticated REST API](rest-api.txt)
   - [Overview](shortcodes.txt)
   - [`[handschelle]`](shortcodes.txt)
   - [`[handschelle-anzeige]`](shortcodes.txt)
@@ -123,6 +124,9 @@ Planned features for upcoming versions:
 ---
 
 ## Release Notes
+
+### 17.2 *(2026-10-09)*
+- **Authenticated Handschelle REST API**: Added `/wp-json/handschelle/v1/entries` for administrator-only listing and pending-entry creation, plus `/entries/{id}` for reading and editing records. API creation always stores `freigegeben = 0`; approval cannot be changed through REST. Private email is excluded from REST responses and cannot be read or edited through these routes. Authenticate with a WordPress account that has `manage_options` (for example, an Application Password).
 
 ### 17.1 *(2026-10-01)*
 - **Offence status options**: Added `Angeklagt`, `Freispruch`, and `Revision` to the shared status list used by public submission forms, inline editing, and administration. Existing entries retain their status; no database migration is required. `Freispruch` uses the dismissed-case badge style; the other new statuses use the existing neutral pending-status badge style.
