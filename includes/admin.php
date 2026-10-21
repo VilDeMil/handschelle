@@ -617,6 +617,7 @@ class Handschelle_Admin {
                             <th style="width:50px">Alter</th>
                             <th>Partei</th>
                             <th>Straftat</th>
+                            <th>Urteil</th>
                             <th style="width:90px">Status</th>
                             <th style="width:120px">Freigabe</th>
                             <th style="width:300px">Aktionen</th>
@@ -624,7 +625,7 @@ class Handschelle_Admin {
                     </thead>
                     <tbody>
                     <?php if ( empty( $entries ) ) : ?>
-                        <tr><td colspan="8" style="text-align:center;padding:2rem;color:#999;">Keine Einträge vorhanden.</td></tr>
+                        <tr><td colspan="9" style="text-align:center;padding:2rem;color:#999;">Keine Einträge vorhanden.</td></tr>
                     <?php endif; ?>
                     <?php foreach ( $entries as $e ) :
                         $img_url = handschelle_get_image_url( $e->bild );
@@ -647,6 +648,7 @@ class Handschelle_Admin {
                             <td><?php $age = handschelle_calc_age( $e->geburtsdatum ?? '' ); echo $age !== null ? $age : '—'; ?></td>
                             <td><?php echo esc_html( $e->partei ); ?><br><small><?php echo esc_html( $e->aufgabe_partei ); ?></small></td>
                             <td><?php echo esc_html( mb_substr( $e->straftat, 0, 80 ) ) . ( mb_strlen( $e->straftat ) > 80 ? '…' : '' ); ?></td>
+                            <td><?php echo ! empty( $e->urteil ) ? esc_html( mb_substr( $e->urteil, 0, 80 ) ) . ( mb_strlen( $e->urteil ) > 80 ? '…' : '' ) : '—'; ?></td>
                             <td><?php echo $e->status_aktiv ? '<span class="hs-badge hs-badge-aktiv">Aktiv</span>' : '<span class="hs-badge hs-badge-inaktiv">Inaktiv</span>'; ?></td>
                             <td><?php echo $e->freigegeben ? '<span class="hs-badge hs-badge-aktiv">✅ Freigegeben</span>' : '<span class="hs-badge hs-badge-pending">⏳ Ausstehend</span>'; ?></td>
                             <td class="hs-actions">

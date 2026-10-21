@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| **Version** | 17.2 |
+| **Version** | 17.3 |
 | **E-Mail** | info@die-handschelle.com |
 | **Website** | https://www.die-handschelle.com |
 | **Lizenz** | GPL-2.0+ |
@@ -124,6 +124,9 @@ Planned features for upcoming versions:
 ---
 
 ## Release Notes
+
+### 17.3 *(2026-10-21)*
+- **Admin overview**: Added an Urteil column to each entry row, showing the saved verdict or an em dash when none is recorded.
 
 ### 17.2 *(2026-10-09)*
 - **Authenticated Handschelle REST API**: Added `/wp-json/handschelle/v1/entries` for administrator-only listing and pending-entry creation, plus `/entries/{id}` for reading and editing records. API creation always stores `freigegeben = 0`; approval cannot be changed through REST. Private email is excluded from REST responses and cannot be read or edited through these routes. Authenticate with a WordPress account that has `manage_options` (for example, an Application Password).
